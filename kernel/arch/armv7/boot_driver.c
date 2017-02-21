@@ -222,8 +222,24 @@ __attribute__((noreturn))
 void boot_bsp_core(void *pointer, void *cpu_driver_entry,
                    void *cpu_driver_base)
 {
+	
+	__asm volatile(
+			"ldr	r5, =0x70006300\n\t" 
+			"mov	r6, #66\n\t"
+			"str	r6, [r5]\n\t"
+			);
+	
     my_core_id = cp15_get_cpu_id();
 
+	__asm volatile(
+			"ldr	r5, =0x70006300\n\t" 
+			"mov	r6, #66\n\t"
+			"str	r6, [r5]\n\t"
+			);
+	
+	char *temp = (char *) 0x70006300;
+	*temp = 'c';
+	
     /* Place all AP cores in the WFE loop. */
     plat_advance_aps();
 

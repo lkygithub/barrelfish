@@ -295,25 +295,7 @@ let bin_rcce_lu = [ "/sbin/" ++ f | f <- [
                         "angler",
                         "corectrl"
                         ] ]
-	-- ARMv7-A Jetson-tk1 modules
-	jetsontk1Modules = [ "/sbin/" ++ f | f <- [
-                        "cpu_tegrak1",
-                        "init",
-                        "mem_serv",
-                        "monitor",
-                        "ramfsd",
-                        "spawnd",
-                        "startd",
-                        "skb",
-                        "kaluga",
-                        "fish",
-                        "serial_tegrak1",
-                        "serial_kernel",
-                        "angler",
-                        "corectrl",
-                        "memtest"
-						] ]
-
+						
     -- ARMv7-A modules for Versatile Express EMM board (GEM5, qemu)
     vExpressEMMModules_A15 = [ "/sbin/" ++ f | f <- [
                                "cpu_a15ve",
@@ -333,6 +315,24 @@ let bin_rcce_lu = [ "/sbin/" ++ f | f <- [
                                "memtest"
                                ] ]
 
+    -- ARMv7-A modules for Jetson-tk1 board 
+    jetsontk1Modules_A15 = [ "/sbin/" ++ f | f <- [
+                               "cpu_tegrak1",
+                               "init",
+                               "kaluga",
+                               "mem_serv",
+                               "monitor",
+                               "ramfsd",
+                               --"serial_jetsontk1",
+                               "serial_kernel",
+                               "spawnd",
+                               "startd",
+                               "corectrl",
+                               "skb",
+                               "angler",
+                               "fish",
+                               "memtest"
+                               ] ]
     -- ARMv7-A modules for Versatile Express EMM board (FVP)
     vExpressEMMModules_A9 = [ "/sbin/" ++ f | f <- [
                               "cpu_a9ve",
@@ -515,9 +515,9 @@ let bin_rcce_lu = [ "/sbin/" ++ f | f <- [
     "Standard Pandaboard ES build image and modules",
 
 	platform "JetsonTK1" [ "armv7" ]
-	([ ("armv7", f) | f <- jetsontk1Modules ] ++
-	 [ ("root", "/armv7_tegrak1_image"),
-	   ("root", "/armv7_tegrak1_image-gdb.gdb") ])
+	([ ("armv7", f) | f <- jetsontk1Modules_A15] ++
+	 [ ("root", "/armv7_jetsontk1_image"),
+	   ("root", "/armv7_jetsontk1_image-gdb.gdb") ])
 	"Standard Jetson TK1 build image and modules",
 
     platform "VExpressEMM-A15" [ "armv7" ]
@@ -562,7 +562,7 @@ let bin_rcce_lu = [ "/sbin/" ++ f | f <- [
     armv7Image "armv7_omap44xx" "omap44xx" "omap44xx" "0x80000000" pandaModules,
 
 	-- Build the default Jetson-tk1 boot image
-	armv7Image "armv7_tegrak1" "tegrak1" "tegrak1" "0x80000000" jetsontk1Modules,
+	armv7Image "armv7_jetsontk1" "tegrak1" "tegrak1" "0x80000000" jetsontk1Modules_A15,
 
     -- Build the A15 simulation image (VersatileExpress EMM board, 1 core)
     armv7Image "armv7_a15ve_1" "ve" "a15ve" "0x80000000" vExpressEMMModules_A15,
@@ -625,7 +625,7 @@ let bin_rcce_lu = [ "/sbin/" ++ f | f <- [
                      "armv7_a15ve_gem5",
                      "armv7_a15a7ve",
                      "armv7_omap44xx",
-					 "armv7_tegrak1",
+					 "armv7_jetsontk1",
                      "armv7_zynq7" ]],
     Rules [ copyFile SrcTree "root" ("/hake/menu.lst." ++ p)
                      "root" ("/platforms/x86/menu.lst." ++ p)
@@ -766,10 +766,5 @@ let bin_rcce_lu = [ "/sbin/" ++ f | f <- [
       In BuildTree "root" "/armv7_omap44xx_image"
     ]
     "Boot Barrelfish on a Pandaboard, over a local USB cable"
-
-	boot "note_jetsontk1" [ "armv7" ] [
-	  Str "echo",
-	  Str "\"Now use u-boot and tftp load the Image on Jetson-tk1 Board.\""
-	]
 
  ]

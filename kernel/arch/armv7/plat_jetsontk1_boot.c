@@ -16,8 +16,8 @@
 
 #include <boot_protocol.h>
 #include <cp15.h>
-#include <dev/tegrak1/jetson_exception_vectors_dev.h>
-#include <dev/tegrak1/jetson_flow_controller_dev.h>
+#include <dev/jetsontk1/jetson_exception_vectors_dev.h>
+#include <dev/jetsontk1/jetson_flow_controller_dev.h>
 #include <jetsontk1_map.h>
 
 #define  JETSON_FLOW_CTRL_CPU_HALT_VALUE	0x48000000

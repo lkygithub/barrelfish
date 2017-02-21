@@ -50,6 +50,7 @@ start:
     //
 
     // Switch to system mode, with aborts and interrupts off.
+    
     cpsid aif, #ARM_MODE_SYS
 
     // Init stack
@@ -64,6 +65,10 @@ start:
 
     // If not, wait for the BSP to wake us up.
     bne wait_for_bsp
+    
+	ldr r1, =#0x70006300
+	mov r2, #65
+	str r2, [r1]
 
     // Prepare argument
     b boot_bsp_core
