@@ -31,20 +31,16 @@ static void jetson_uart_hw_init(jetson_uart_t *uart);
 #define MSG(port, format, ...) \
     printk( LOG_NOTE, "Jetson-tk1 serial[%d]: "format, port, ## __VA_ARGS__ )
 
-#define CONFING_SYS_NS16550_CLK	40800000
-
-#define DIV_ROUND_CLOSEST(x, divisor)(		\
-{											\
-	(((x) + ((divisor) / 2)) / (divisor));	\
-}											\
-)
+#define CONFING_SYS_NS16550_CLK			40800000
+#define CONFING_SYS_NS16550_BAUDRATE	115200
 
 static int
-calc_divisor(jetson_uart_t *uart)
+calc_divisor(void)
 {
 	const unsigned int mode_x_div = 16;
-	return DIV_ROUND_CLOSEST(CONFING_SYS_NS16550_CLK,
-			mode_x_div * 115200);
+	
+	return (CONFING_SYS_NS16550_CLK / mode_x_div 
+			/ CONFING_SYS_NS16550_BAUDRATE );
 }
 
 /*
@@ -77,10 +73,10 @@ void jetson_uart_init(unsigned port, lvaddr_t base, bool initialize_hw)
 static void jetson_uart_hw_init(jetson_uart_t *uart)
 {
 	int baud_divisor;
-	baud_divisor = calc_divisor(uart);
+	baud_divisor = calc_divisor();
 
     while(!jetson_uart_LSR_tsr_e_rdf(uart));
-
+	
     jetson_uart_LCR_dlab_wrf(uart, 1);
 
     jetson_uart_DLL_clock_lsb_wrf(uart, 0);
@@ -119,7 +115,6 @@ static void jetson_uart_hw_init(jetson_uart_t *uart)
     lcr = jetson_uart_LCR_nb_stop_insert(lcr, 0);         // 1 stop bit
     lcr = jetson_uart_LCR_char_length_insert(lcr, jetson_uart_wl_8bits); // 8 data bits
     jetson_uart_LCR_wr(uart, lcr);
-
 }
 
 /**
@@ -146,10 +141,8 @@ char serial_getchar(unsigned port)
     jetson_uart_t *uart = &ports[port];
 
     /* Read until the interrupt is deasserted. */
-    char c= '\0';
-    while(jetson_uart_IIR_it_pending_rdf(uart) == 0) {
-        c= jetson_uart_RBR_rbr_rdf(uart);
-    }
+	while(!jetson_uart_LSR_rx_data_r_rdf(uart));
 
-    return c;
+	//Return the character
+    return jetson_uart_RBR_rbr_rdf(uart);
 }
