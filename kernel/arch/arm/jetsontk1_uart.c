@@ -31,7 +31,7 @@ static void jetson_uart_hw_init(jetson_uart_t *uart);
 #define MSG(port, format, ...) \
     printk( LOG_NOTE, "Jetson-tk1 serial[%d]: "format, port, ## __VA_ARGS__ )
 
-#define CONFING_SYS_NS16550_CLK			40800000
+#define CONFING_SYS_NS16550_CLK			408000000
 #define CONFING_SYS_NS16550_BAUDRATE	115200
 
 static int
@@ -115,6 +115,19 @@ static void jetson_uart_hw_init(jetson_uart_t *uart)
     lcr = jetson_uart_LCR_nb_stop_insert(lcr, 0);         // 1 stop bit
     lcr = jetson_uart_LCR_char_length_insert(lcr, jetson_uart_wl_8bits); // 8 data bits
     jetson_uart_LCR_wr(uart, lcr);
+
+	//for DEBUG
+	#if 0
+	int i;
+	for(i = 0; i < 7; i++){
+    	while(!jetson_uart_LSR_thr_e_rdf(uart));
+    	jetson_uart_THR_thr_wrf(uart, 'c');
+	}
+	while(!jetson_uart_LSR_thr_e_rdf(uart));
+	jetson_uart_THR_thr_wrf(uart, '\r');
+	while(!jetson_uart_LSR_thr_e_rdf(uart));
+	jetson_uart_THR_thr_wrf(uart, '\n');
+	#endif
 }
 
 /**

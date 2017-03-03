@@ -158,7 +158,6 @@ arch_init(struct arm_core_data *boot_core_data,
     /* Let the paging code know where the kernel page tables are.  Note that
      * paging_map_device() won't work until this is called. */
     paging_load_pointers(core_data);
-
     /* Reinitialise the serial port, as it may have moved, and we need to map
      * it into high memory. */
     /* XXX - reread the args to update serial_console_port. */

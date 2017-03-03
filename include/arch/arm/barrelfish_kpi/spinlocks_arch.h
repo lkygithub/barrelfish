@@ -20,7 +20,7 @@
 
 #ifndef ARCH_ARM_BARRELFISH_KPI_SPINLOCKS_H
 #define ARCH_ARM_BARRELFISH_KPI_SPINLOCKS_H
-
+#undef  __atomic_test_and_set
 /* Need to include this for errval_t */
 #include <errors/errno.h>
 #include <stdbool.h>
@@ -43,7 +43,8 @@ static inline void spinlock_init(spinlock_t *l)
 #define acquire_spinlock(_l) spinlock_acquire(_l)
 static inline void spinlock_acquire(spinlock_t *l)
 {
-    while (__atomic_test_and_set(l, __ATOMIC_ACQUIRE));
+    //while (__atomic_test_and_set(l, __ATOMIC_ACQUIRE));
+    __atomic_test_and_set(l, __ATOMIC_ACQUIRE);
 }
 
 #define release_spinlock(_l) spinlock_release(_l)

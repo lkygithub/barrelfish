@@ -232,7 +232,8 @@ lvaddr_t paging_map_device(lpaddr_t dev_base, size_t dev_size)
         // Otherwise, if it's free, map it. 
         if ( L1_TYPE(l1_high[i].raw) == L1_TYPE_INVALID_ENTRY ) {
             map_kernel_section_hi(dev_virt, make_dev_section(dev_base));
-            invalidate_data_caches_pouu(true);
+            //invalidate_data_caches_pouu(true);
+			cp15_invalidate_d_cache();
             invalidate_tlb(); /* XXX selective */
             return dev_virt + dev_offset;
         } 

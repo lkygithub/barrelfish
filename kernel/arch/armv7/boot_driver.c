@@ -222,24 +222,8 @@ __attribute__((noreturn))
 void boot_bsp_core(void *pointer, void *cpu_driver_entry,
                    void *cpu_driver_base)
 {
-	
-	__asm volatile(
-			"ldr	r5, =0x70006300\n\t" 
-			"mov	r6, #66\n\t"
-			"str	r6, [r5]\n\t"
-			);
-	
     my_core_id = cp15_get_cpu_id();
 
-	__asm volatile(
-			"ldr	r5, =0x70006300\n\t" 
-			"mov	r6, #66\n\t"
-			"str	r6, [r5]\n\t"
-			);
-	
-	char *temp = (char *) 0x70006300;
-	*temp = 'c';
-	
     /* Place all AP cores in the WFE loop. */
     plat_advance_aps();
 
@@ -276,7 +260,15 @@ void boot_bsp_core(void *pointer, void *cpu_driver_entry,
 
     /* The spinlocks are in the BSS, and thus already zeroed, but it's polite
      * to explicitly initialize them here... */
-    spinlock_init(&global->locks.print);
+	char tttt;
+	MSG ("DEBUG: global_address = 0x%08x\n", &tttt);
+	MSG ("DEBUG: global->locks.print = %02x\n", (int) tttt);
+    //spinlock_init(&tttt);
+    __atomic_clear(&tttt, __ATOMIC_RELEASE);
+	MSG ("DEBUG: global->locks.print = %02x\n", (int) tttt);
+	//spinlock_acquire(&global->locks.print);
+    __atomic_test_and_set(&tttt, __ATOMIC_ACQUIRE);
+	MSG ("DEBUG: global->locks.print = %02x\n", (int) tttt);
 
     MSG("Boot driver invoked as: %s\n", cmdline);
 
@@ -358,6 +350,52 @@ switch_and_jump(void *cpu_driver_entry, lvaddr_t boot_pointer, lpaddr_t ttbr0,
     /* Switch the MMU on. */
     enable_mmu(ttbr0, ttbr1);
 
+#if 0
+	MSG("Test the MMU and Page Table.\n");
+
+	// 1. 0x30000000 -> 0xa0000000
+	l1_low[0x300].section.base_address = 0xa00;
+	cp15_invalidate_i_and_d_caches_fast();
+	invalidate_tlb();
+	uint32_t *testp = (uint32_t *) 0xa0000000;
+	*testp = 0xFF77FF77;
+	printf ("DEBUG_MMU: l1_low[%d] = 0x%03x\n", 0x300,
+			l1_low[0x300].section.base_address);
+	printf ("DEBUG_MMU: data of 0xa0000000 is %08x\n", *testp);
+	testp = (uint32_t *) 0x30000000;
+	printf ("DEBUG_MMU: data of 0x30000000 is %08x\n", *testp);
+	// 2. 0x30000000 -> 0x60000000
+	l1_low[0x300].section.base_address = 0x600;
+	cp15_invalidate_i_and_d_caches_fast();
+	invalidate_tlb();
+	testp = (uint32_t *) 0x6000f500;
+	printf ("DEBUG_MMU: data of 0x6000f500 is %08x\n", *testp);
+	testp = (uint32_t *) 0x3000f500;
+	printf ("DEBUG_MMU: data of 0x3000f500 is %08x\n", *testp);
+	// 3. 0xa0000000 -> 0x60000000
+	cp15_invalidate_i_and_d_caches_fast();
+	invalidate_tlb();
+	l1_high[0xa00].section.base_address = 0x600;
+	testp = (uint32_t *) 0x6000f500;
+	printf ("DEBUG_MMU: data of 0x6000f500 is %08x\n", *testp);
+	testp = (uint32_t *) 0xa000f500;
+	printf ("DEBUG_MMU: data of 0xa000f500 is %08x\n", *testp);
+	// 4. 0xa0000000 -> 0xb0000000
+	l1_high[0xa00].section.base_address = 0xb00;
+	cp15_invalidate_i_and_d_caches_fast();
+	invalidate_tlb();
+	testp = (uint32_t *) 0xb0004000;
+	*testp = 0x87878787;
+	printf ("DEBUG_MMU: data of 0x80004000 is %08x\n", *testp);
+	testp = (uint32_t *) 0xa0004000;
+	printf ("DEBUG_MMU: data of 0xa0004000 is %08x\n", *testp);
+	//uint32_t *temp = (uint32_t *) 0xfef0f500;
+	//printf ("fef0f500: %08x\n", *temp);
+	//printf ("l1_high[fef] = %08x\n", l1_high[0xfef].section.base_address);
+	//int *temp1 = (int *) 0x6000f500;
+	//printf ("6000f500: %08x\n", *temp1);
+	while(1);
+#endif
     /* We're now executing with the kernel window mapped.  If we're on a
      * platform that doesn't have RAM at 0x80000000, then we're still using
      * physical addresses through the uncached device mappings in TTBR0.

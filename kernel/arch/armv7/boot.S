@@ -66,10 +66,6 @@ start:
     // If not, wait for the BSP to wake us up.
     bne wait_for_bsp
     
-	ldr r1, =#0x70006300
-	mov r2, #65
-	str r2, [r1]
-
     // Prepare argument
     b boot_bsp_core
     b halt

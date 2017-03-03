@@ -41,8 +41,19 @@ errval_t
 serial_init(unsigned port, bool initialize_hw) {
     assert(paging_mmu_enabled());
     assert(port < serial_num_physical_ports);
+
     lvaddr_t base = paging_map_device(uart_base[port], uart_size[port]);
     jetson_uart_init(port, base, initialize_hw);
+#if 0
+	lvaddr_t test_base = base;
+	while (test_base != 0){
+		serial_putchar(port, test_base % 16 + '0');
+		test_base /= 16;
+	}
+	serial_putchar(port, 'Y');
+	serial_putchar(port, '\r');
+	serial_putchar(port, '\n');
+#endif
     return SYS_ERR_OK;
 };
 

@@ -267,4 +267,8 @@ static inline void isb(void) { __asm volatile ("isb"); }
 static inline void sev(void) { __asm volatile ("sev"); }
 static inline void wfe(void) { __asm volatile ("wfe"); }
 
+void cp15_invalidate_d_cache(void);
+void cp15_invalidate_i_and_d_caches(void);
+void cp15_invalidate_i_and_d_caches_fast(void);
 #endif // __CP15_H__
+

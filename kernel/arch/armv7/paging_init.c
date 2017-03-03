@@ -117,6 +117,8 @@ void paging_init(lpaddr_t ram_base, size_t ram_size,
     MSG("Initialising kernel paging, using RAM at %08x-%08x\n",
         ram_base, ram_base + (ram_size - 1));
 
+	MSG("Kernel paging, L1_low at %08x and L1_high at %08x\n",
+		(lpaddr_t) l1_low, (lpaddr_t) l1_high);
     /**
      * On many ARMv7-A platforms, physical RAM (phys_memory_start) is the same
      * as the offset of mapped physical memory within virtual address space
@@ -180,6 +182,9 @@ void paging_init(lpaddr_t ram_base, size_t ram_size,
         vbase += ARM_L1_SECTION_BYTES;
         pbase += ARM_L1_SECTION_BYTES;
     }
+#if 0
+	map_kernel_section_lo(0x40000000,make_dev_section(0x0));
+#endif
 }
 
 void enable_mmu(lpaddr_t ttbr0, lpaddr_t ttbr1)
@@ -258,6 +263,7 @@ void enable_mmu(lpaddr_t ttbr0, lpaddr_t ttbr1)
     sctlr|= BIT(11); /* Branch prediction enabled. */
     sctlr|= BIT(2);  /* D-Cache and unified caches enabled. */
     sctlr&= ~BIT(1); /* Alignment faults disabled. */
+	//sctlr|= BIT(1);  /* ALighment faults enabled */
     sctlr|= BIT(0);  /* Level 1 MMU enabled. */
     cp15_write_sctlr(sctlr);
 
