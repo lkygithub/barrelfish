@@ -261,7 +261,6 @@ void enable_mmu(lpaddr_t ttbr0, lpaddr_t ttbr1)
     sctlr|= BIT(11); /* Branch prediction enabled. */
     sctlr|= BIT(2);  /* D-Cache and unified caches enabled. */
     sctlr&= ~BIT(1); /* Alignment faults disabled. */
-	//sctlr|= BIT(1);  /* ALighment faults enabled */
     sctlr|= BIT(0);  /* Level 1 MMU enabled. */
     cp15_write_sctlr(sctlr);
 
