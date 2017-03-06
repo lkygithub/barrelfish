@@ -62,7 +62,6 @@ static union arm_l1_entry make_dev_section(lpaddr_t pa)
     l1.section.base_address = ARM_L1_SECTION_NUMBER(pa);
     return l1;
 }
-
 /**
  * /brief Return an L1 page table entry to map a 1MB 'section' of RAM
  * located at physical address 'pa'.
@@ -114,11 +113,11 @@ void paging_init(lpaddr_t ram_base, size_t ram_size,
     assert(ROUND_UP((lpaddr_t)l1_low, ARM_L1_ALIGN) == (lpaddr_t)l1_low);
     assert(ROUND_UP((lpaddr_t)l1_high, ARM_L1_ALIGN) == (lpaddr_t)l1_high);
 
-    MSG("Initialising kernel paging, using RAM at %08x-%08x\n",
-        ram_base, ram_base + (ram_size - 1));
+    //MSG("Initialising kernel paging, using RAM at %08x-%08x\n",
+    //    ram_base, ram_base + (ram_size - 1));
 
-	MSG("Kernel paging, L1_low at %08x and L1_high at %08x\n",
-		(lpaddr_t) l1_low, (lpaddr_t) l1_high);
+	//MSG("Kernel paging, L1_low at %08x and L1_high at %08x\n",
+	//	(lpaddr_t) l1_low, (lpaddr_t) l1_high);
     /**
      * On many ARMv7-A platforms, physical RAM (phys_memory_start) is the same
      * as the offset of mapped physical memory within virtual address space
@@ -182,9 +181,6 @@ void paging_init(lpaddr_t ram_base, size_t ram_size,
         vbase += ARM_L1_SECTION_BYTES;
         pbase += ARM_L1_SECTION_BYTES;
     }
-#if 0
-	map_kernel_section_lo(0x40000000,make_dev_section(0x0));
-#endif
 }
 
 void enable_mmu(lpaddr_t ttbr0, lpaddr_t ttbr1)
@@ -204,6 +200,7 @@ void enable_mmu(lpaddr_t ttbr0, lpaddr_t ttbr1)
      * set TTBCR.N = 1 to use TTBR1 for VAs >= MEMORY_OFFSET (=2GB)
      */
     uint32_t sctlr= cp15_read_sctlr();
+#if 0
     MSG(" MMU is currently ");
     if(sctlr & BIT(2)) {
                        printf("enabled.\n");
@@ -219,13 +216,14 @@ void enable_mmu(lpaddr_t ttbr0, lpaddr_t ttbr1)
                        panic("Caches are enabled.\n");
     }
     else               printf("disabled.\n");
-
+#endif
     /* Force all outstanding operations to complete. */
     dsb(); isb();
 
     /* Ensure that the local caches and TLBs have no stale data. */
-    invalidate_data_caches_pouu(false);
-    invalidate_instruction_cache();
+    //invalidate_data_caches_pouu(false);
+	cp15_invalidate_i_and_d_caches_fast();
+    //invalidate_instruction_cache();
     invalidate_tlb();
 
     /* Install the new tables. */

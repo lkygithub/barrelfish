@@ -43,8 +43,7 @@ static inline void spinlock_init(spinlock_t *l)
 #define acquire_spinlock(_l) spinlock_acquire(_l)
 static inline void spinlock_acquire(spinlock_t *l)
 {
-    //while (__atomic_test_and_set(l, __ATOMIC_ACQUIRE));
-    __atomic_test_and_set(l, __ATOMIC_ACQUIRE);
+    while (__atomic_test_and_set(l, __ATOMIC_ACQUIRE));
 }
 
 #define release_spinlock(_l) spinlock_release(_l)

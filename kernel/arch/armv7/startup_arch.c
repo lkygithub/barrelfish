@@ -515,6 +515,7 @@ spawn_init_common(const char *name, int argc, const char *argv[],
 
     dump_dispatcher(disp);
 
+	MSG("DEBUG: dump_dispatcher done!\n");
     return init_dcb;
 }
 
@@ -544,6 +545,9 @@ spawn_bsp_init(const char *name)
     // Map bootinfo
     spawn_init_map(init_l2, INIT_VBASE, INIT_BOOTINFO_VBASE,
                    bootinfo_phys, BOOTINFO_SIZE, INIT_PERM_RW);
+
+	cp15_invalidate_i_and_d_caches_fast();
+	invalidate_tlb();
 
     struct startup_l2_info l2_info = { init_l2, INIT_VBASE };
 
