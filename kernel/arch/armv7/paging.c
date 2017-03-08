@@ -178,6 +178,7 @@ paging_map_vectors(void) {
 
     /* Clean the modified entry to L2 cache. */
     clean_to_pou(e_l1);
+	cp15_invalidate_i_and_d_caches_fast();
 
     /* We shouldn't need to invalidate any TLB entries, as this entry has
      * never been mapped. */
@@ -406,6 +407,7 @@ caps_map_l1(struct capability* dest,
 
             /* Clean the modified entry to L2 cache. */
             clean_to_pou(entry);
+			cp15_invalidate_i_and_d_caches_fast();
 
             debug(SUBSYS_PAGING, "L2 mapping %08"PRIxLVADDR"[%"PRIuCSLOT
                                  "] @%p = %08"PRIx32"\n",
@@ -474,6 +476,7 @@ caps_map_l1(struct capability* dest,
 
         /* Clean the modified entry to L2 cache. */
         clean_to_pou(entry);
+		cp15_invalidate_i_and_d_caches_fast();
 
         debug(SUBSYS_PAGING, "L1 mapping %"PRIuCSLOT". @%p = %08"PRIx32"\n",
               slot + i, entry, entry->raw);
@@ -544,6 +547,7 @@ caps_map_l2(struct capability* dest,
 
         /* Clean the modified entry to L2 cache. */
         clean_to_pou(entry);
+		cp15_invalidate_i_and_d_caches_fast();
 
         debug(SUBSYS_PAGING, "L2 mapping %08"PRIxLVADDR"[%"PRIuCSLOT"] @%p = %08"PRIx32"\n",
                dest_lvaddr, slot, entry, entry->raw);
@@ -638,6 +642,7 @@ errval_t paging_modify_flags(struct capability *mapping, uintptr_t offset,
 
         /* Clean the modified entry to L2 cache. */
         clean_to_pou(entry);
+		cp15_invalidate_i_and_d_caches_fast();
     }
 
     return paging_tlb_flush_range(cte_for_cap(mapping), offset, pages);
@@ -733,4 +738,5 @@ void paging_set_l2_entry(uintptr_t* l2e, lpaddr_t addr, uintptr_t flags)
 
     /* Clean the modified entry to L2 cache. */
     clean_to_pou(l2e);
+	cp15_invalidate_i_and_d_caches_fast();
 }

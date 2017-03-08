@@ -516,7 +516,6 @@ spawn_init_common(const char *name, int argc, const char *argv[],
 
     dump_dispatcher(disp);
 
-	MSG("DEBUG: dump_dispatcher done!\n");
     return init_dcb;
 }
 
@@ -553,7 +552,7 @@ spawn_bsp_init(const char *name)
     load_init_image(&l2_info, BSP_INIT_MODULE_NAME, &init_ep, &got_base);
 
 	cp15_invalidate_i_and_d_caches_fast();
-	invalidate_tlb();
+	
 #if 0
 	for (int i = 0; i < 33; i++)
 		MSG("Init_L1_Page init_l1[%d] = %08x\n",i, (uint32_t) init_l1[i].raw);
