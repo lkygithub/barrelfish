@@ -325,7 +325,6 @@ void handle_irq(arch_registers_state_t* save_area,
     // Offer it to the timer
     if (timer_interrupt(irq)) {
         // Timer interrupt, timer_interrupt() acks it at the timer.
-		printk(LOG_WARN, "IRQ TEST, irq = %d\n", irq);
         wakeup_check(systime_now());
         dispatch(schedule());
     }
@@ -333,7 +332,6 @@ void handle_irq(arch_registers_state_t* save_area,
     // we just acknowledge it here
     else if(irq == 1)
     {
-		printk(LOG_WARN, "IRQ TEST, irq = %d\n", irq);
         gic_ack_irq(irq);
         dispatch(schedule());
     }

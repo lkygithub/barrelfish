@@ -100,6 +100,20 @@ static errval_t vexpress_startup(void)
     return SYS_ERR_OK;
 }
 
+static errval_t jetsontk1_startup(void)
+{
+    errval_t err;
+    err = init_cap_manager();
+    assert(err_is_ok(err));
+
+    struct module_info* mi = find_module("serial_jetsontk1");
+    if (mi != NULL) {
+        err = mi->start_function(0, mi, "hw.arm.jetsontk1.uart {}", NULL);
+        assert(err_is_ok(err));
+    }
+    return SYS_ERR_OK;
+}
+
 static errval_t zynq7_startup(void)
 {
     errval_t err;
@@ -192,6 +206,9 @@ errval_t arch_startup(char * add_device_db_file)
         case PI_PLATFORM_VEXPRESS:
             debug_printf("Kaluga running on VExpressEMM\n");
             return vexpress_startup();
+        case PI_PLATFORM_JETSONTK1:
+            debug_printf("Kaluga running on Jetson-TK1\n");
+            return jetsontk1_startup();
         case PI_PLATFORM_ZYNQ7:
             debug_printf("Kaluga running on a Zynq7000\n");
             return zynq7_startup();

@@ -24,6 +24,7 @@
 
 #include <arch/arm/omap44xx/device_registers.h>
 #include <omap44xx_map.h>
+#include <jetsontk1_map.h>
 #include <vexpress_map.h>
 
 #include "kaluga.h"
@@ -152,6 +153,22 @@ static struct allowed_registers* vexpress[] = {
     NULL,
 };
 
+static struct allowed_registers jetsontk1_uart = {
+    .binary = "hw.arm.jetsontk1.uart",
+    .registers =
+    {
+        {JETSON_APB_UARTA, JETSON_APB_UARTA_SIZE},
+        {JETSON_APB_UARTB, JETSON_APB_UARTB_SIZE},
+        {JETSON_APB_UARTC, JETSON_APB_UARTC_SIZE},
+        {JETSON_APB_UARTD, JETSON_APB_UARTD_SIZE},
+        {0x0, 0x0}
+    }
+};
+
+static struct allowed_registers* jetsontk1[] = {
+    &jetsontk1_uart,
+    NULL,
+};
 /**
  * \brief Startup function for ARMv7 drivers.
  *
@@ -182,6 +199,9 @@ default_start_function(coreid_t where, struct module_info* driver,
             break;
         case PI_PLATFORM_VEXPRESS:
             regs= vexpress;
+            break;
+        case PI_PLATFORM_JETSONTK1:
+            regs= jetsontk1;
             break;
         default:
             printf("Unrecognised ARMv7 platform\n");
