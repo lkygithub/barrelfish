@@ -454,7 +454,7 @@ let
      target = "tegrak1",
      architectures = [ "armv7" ],
      assemblyFiles = [ "arch/armv7/boot.S",
-	 				   "arch/armv7/cp15.S"
+	 				   "arch/armv7/cp15.S" --temp
 	 				 ],
      cFiles = [
                 "logging.c",
@@ -484,7 +484,7 @@ let
                        "arch/armv7/set_stack_for_mode.S",
                        "arch/armv7/bsp_start.S",
                        "arch/armv7/cpu_start.S",
-					   "arch/armv7/cp15.S"
+					   "arch/armv7/cp15.S" --temp
                      ],
      cFiles = [
                 "arch/armv7/a15_gt.c",
