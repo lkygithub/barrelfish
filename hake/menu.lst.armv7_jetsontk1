@@ -27,8 +27,8 @@ module /armv7/sbin/spawnd boot
 module /armv7/sbin/startd boot
 
 # Device drivers
-# module /armv7/sbin/serial_jetsontk1 auto
-module /armv7/sbin/serial_kernel irq=122
+module /armv7/sbin/serial_jetsontk1 portbase=3 irq=122
+# module /armv7/sbin/serial_kernel irq=122
 module /armv7/sbin/corectrl auto
 
 # General user domains

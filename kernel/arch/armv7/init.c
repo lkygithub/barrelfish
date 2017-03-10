@@ -158,6 +158,7 @@ arch_init(struct arm_core_data *boot_core_data,
     /* Let the paging code know where the kernel page tables are.  Note that
      * paging_map_device() won't work until this is called. */
     paging_load_pointers(core_data);
+
     /* Reinitialise the serial port, as it may have moved, and we need to map
      * it into high memory. */
     /* XXX - reread the args to update serial_console_port. */
@@ -181,6 +182,28 @@ arch_init(struct arm_core_data *boot_core_data,
     assert(core_data != NULL);
     assert(paging_mmu_enabled());
 
+#if 0
+	// 3. 0xa0000000 -> 0x60000000
+    union arm_l1_entry *l1_high= (union arm_l1_entry *)
+        local_phys_to_mem(boot_core_data->kernel_l1_high);
+	for(uint32_t i = 0x900; i < 0xc00; i++){
+		l1_high[i].section.base_address = 0x600;
+		invalidate_data_caches_pouu(true);
+		invalidate_tlb();
+		uint32_t *testp = (uint32_t *) 0x6000f500;
+		uint32_t *testv = (uint32_t *) ((i << 20) + 0xf500);
+		if(*testv != *testp)
+			MSG ("DEBUG_MMU_ERROR: address =%08x\n", testv);
+	}
+	for(uint32_t i = 0xc0000000; i < 0xeff00000; i++){
+		l1_high[ARM_L1_OFFSET(i)] = make_dev_section(0x6000f500);
+		uint32_t *testp = (uint32_t *) 0x6000f500;
+		uint32_t *testv = (uint32_t *) (i + 0xf500);
+		MSG ("DEBUG_MMU: address =%08x\n", testv);
+		if(*testv != *testp)
+			MSG ("DEBUG_MMU_ERROR: address =%08x\n", testv);
+	}
+#endif
     if(!is_bsp) {
         MSG("APP core.\n");
         platform_notify_bsp(&bootrec->done);

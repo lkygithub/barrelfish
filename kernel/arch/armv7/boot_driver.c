@@ -192,20 +192,31 @@ __attribute__((noreturn))
 void boot_app_core(struct armv7_boot_record *bootrec) {
     my_core_id = cp15_get_cpu_id();
 
-    MSG("APP core %"PRIu32" booting.\n", bootrec->target_mpid);
+#if 0
+	__asm volatile(
+		"ldr	r5, =#0x70006300\n\t"
+		"mov	r6, #68\n\t"
+		"str	r6, [r5]\n\t"
+		"mov	r7, #500\n\t"
+		"mov	r6, #69\n\t"
+		"str	r6, [r5]\n\t"
+	);
+	while(1);
+#endif
+    //MSG("APP core %"PRIu32" booting.\n", bootrec->target_mpid);
 
     /* Get the core_data structure from the boot record. */
     struct arm_core_data *app_core_data=
         (struct arm_core_data *)mem_to_local_phys(bootrec->core_data);
 
-    MSG("CPU driver entry point is KV:%08"PRIx32"\n",
-            app_core_data->entry_point);
+    //MSG("CPU driver entry point is KV:%08"PRIx32"\n",
+    //        app_core_data->entry_point);
 
-    MSG("Page tables at P:%08"PRIx32" and P:%08"PRIx32".\n",
-            app_core_data->kernel_l1_low,
-            app_core_data->kernel_l1_high);
+    //MSG("Page tables at P:%08"PRIx32" and P:%08"PRIx32".\n",
+    //        app_core_data->kernel_l1_low,
+    //        app_core_data->kernel_l1_high);
 
-    MSG("Switching page tables and jumping - see you in arch_init().\n");
+    //MSG("Switching page tables and jumping - see you in arch_init().\n");
     switch_and_jump((void *)app_core_data->entry_point,
                     bootrec->core_data,
                     app_core_data->kernel_l1_low,
@@ -226,7 +237,17 @@ void boot_bsp_core(void *pointer, void *cpu_driver_entry,
 
     /* Place all AP cores in the WFE loop. */
     plat_advance_aps();
-
+#if 0
+	__asm volatile(
+		"ldr	r5, =#0x70006300\n\t"
+		"mov	r6, #68\n\t"
+		"str	r6, [r5]\n\t"
+		"mov	r7, #500\n\t"
+		"mov	r6, #69\n\t"
+		"str	r6, [r5]\n\t"
+	);
+	while(1);
+#endif
     /* If this pointer has been modified by the loader, it means we're got a
      * statically-allocated multiboot info structure, as we're executing from
      * ROM, in a simulator, or otherwise unable to use a full bootloader. */
@@ -358,10 +379,10 @@ switch_and_jump(void *cpu_driver_entry, lvaddr_t boot_pointer, lpaddr_t ttbr0,
 
 	// 1. 0x30000000 -> 0xa0000000
 	l1_low[0x300].section.base_address = 0xa00;
-	cp15_invalidate_i_and_d_caches_fast();
-	invalidate_tlb();
 	uint32_t *testp = (uint32_t *) 0xa0000000;
 	*testp = 0xFF77FF77;
+	invalidate_data_caches_pouu(true);
+	invalidate_tlb();
 	printf ("DEBUG_MMU: l1_low[%d] = 0x%03x\n", 0x300,
 			l1_low[0x300].section.base_address);
 	printf ("DEBUG_MMU: data of 0xa0000000 is %08x\n", *testp);
@@ -369,23 +390,23 @@ switch_and_jump(void *cpu_driver_entry, lvaddr_t boot_pointer, lpaddr_t ttbr0,
 	printf ("DEBUG_MMU: data of 0x30000000 is %08x\n", *testp);
 	// 2. 0x30000000 -> 0x60000000
 	l1_low[0x300].section.base_address = 0x600;
-	cp15_invalidate_i_and_d_caches_fast();
+	invalidate_data_caches_pouu(false);
 	invalidate_tlb();
 	testp = (uint32_t *) 0x6000f500;
 	printf ("DEBUG_MMU: data of 0x6000f500 is %08x\n", *testp);
 	testp = (uint32_t *) 0x3000f500;
 	printf ("DEBUG_MMU: data of 0x3000f500 is %08x\n", *testp);
 	// 3. 0xa0000000 -> 0x60000000
-	cp15_invalidate_i_and_d_caches_fast();
-	invalidate_tlb();
 	l1_high[0xa00].section.base_address = 0x600;
+	invalidate_data_caches_pouu(false);
+	invalidate_tlb();
 	testp = (uint32_t *) 0x6000f500;
 	printf ("DEBUG_MMU: data of 0x6000f500 is %08x\n", *testp);
 	testp = (uint32_t *) 0xa000f500;
 	printf ("DEBUG_MMU: data of 0xa000f500 is %08x\n", *testp);
 	// 4. 0xa0000000 -> 0xb0000000
 	l1_high[0xa00].section.base_address = 0xb00;
-	cp15_invalidate_i_and_d_caches_fast();
+	invalidate_data_caches_pouu(true);
 	invalidate_tlb();
 	testp = (uint32_t *) 0xb0004000;
 	*testp = 0x87878787;
@@ -397,7 +418,7 @@ switch_and_jump(void *cpu_driver_entry, lvaddr_t boot_pointer, lpaddr_t ttbr0,
 	//printf ("l1_high[fef] = %08x\n", l1_high[0xfef].section.base_address);
 	//int *temp1 = (int *) 0x6000f500;
 	//printf ("6000f500: %08x\n", *temp1);
-	while(1);
+	//while(1);
 #endif
     /* We're now executing with the kernel window mapped.  If we're on a
      * platform that doesn't have RAM at 0x80000000, then we're still using

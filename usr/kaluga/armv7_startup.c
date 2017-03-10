@@ -157,10 +157,11 @@ static struct allowed_registers jetsontk1_uart = {
     .binary = "hw.arm.jetsontk1.uart",
     .registers =
     {
-        {JETSON_APB_UARTA, JETSON_APB_UARTA_SIZE},
-        {JETSON_APB_UARTB, JETSON_APB_UARTB_SIZE},
-        {JETSON_APB_UARTC, JETSON_APB_UARTC_SIZE},
-        {JETSON_APB_UARTD, JETSON_APB_UARTD_SIZE},
+        //{JETSON_APB_UARTA, JETSON_APB_UARTA_SIZE},
+        //{JETSON_APB_UARTB, JETSON_APB_UARTB_SIZE},
+        //{JETSON_APB_UARTC, JETSON_APB_UARTC_SIZE},
+		// We have to alloc up to 1MB
+        {JETSON_APB_UARTD, JETSON_APB_UARTD_SIZE_ALLOC},
         {0x0, 0x0}
     }
 };

@@ -50,7 +50,6 @@ start:
     //
 
     // Switch to system mode, with aborts and interrupts off.
-    
     cpsid aif, #ARM_MODE_SYS
 
     // Init stack
@@ -65,7 +64,7 @@ start:
 
     // If not, wait for the BSP to wake us up.
     bne wait_for_bsp
-    
+
     // Prepare argument
     b boot_bsp_core
     b halt
@@ -74,7 +73,6 @@ wait_for_bsp:
     // Get the address of our mailbox.  Right now there's only one.
     ldr r4, got_boot_records
     ldr r0, [PIC_REGISTER, r4]
-
     // r3 - MPID
     wfe
 

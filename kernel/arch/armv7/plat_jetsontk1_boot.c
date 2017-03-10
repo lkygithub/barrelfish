@@ -42,14 +42,18 @@ plat_advance_aps(void) {
     //setup boot driver entry for new cores
     jetson_exception_vectors_reset_vector_wr(&vectors, (uint32_t)&start);
 	
+	__asm__ volatile ("SEV");
 	//reset cores: core 1, 2, 3
 	jetson_flow_controller_FCHCPU1C0_wr(&fctrl, 0x1);
+	//dsb();
+	//jetson_flow_controller_FCHCPU1E0_rd(&fctrl);
 	jetson_flow_controller_FCHCPU2C0_wr(&fctrl, 0x1);
 	jetson_flow_controller_FCHCPU3C0_wr(&fctrl, 0x1);
 
 	jetson_flow_controller_FCHCPU1E0_wr(&fctrl, JETSON_FLOW_CTRL_CPU_HALT_VALUE);
+	//dsb();
+	//jetson_flow_controller_FCHCPU1E0_rd(&fctrl);
 	jetson_flow_controller_FCHCPU2E0_wr(&fctrl, JETSON_FLOW_CTRL_CPU_HALT_VALUE);
 	jetson_flow_controller_FCHCPU3E0_wr(&fctrl, JETSON_FLOW_CTRL_CPU_HALT_VALUE);
 
-	// __asm__ volatile ("SEV");
 }

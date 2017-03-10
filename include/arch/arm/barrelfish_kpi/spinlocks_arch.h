@@ -20,7 +20,6 @@
 
 #ifndef ARCH_ARM_BARRELFISH_KPI_SPINLOCKS_H
 #define ARCH_ARM_BARRELFISH_KPI_SPINLOCKS_H
-#undef  __atomic_test_and_set
 /* Need to include this for errval_t */
 #include <errors/errno.h>
 #include <stdbool.h>

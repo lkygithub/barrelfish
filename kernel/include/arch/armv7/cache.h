@@ -22,6 +22,12 @@ cache_get_louu(void) {
     return (clidr >> 27) & MASK(3);
 }
 
+static inline size_t
+cache_get_loc(void) {
+    uint32_t clidr= cp15_read_clidr();
+    return (clidr >> 24) & MASK(3);
+}
+
 enum armv7_cache_type {
     armv7_cache_none    = 0x0,
     armv7_cache_i       = 0x1,
@@ -76,12 +82,13 @@ invalidate_data_cache(size_t level, bool clean) {
     size_t ways= x + 1;
 
     size_t y=    (ccsidr >> 13) & MASK(15); /* SETS - 1 */
-    size_t S=    csb(x);                    /* ceil(log2(SETS)) */
+    //size_t S=    csb(x);                    /* ceil(log2(SETS)) */
     size_t sets= y + 1;
 
     /* Calculate the set/way register format. See TRM B4.2.1. */
     size_t w_shift= 32 - A;
-    size_t s_shift= L + S;
+    //size_t s_shift= L + S;
+    size_t s_shift= L;
 
     for(size_t w= 0; w < ways; w++) {
         for(size_t s= 0; s < sets; s++) {
@@ -97,9 +104,10 @@ invalidate_data_cache(size_t level, bool clean) {
 /* Invalidate (and possibly clean) all data caches to point of unification. */
 static inline void
 invalidate_data_caches_pouu(bool clean) {
-    size_t louu= cache_get_louu();
+    //size_t louu= cache_get_louu();
+	size_t loc = cache_get_loc();
 
-    for(size_t level= 1; level <= louu; level++)
+    for(size_t level= 1; level <= loc; level++)
         invalidate_data_cache(level, clean);
 }
 

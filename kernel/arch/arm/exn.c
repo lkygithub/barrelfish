@@ -51,10 +51,6 @@ void handle_user_page_fault(lvaddr_t fault_address,
            dcb_current->disabled ? " WHILE DISABLED" : "", DISP_NAME_LEN,
            disp->d.name, fault_address, saved_pc);
 
-	for (int i = 0; i < 17; i++){
-		printk(LOG_WARN, "i=%d, reg[%d] = %08x\n", i, i, save_area->regs[i]);
-	}
-
     if (dcb_current->disabled) {
         handler = disp->d.dispatcher_pagefault_disabled;
         dcb_current->faults_taken++;

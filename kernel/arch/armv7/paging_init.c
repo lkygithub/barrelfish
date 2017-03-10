@@ -221,9 +221,8 @@ void enable_mmu(lpaddr_t ttbr0, lpaddr_t ttbr1)
     dsb(); isb();
 
     /* Ensure that the local caches and TLBs have no stale data. */
-    //invalidate_data_caches_pouu(false);
-    //invalidate_instruction_cache();
-	cp15_invalidate_i_and_d_caches_fast();
+    invalidate_data_caches_pouu(false);
+    invalidate_instruction_cache();
     invalidate_tlb();
 
     /* Install the new tables. */

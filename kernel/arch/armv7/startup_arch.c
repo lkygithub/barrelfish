@@ -550,9 +550,10 @@ spawn_bsp_init(const char *name)
 
     genvaddr_t init_ep, got_base;
     load_init_image(&l2_info, BSP_INIT_MODULE_NAME, &init_ep, &got_base);
-
-	cp15_invalidate_i_and_d_caches_fast();
 	
+	invalidate_data_caches_pouu(true);
+	invalidate_tlb();
+
 #if 0
 	for (int i = 0; i < 33; i++)
 		MSG("Init_L1_Page init_l1[%d] = %08x\n",i, (uint32_t) init_l1[i].raw);

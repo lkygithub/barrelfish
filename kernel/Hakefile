@@ -256,6 +256,7 @@ let
     assemblyFiles = [ "arch/armv7/exceptions.S",
                       "arch/armv7/set_stack_for_mode.S",
                       "arch/armv7/bsp_start.S",
+                      "arch/armv7/cp15.S",
                       "arch/armv7/cpu_start.S"
                     ],
     cFiles = [

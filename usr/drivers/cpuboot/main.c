@@ -195,6 +195,7 @@ static int boot_cpu(int argc, char **argv)
     coreid_t core_from = 0, core_to = 0, core_step = 0;
     int parsed = parse_core_list(argv[1], &core_from, &core_to, &core_step);
 
+	printf("BOOT_CPU: core_from = %d, core_to =%d, core_step=%d\n", core_from,core_to,core_step);
     if (parsed == 0) {
     	USER_PANIC("invalid CPU ID: %s", argv[1]);
     }
