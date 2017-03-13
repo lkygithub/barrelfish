@@ -9,7 +9,7 @@ timeout 0
 
 title	Barrelfish
 #root	(nd)
-kernel	/armv7/sbin/cpu_tegrak1 loglevel=3 periphbase=0x50040000 consolePort=3
+kernel	/armv7/sbin/cpu_tegrak1 loglevel=3 periphbase=0x50040000 consolePort=3 cntfrq=62500000
 module	/armv7/sbin/cpu_tegrak1
 module	/armv7/sbin/init
 
@@ -27,8 +27,8 @@ module /armv7/sbin/spawnd boot
 module /armv7/sbin/startd boot
 
 # Device drivers
-module /armv7/sbin/serial_jetsontk1 portbase=3 irq=122
-# module /armv7/sbin/serial_kernel irq=122
+# module /armv7/sbin/serial_jetsontk1 irq=122
+module /armv7/sbin/serial_kernel irq=122
 module /armv7/sbin/corectrl auto
 
 # General user domains
@@ -36,6 +36,10 @@ module /armv7/sbin/angler serial0.terminal dumb
 module /armv7/sbin/fish nospawn
 
 module /armv7/sbin/memtest
+module /armv7/sbin/examples/xmpl-hello core=1
+#module /armv7/sbin/ump_send core=0
+##module /armv7/sbin/ump_receive core=1
+##module /armv7/sbin/ump_receive
 
 # 1GB of RAM starting at 0x80000000
 #        start       size       id

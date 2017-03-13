@@ -84,14 +84,16 @@ static void jetson_uart_hw_init(jetson_uart_t *uart)
 
     jetson_uart_LCR_dlab_wrf(uart, 0);
 
-    //jetson_uart_MCR_out2_wrf(uart, 1);
+    jetson_uart_MCR_out2_wrf(uart, 1);
     jetson_uart_MCR_dtr_wrf(uart, 1);
     jetson_uart_MCR_rts_wrf(uart, 1);
 
     jetson_uart_FCR_t fcr = jetson_uart_FCR_default;
 
-    fcr = jetson_uart_FCR_dma_mode_insert(fcr, 1); //DMA
-    fcr = jetson_uart_FCR_fifo_en_insert(fcr, 1); // enable FIFOs
+    fcr = jetson_uart_FCR_rx_fifo_trig_insert(fcr, 1);
+    fcr = jetson_uart_FCR_tx_fifo_trig_insert(fcr, 1);
+    fcr = jetson_uart_FCR_dma_mode_insert(fcr, 0); //DMA
+    fcr = jetson_uart_FCR_fifo_en_insert(fcr, 0); // enable FIFOs
     jetson_uart_FCR_wr(uart, fcr);
 
 
@@ -108,6 +110,10 @@ static void jetson_uart_hw_init(jetson_uart_t *uart)
     jetson_uart_DLM_clock_msb_wrf(uart, (baud_divisor >> 8) & 0xff);
     //8 register operational mode
     jetson_uart_LCR_dlab_wrf(uart, 0);
+
+    //set up interrupt
+    jetson_uart_IER_rhr_it_wrf(uart, 1);
+    jetson_uart_IER_modem_sts_it_wrf(uart, 1);
     //9 load irq config --> only rhr irq for now
 
     jetson_uart_LCR_t lcr = jetson_uart_LCR_default;
@@ -154,8 +160,11 @@ char serial_getchar(unsigned port)
     jetson_uart_t *uart = &ports[port];
 
     /* Read until the interrupt is deasserted. */
-	while(!jetson_uart_LSR_rx_data_r_rdf(uart));
-
+    char c = '\0';
+	//while(!jetson_uart_LSR_rx_data_r_rdf(uart));
+    while(jetson_uart_IIR_it_pending_rdf(uart) == 0) {
+        c = jetson_uart_RBR_rbr_rdf(uart);
+    }
 	//Return the character
-    return jetson_uart_RBR_rbr_rdf(uart);
+    return c;
 }

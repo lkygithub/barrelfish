@@ -178,7 +178,7 @@ use_kaluga_dvm = True
 
 -- Domain and driver debugging
 global_debug :: Bool
-global_debug = False
+global_debug = False 
 
 e1000n_debug :: Bool
 e1000n_debug = False
@@ -229,7 +229,7 @@ usrpci_debug :: Bool
 usrpci_debug = False
 
 timer_debug :: Bool
-timer_debug = False
+timer_debug = True
 
 eclipse_kernel_debug :: Bool
 eclipse_kernel_debug = False
@@ -274,7 +274,7 @@ term_debug :: Bool
 term_debug = False
 
 serial_debug :: Bool
-serial_debug = False
+serial_debug = True
 
 -- Deadlock debugging
 debug_deadlocks :: Bool
