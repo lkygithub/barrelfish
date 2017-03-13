@@ -32,14 +32,14 @@ module /armv7/sbin/serial_kernel irq=122
 module /armv7/sbin/corectrl auto
 
 # General user domains
-module /armv7/sbin/angler serial0.terminal dumb
+module /armv7/sbin/angler serial0.terminal xterm
 module /armv7/sbin/fish nospawn
 
 module /armv7/sbin/memtest
-module /armv7/sbin/examples/xmpl-hello core=1
-#module /armv7/sbin/ump_send core=0
-##module /armv7/sbin/ump_receive core=1
-##module /armv7/sbin/ump_receive
+module /armv7/sbin/examples/xmpl-hello 
+# module /armv7/sbin/ump_send core=0
+# module /armv7/sbin/ump_receive core=1
+# module /armv7/sbin/ump_receive
 
 # 1GB of RAM starting at 0x80000000
 #        start       size       id
