@@ -8,6 +8,7 @@
 
 //
 // Serial console and debugger interfaces
+// XXX: Fix me, not use!
 //
 #define NUM_PORTS 4
 
@@ -206,7 +207,7 @@ static errval_t real_init(unsigned port)
         return SYS_ERR_SERIAL_PORT_INVALID;
     }
     if (uart_initialized[port]) {
-        printf("omap serial_init[%d]: already initialized; skipping.\n", port);
+        printf("jetsontk1 serial_init[%d]: already initialized; skipping.\n", port);
         return SYS_ERR_OK;
     }
 

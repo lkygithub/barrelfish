@@ -21,7 +21,11 @@ static int yield_thread(void *dummy)
 
 static int worker_thread(void *dummy)
 {
-    for(;;);
+    char *temp = (char *) dummy;
+    for(;;){
+        printf ("%c\n", *temp);
+        for (int i = 0; i < 600000000; i++);
+    }
     return -1;
 }
 
@@ -30,8 +34,12 @@ int main(int argc, char *argv[])
   //    assert(argc == 3);
 
   int yielders = 1; //atoi(argv[1]);
-  int workers = 0; //atoi(argv[2]);
+  int workers = 3; //atoi(argv[2]);
 
+  char p1,p2,p3;
+  p1 = 'A';
+  p2 = 'B';
+  p3 = 'C';
     printf("Yield test. Yielders: %d, workers: %d\n", yielders, workers);
 
     for(int i = 0; i < yielders; i++) {
@@ -41,7 +49,17 @@ int main(int argc, char *argv[])
     }
 
     for(int i = 0; i < workers; i++) {
-        struct thread *t = thread_create(worker_thread, NULL);
+        struct thread *t = NULL;
+
+        if (i == 0)
+            t = thread_create(worker_thread, &p1);
+        else if (i == 1)
+            t = thread_create(worker_thread, &p2);
+        else if (i == 2)
+            t = thread_create(worker_thread, &p3);
+        else
+            t = thread_create(worker_thread, NULL);
+
         errval_t err = thread_detach(t);
         assert(err_is_ok(err));
     }

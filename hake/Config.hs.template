@@ -229,7 +229,7 @@ usrpci_debug :: Bool
 usrpci_debug = False
 
 timer_debug :: Bool
-timer_debug = True
+timer_debug = False
 
 eclipse_kernel_debug :: Bool
 eclipse_kernel_debug = False
@@ -274,7 +274,7 @@ term_debug :: Bool
 term_debug = False
 
 serial_debug :: Bool
-serial_debug = True
+serial_debug = False
 
 -- Deadlock debugging
 debug_deadlocks :: Bool

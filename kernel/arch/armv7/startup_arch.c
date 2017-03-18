@@ -397,7 +397,6 @@ static void init_page_tables(void)
         lpaddr_t paddr = mem_to_local_phys((lvaddr_t)init_l2) + l2_off;
         paging_map_user_pages_l1((lvaddr_t)init_l1, vaddr, paddr);
     }
-	
 
     MSG("Calling paging_context_switch with address = %"PRIxLVADDR"\n",
            mem_to_local_phys((lvaddr_t) init_l1));
@@ -550,9 +549,6 @@ spawn_bsp_init(const char *name)
 
     genvaddr_t init_ep, got_base;
     load_init_image(&l2_info, BSP_INIT_MODULE_NAME, &init_ep, &got_base);
-	
-	invalidate_data_caches_pouu(true);
-	invalidate_tlb();
 
 #if 0
 	for (int i = 0; i < 33; i++)
