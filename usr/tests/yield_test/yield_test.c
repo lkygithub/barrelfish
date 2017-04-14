@@ -24,7 +24,7 @@ static int worker_thread(void *dummy)
     char *temp = (char *) dummy;
     for(;;){
         printf ("%c\n", *temp);
-        for (int i = 0; i < 600000000; i++);
+        for (int i = 0; i < 700000000; i++);
     }
     return -1;
 }

@@ -18,7 +18,7 @@
 #ifdef __k1om__
 #define FRAME_BITS_MAX 30
 #else
-#define FRAME_BITS_MAX 32
+#define FRAME_BITS_MAX 31
 #endif
 #define FRAME_BITS_INC 2
 

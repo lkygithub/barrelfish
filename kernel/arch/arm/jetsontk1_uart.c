@@ -92,8 +92,8 @@ static void jetson_uart_hw_init(jetson_uart_t *uart)
 
     fcr = jetson_uart_FCR_rx_fifo_trig_insert(fcr, 1);
     fcr = jetson_uart_FCR_tx_fifo_trig_insert(fcr, 1);
-    fcr = jetson_uart_FCR_dma_mode_insert(fcr, 0); //DMA
-    fcr = jetson_uart_FCR_fifo_en_insert(fcr, 0); // enable FIFOs
+    fcr = jetson_uart_FCR_dma_mode_insert(fcr, 0); // disable DMA
+    fcr = jetson_uart_FCR_fifo_en_insert(fcr, 0); // disable FIFOs
     jetson_uart_FCR_wr(uart, fcr);
 
 

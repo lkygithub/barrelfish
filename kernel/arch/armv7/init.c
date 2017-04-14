@@ -176,6 +176,8 @@ arch_init(struct arm_core_data *boot_core_data,
 
     MSG("Barrelfish CPU driver starting on ARMv7\n");
     MSG("Core data at %p\n", core_data);
+	MSG("####DEBUG: l1_low = %08x, l1_high = %08x, l2_vec = %08x.\n", core_data->kernel_l1_low
+			, core_data->kernel_l1_high, core_data->kernel_l2_vec);
     MSG("Global data at %p\n", global);
     MSG("Boot record at %p\n", bootrec);
     errval_t errval;

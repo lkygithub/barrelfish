@@ -161,6 +161,27 @@ let bin_rcce_lu = [ "/sbin/" ++ f | f <- [
                         "benchmarks/xphi_ump_bench",
                         "benchmarks/xphi_xump_bench" ] ] ++ bench_x86
 
+    bench_armv7 = [ "/sbin/" ++ f | f <- [
+                        "channel_cost_bench",
+                        "flounder_stubs_buffer_bench",
+                        "flounder_stubs_empty_bench",
+                        "flounder_stubs_payload_bench",
+	 					"benchmarks/vspace_map",
+	 					--"benchmarks/mem_latency",
+	 					"xcorecapbench",
+	 					"ump_latency",
+	 					--"ump_latency_cache",
+	 					"ump_throughput",
+	 					"ump_send",
+	 					"ump_receive",
+	 					"ump_exchange",
+	 					--"lrpc_bench",
+	 					"tsc_bench",
+	 					--"shared_mem_clock_bench",
+	 					--"ipi_bench",
+	 					"mdb_bench",
+	 					"freemem" ] ]
+
     -- Default list of modules to build/install for all enabled architectures
     modules_common = [ "/sbin/" ++ f | f <- [
                           "init",
@@ -315,6 +336,7 @@ let bin_rcce_lu = [ "/sbin/" ++ f | f <- [
                                "memtest"
                                ] ]
 
+
     -- ARMv7-A modules for Jetson-tk1 board 
     jetsontk1Modules_A15 = [ "/sbin/" ++ f | f <- [
                                "cpu_tegrak1",
@@ -332,7 +354,8 @@ let bin_rcce_lu = [ "/sbin/" ++ f | f <- [
                                "angler",
                                "fish",
                                "memtest"
-                               ] ]
+                               ] ] ++ tests_common ++ bench_armv7
+
     -- ARMv7-A modules for Versatile Express EMM board (FVP)
     vExpressEMMModules_A9 = [ "/sbin/" ++ f | f <- [
                               "cpu_a9ve",

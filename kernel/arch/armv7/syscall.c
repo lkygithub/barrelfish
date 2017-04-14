@@ -1086,7 +1086,7 @@ handle_invoke(arch_registers_state_t *context, int argc)
     uint8_t  flags         = (sa->arg0 >> 24) & 0xf;
     uint8_t  invoke_level  = (sa->arg0 >> 16) & 0xff;
     capaddr_t  invoke_cptr = sa->arg1;
-
+ 
     debug(SUBSYS_SYSCALL, "sys_invoke(0x%"PRIxCADDR"(%d))\n",
                 invoke_cptr, invoke_level);
 
