@@ -278,7 +278,7 @@ static void serial_putchar(unsigned port, char c)
 }
 
 /** write string to serial port */
-void serial_write(char *c, size_t len)
+void serial_write(const char *c, size_t len)
 {
     for (int i = 0; i < len; i++) {
         serial_putchar(serial_console_port, c[i]);

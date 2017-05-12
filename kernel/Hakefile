@@ -410,7 +410,7 @@ let
      target = "tegrak1",
      architectures = [ "armv7" ],
      assemblyFiles = [ "arch/armv7/boot.S",
-	 				   "arch/armv7/cp15.S" --temp
+	 				             "arch/armv7/cp15.S" --temp
 	 				 ],
      cFiles = [
                 "logging.c",
@@ -424,11 +424,11 @@ let
                 "arch/arm/misc.c",
                 "arch/arm/multiboot.c",
                 "arch/arm/jetsontk1_uart.c"
-                ],
+                ] ++ boot_c,
      mackerelDevices = [ "arm",
                          "cpuid_arm",
                          "jetsontk1/jetson_exception_vectors",
-						 "jetsontk1/jetson_flow_controller",
+						             "jetsontk1/jetson_flow_controller",
                          "jetsontk1/jetson_uart"
                        ],
      addLibraries = [ ]

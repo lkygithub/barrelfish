@@ -162,10 +162,10 @@ let bin_rcce_lu = [ "/sbin/" ++ f | f <- [
 
     bench_armv7 = [ "/sbin/" ++ f | f <- [
                         "channel_cost_bench",
-                        "flounder_stubs_buffer_bench",
-                        "flounder_stubs_empty_bench",
-                        "flounder_stubs_payload_bench",
-	 					"benchmarks/vspace_map",
+                        --"flounder_stubs_buffer_bench",
+                        --"flounder_stubs_empty_bench",
+                        --"flounder_stubs_payload_bench",
+	 					--"benchmarks/vspace_map",
 	 					--"benchmarks/mem_latency",
 	 					"xcorecapbench",
 	 					"ump_latency",
@@ -306,9 +306,9 @@ let bin_rcce_lu = [ "/sbin/" ++ f | f <- [
                                "skb",
                                "angler",
                                "fish",
-                               "memtest",
-							   "examples/rpc_client",
-							   "examples/rpc_server"
+                               "memtest"
+							   -- "examples/rpc_client",
+							   -- "examples/rpc_server"
                                ] ]
 
 
@@ -328,10 +328,10 @@ let bin_rcce_lu = [ "/sbin/" ++ f | f <- [
                                "skb",
                                "angler",
                                "fish",
-                               "memtest",
-							   "examples/rpc_client",
-							   "examples/xmpl-rpc_msg", 
-							   "examples/rpc_server"
+                               "memtest"
+							   -- "examples/rpc_client",
+                 -- "examples/rpc_server",
+							   -- "examples/xmpl-rpc_msg"
                                ] ] ++ tests_common ++ bench_armv7
 
     -- ARMv7-A modules for Versatile Express EMM board (FVP)
@@ -591,7 +591,7 @@ let bin_rcce_lu = [ "/sbin/" ++ f | f <- [
                      "armv7_a15ve_gem5",
                      "armv7_a15a7ve",
                      "armv7_omap44xx",
-					 "armv7_jetsontk1",
+					           "armv7_jetsontk1",
                      "armv7_zynq7" ]],
     Rules [ copyFile SrcTree "root" ("/hake/menu.lst." ++ p)
                      "root" ("/platforms/x86/menu.lst." ++ p)
