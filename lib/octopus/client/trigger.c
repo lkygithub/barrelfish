@@ -17,17 +17,18 @@
 #include <barrelfish/barrelfish.h>
 #include <barrelfish/threads.h>
 
+#include <if/octopus_defs.h>
+#include <if/octopus_thc.h>
+
 #include <octopus/init.h>
 #include <octopus/getset.h>
 #include <octopus/trigger.h>
-#include <if/octopus_defs.h>
-#include <if/octopus_thc.h>
 
 #include "handler.h"
 #include "common.h"
 
 void trigger_handler(struct octopus_binding* b, octopus_trigger_id_t id,
-        uint64_t t, octopus_mode_t mode, char* record, uint64_t st)
+        uint64_t t, octopus_mode_t mode, const char* record, uint64_t st)
 {
     assert(t != 0);
 

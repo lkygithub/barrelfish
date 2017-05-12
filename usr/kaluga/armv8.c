@@ -16,13 +16,19 @@
 #include <barrelfish/barrelfish.h>
 #include <skb/skb.h>
 #include <barrelfish_kpi/platform.h>
-#include <if/monitor_blocking_rpcclient_defs.h>
+#include <if/monitor_blocking_defs.h>
 #include "kaluga.h"
 
 
 static errval_t armv8_startup_common(void)
 {
     errval_t err = SYS_ERR_OK;
+
+    // Since we don't seem to be able to boot cores on the ARMv8 platforms yet,
+    // we just set all_spawnds_up here. -RA,2017-02-24.
+    err = oct_set("all_spawnds_up { iref: 0 }");
+    assert(err_is_ok(err));
+
     // We need to run on core 0
     // (we are responsible for booting all the other cores)
     assert(my_core_id == BSP_CORE_ID);
@@ -82,18 +88,56 @@ static errval_t fvp_startup(void)
 
 static errval_t apm88xxxx_startup(void)
 {
+    errval_t err;
+
+    err = skb_execute_query("[plat_apm88xxxx].");
+    if(err_is_fail(err)){
+        USER_PANIC_SKB_ERR(err, "Additional device db file 'plat_apm88xxxx' not loaded.");
+    }
+
+    return armv8_startup_common();
+}
+
+static errval_t cn88xx_startup(void)
+{
+    errval_t err;
+
+    err = skb_execute_query("[plat_cn88xx].");
+    if(err_is_fail(err)){
+        USER_PANIC_SKB_ERR(err, "Additional device db file 'plat_cn88xx' not loaded.");
+    }
+
     return armv8_startup_common();
 }
 
 errval_t arch_startup(char * add_device_db_file)
 {
-    errval_t err = SYS_ERR_OK;
+    errval_t err;
 
-    struct monitor_blocking_rpc_client *m = get_monitor_blocking_rpc_client();
+    err = skb_client_connect();
+    if (err_is_fail(err)) {
+        USER_PANIC_ERR(err, "Connect to SKB.");
+    }
+
+    // Make sure the driver db is loaded
+    err = skb_execute("[device_db].");
+    if (err_is_fail(err)) {
+        USER_PANIC_SKB_ERR(err, "Device DB not loaded.");
+    }
+
+    if (add_device_db_file) {
+        err = skb_execute_query("[%s].", add_device_db_file);
+        if(err_is_fail(err)){
+            USER_PANIC_SKB_ERR(err, "Additional device db file '%s' not loaded.",
+                               add_device_db_file);
+        }
+    }
+
+    struct monitor_blocking_binding *m = get_monitor_blocking_binding();
     assert(m != NULL);
 
     uint32_t arch, platform;
-    err = m->vtbl.get_platform(m, &arch, &platform);
+    err = m->rpc_tx_vtbl.get_platform(m, &arch, &platform);
     assert(err_is_ok(err));
     assert(arch == PI_ARCH_ARMV8A);
 
@@ -104,6 +148,9 @@ errval_t arch_startup(char * add_device_db_file)
     case PI_PLATFORM_APM88XXXX:
         debug_printf("Kaluga running on APM88xxxx\n");
         return apm88xxxx_startup();
+    case PI_PLATFORM_CN88XX:
+        debug_printf("Kaluga running on CN88xx\n");
+        return cn88xx_startup();
     }
 
     return KALUGA_ERR_UNKNOWN_PLATFORM;

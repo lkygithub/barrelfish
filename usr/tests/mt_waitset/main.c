@@ -4,7 +4,7 @@
 #include <barrelfish/barrelfish.h>
 #include <barrelfish/nameservice_client.h>
 #include <if/mt_waitset_defs.h>
-#include <if/mt_waitset_rpcclient_defs.h>
+#include <if/mt_waitset_defs.h>
 #include <barrelfish/deferred.h>
 #include <barrelfish/inthandler.h>
 #include <bench/bench.h>
@@ -21,7 +21,6 @@ struct thread *threads[256];
 static int server_threads = 10;
 static int client_threads = 1;
 static int iteration_count = 1000;
-static int limit;
 
 static int client_counter = 0;
 static int64_t server_calls[256];
@@ -51,9 +50,9 @@ static void show_client_stats(void)
 
 static int client_thread(void * arg)
 {
-    struct mt_waitset_rpc_client *rpc_client;
+    struct mt_waitset_binding *binding;
     errval_t err;
-    rpc_client = arg;
+    binding = arg;
     int i, j, k, l;
     uint64_t payload[512];
     uint64_t result[512];
@@ -74,9 +73,7 @@ static int client_thread(void * arg)
 
         for (i = 0; i < j; i++)
             payload[i] = i2 + i;
-        if (j > limit)
-            j = limit;
-        err = rpc_client->vtbl.rpc_method(rpc_client, i2, (uint8_t *)payload, 8 * j, i1, &o1, (uint8_t *)result, &result_size, &o2);
+        err = binding->rpc_tx_vtbl.rpc_method(binding, i2, (uint8_t *)payload, 8 * j, i1, &o1, (uint8_t *)result, &result_size, &o2);
 
         assert(err == SYS_ERR_OK);
         l = 0;
@@ -104,7 +101,7 @@ static int client_thread(void * arg)
         disp_enable(handle);
         // all threads have finished, we're done, inform the server
         payload[0] = mmm;
-        err = rpc_client->vtbl.rpc_method(rpc_client, mmm, (uint8_t *)payload, 8, 65536, &o1, (uint8_t *)result, &result_size, &o2);
+        err = binding->rpc_tx_vtbl.rpc_method(binding, mmm, (uint8_t *)payload, 8, 65536, &o1, (uint8_t *)result, &result_size, &o2);
         show_stats();
     } else
         disp_enable(handle);
@@ -113,16 +110,14 @@ static int client_thread(void * arg)
 
 static void bind_cb(void *st, errval_t err, struct mt_waitset_binding *b)
 {
-    struct mt_waitset_rpc_client *rpc_client;
     int i = (long int)st;
 
-    rpc_client = malloc(sizeof(struct mt_waitset_rpc_client));
-    mt_waitset_rpc_client_init(rpc_client, b);
+    mt_waitset_rpc_client_init(b);
 
     client_counter = client_threads;
     for (i = 1; i < client_threads; i++)
-        thread_create(client_thread, rpc_client);
-    client_thread(rpc_client);
+        thread_create(client_thread, b);
+    client_thread(b);
 }
 
 static void start_client(void)
@@ -157,7 +152,7 @@ static void export_cb(void *st, errval_t err, iref_t iref)
     }
 }
 
-static errval_t server_rpc_method_call(struct mt_waitset_binding *b, uint64_t i1, uint8_t *s, size_t ss, uint32_t i2, uint64_t *o1, uint8_t *r, size_t *rs, uint32_t *o2)
+static errval_t server_rpc_method_call(struct mt_waitset_binding *b, uint64_t i1, const uint8_t *s, size_t ss, uint32_t i2, uint64_t *o1, uint8_t *r, size_t *rs, uint32_t *o2)
 {
     int i, j, k, me;
     static int count = 0;
@@ -279,8 +274,8 @@ int main(int argc, char *argv[])
 
     if (argc == 1) {
         debug_printf("Usage: %s server_threads client_threads iteration_count\n", argv[0]);
-    } else if (argc == 5) {
-        char *xargv[] = {my_name, argv[2], argv[3], argv[4], NULL};
+    } else if (argc == 4) {
+        char *xargv[] = {my_name, argv[2], argv[3], NULL};
 
         server_threads = atoi(argv[1]);
         client_threads = atoi(argv[2]);
@@ -306,7 +301,6 @@ int main(int argc, char *argv[])
     } else {
         client_threads = atoi(argv[1]);
         iteration_count = atoi(argv[2]);
-        limit = atoi(argv[3]);
 
         struct waitset *ws = get_default_waitset();
         start_client();

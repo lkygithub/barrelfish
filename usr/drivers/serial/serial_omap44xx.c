@@ -5,7 +5,7 @@
 
 #include <dev/omap/omap44xx_uart3_dev.h>
 #include <arch/arm/omap44xx/device_registers.h>
-#include <omap44xx_map.h>
+#include <maps/omap44xx_map.h>
 
 /* XXX */
 #define UART_IRQ (32+74)
@@ -254,7 +254,7 @@ static void serial_putchar(char c)
 }
 
 /** write string to serial port */
-void serial_write(char *c, size_t len)
+void serial_write(const char *c, size_t len)
 {
     for (int i = 0; i < len; i++) {
         serial_putchar(c[i]);

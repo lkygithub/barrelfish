@@ -21,8 +21,7 @@
 #include <assert.h>
 #include <trace/trace.h>
 #include <trace_definitions/trace_defs.h>
-#include <contmng/contmng.h>
-#include <contmng/netbench.h>
+#include <netbench/netbench.h>
 #include <procon/procon.h>
 #include "lwip/pbuf.h"
 #include "lwip/init.h"
@@ -31,7 +30,7 @@
 #include "idc_barrelfish.h"
 #include <if/net_queue_manager_defs.h>
 //#include <if/net_ports_defs.h>
-//#include <if/net_ports_rpcclient_defs.h>
+//#include <if/net_ports_defs.h>
 #include <barrelfish/bulk_transfer_arch.h>
 #include <net_interfaces/net_interfaces.h>
 

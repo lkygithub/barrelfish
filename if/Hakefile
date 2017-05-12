@@ -87,13 +87,13 @@
                "xmplcr",
                "xmplmsg",
                "xmplrpc",
+			   "barrelrpc",
                "xmplthc",
                "xomp",
                "xomp_gateway",
                "sfn5122f",
                "sfn5122f_devif",
-               "descq_data",
-               "descq_ctrl"
+               "descq"
            ],
              arch <- allArchitectures
 ] ++
