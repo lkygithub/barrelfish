@@ -22,16 +22,17 @@
 #include <barrelfish/barrelfish.h>
 #include <barrelfish/threads.h>
 
-#include <octopus/init.h>
-#include <octopus/pubsub.h>
 #include <if/octopus_defs.h>
 #include <if/octopus_thc.h>
+
+#include <octopus/init.h>
+#include <octopus/pubsub.h>
 
 #include "common.h"
 #include "handler.h"
 
 void subscription_handler(struct octopus_binding *b, subscription_t id,
-        uint64_t fn, octopus_mode_t mode, char *record,
+        uint64_t fn, octopus_mode_t mode, const char *record,
         uint64_t st)
 {
 

@@ -25,17 +25,65 @@
 #include "acpi_shared.h"
 #include "acpi_debug.h"
 #include <trace/trace.h>
+#include <skb/skb.h>
 
 
 int acpi_arch_init(void)
 {
+    errval_t err;
     ACPI_STATUS as;
 
-    as = AcpiInitializeObjects(ACPI_FULL_INITIALIZATION);
+
+    uint32_t flags = 0;
+
+    /* Query the SKB for the monitor binary to use. */
+    err = skb_execute_query("acpi_quirk(AcpiInitializeObjects, T), write(res(T)).");
+    if (err_is_ok(err)) {
+        err = skb_read_output("res(%x))", &flags);
+        if (err_is_fail(err)) {
+            DEBUG_SKB_ERR(err, "read output");
+            flags = 0;
+        }
+    } else {
+        DEBUG_SKB_ERR(err, "skb_execute_query");
+    }
+
+    ACPI_DEBUG("Enabling full Object initialization... flags=%" PRIx32 "\n",
+               flags);
+
+    /* device initializatin on the X-GEne seems broken... */
+    as = AcpiInitializeObjects(flags);
     if (ACPI_FAILURE(as)) {
         ACPI_DEBUG("AcpiInitializeObjects failed\n");
         return -1;
     }
 
     return 0;
+}
+
+
+errval_t acpi_arch_copy_bios_mem(void)
+{
+    return SYS_ERR_OK;
+}
+
+errval_t acpi_arch_load_irq_routing_new(void)
+{
+    return SYS_ERR_OK;
+}
+
+void acpi_arch_video_init(void)
+{
+    /* no op */
+}
+
+errval_t acpi_arch_skb_set_info(void)
+{
+    errval_t err;
+    err = skb_add_fact("mem_region_type(%d,gic).", RegionType_GIC);
+    if (err_is_fail(err)) {
+        return err;
+    }
+
+    return skb_add_fact("mem_region_type(%d,gicd).", RegionType_GIC_DIST);
 }

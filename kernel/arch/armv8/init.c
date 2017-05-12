@@ -33,6 +33,7 @@
 #include <arch/armv8/paging_kernel_arch.h>
 #include <arch/armv8/platform.h>
 #include <systime.h>
+#include <coreboot.h>
 
 static struct global global_temp;
 
@@ -40,6 +41,9 @@ static struct global global_temp;
  * Need to be initialized during kernel loading.
  */
 struct armv8_core_data *armv8_glbl_core_data = NULL;
+
+lpaddr_t kernel_stack = 0;
+lpaddr_t kernel_stack_top = 0;
 
 #define MSG(format, ...) printk( LOG_NOTE, "ARMv8-A: "format, ## __VA_ARGS__ )
 
@@ -60,7 +64,7 @@ static struct cmdarg cmdargs[] = {
 static void mmap_find_memory(struct multiboot_tag_efi_mmap *mmap)
 {
     lpaddr_t physical_mem = 0;
-    uint64_t pages = 512;
+    uint64_t pages = ARMV8_CORE_DATA_PAGES;
 
     for (size_t i = 0; i < mmap->size; i += mmap->descr_size) {
         efi_memory_descriptor *desc = (efi_memory_descriptor *)(mmap->efi_mmap + i);
@@ -90,7 +94,8 @@ static void mmap_find_memory(struct multiboot_tag_efi_mmap *mmap)
 
 bool cpu_is_bsp(void)
 {
-    return (sysreg_get_cpu_id() == 0);
+    /* xxx: assumes the coreid to be set */
+    return (my_core_id == 0);
 }
 
 bool arch_core_is_bsp(void)
@@ -115,12 +120,10 @@ arch_init(uint32_t magic, void *pointer, uintptr_t stack) {
     global = &global_temp;
     memset(&global->locks, 0, sizeof(global->locks));
 
-    // initialize the core id
-    my_core_id = sysreg_get_cpu_id();
-
     switch (magic) {
     case MULTIBOOT2_BOOTLOADER_MAGIC:
         {
+        my_core_id = 0;
 
         struct multiboot_header *mbhdr = pointer;
         uint32_t size = mbhdr->header_length;
@@ -159,16 +162,42 @@ arch_init(uint32_t magic, void *pointer, uintptr_t stack) {
 
         mmap_find_memory(mmap);
 
-        armv8_glbl_core_data->multiboot2 = mem_to_local_phys((lvaddr_t) mb);
-        armv8_glbl_core_data->multiboot2_size = size;
+        armv8_glbl_core_data->multiboot_image.base  = mem_to_local_phys((lvaddr_t) mb);
+        armv8_glbl_core_data->multiboot_image.length = size;
         armv8_glbl_core_data->efi_mmap = mem_to_local_phys((lvaddr_t) mmap);
 
-        kernel_stack = stack;
+        armv8_glbl_core_data->cpu_driver_stack = stack;
 
+        kernel_stack = stack;
+        kernel_stack_top = stack + 16 - KERNEL_STACK_SIZE;
         break;
     }
+    case ARMV8_BOOTMAGIC_PSCI :
+        //serial_init(serial_console_port, false);
+
+        serial_init(serial_console_port, false);
+
+        struct armv8_core_data *core_data = (struct armv8_core_data*)pointer;
+        armv8_glbl_core_data = core_data;
+        global = (struct global *)core_data->cpu_driver_globals_pointer;
+
+        kernel_stack = stack;
+        kernel_stack_top = local_phys_to_mem(core_data->cpu_driver_stack_limit);
+
+        my_core_id = core_data->dst_core_id;
+
+        MSG("ARMv8 Core magic...\n");
+
+        break;
     default: {
+        serial_init(serial_console_port, false);
+
+        serial_console_putchar('x');
+        serial_console_putchar('x');
+        serial_console_putchar('\n');
+
         panic("Implement AP booting!");
+        __asm volatile ("wfi":::);
         break;
     }
     }
@@ -177,7 +206,8 @@ arch_init(uint32_t magic, void *pointer, uintptr_t stack) {
     MSG("Barrelfish CPU driver starting on ARMv8\n");
     MSG("Global data at %p\n", global);
     MSG("Multiboot record at %p\n", pointer);
-    MSG("Kernel stack at 0x%" PRIxPTR "\n", kernel_stack);
+    MSG("Kernel stack at 0x%016" PRIxPTR ".. 0x%016" PRIxPTR "\n",
+        kernel_stack_top, kernel_stack);
     MSG("Kernel first byte at 0x%" PRIxPTR "\n", &kernel_first_byte);
 
     MSG("Exception vectors (VBAR_EL1): %p\n", &vectors);
@@ -185,8 +215,12 @@ arch_init(uint32_t magic, void *pointer, uintptr_t stack) {
 
     platform_gic_init();
 
-    arm_kernel_startup();
+    MSG("Setting coreboot spawn handler\n");
+    coreboot_set_spawn_handler(CPU_ARM8, platform_boot_core);
+
+    arm_kernel_startup(pointer);
     while (1) {
         __asm volatile ("wfi":::);
     }
 }
+

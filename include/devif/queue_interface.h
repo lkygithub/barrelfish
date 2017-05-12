@@ -12,14 +12,9 @@
 
 #include <barrelfish/barrelfish.h>
 
-#define DEVQ_BUF_FLAG_TX 0x1
-#define DEVQ_BUF_FLAG_RX 0x2
-#define DEVQ_BUF_FLAG_TX_LAST 0x4
-
-
-
 typedef uint32_t regionid_t;
 typedef uint32_t bufferid_t;
+typedef uint64_t genoffset_t;
 
 
 struct devq;
@@ -27,11 +22,12 @@ struct region_pool;
 
 // For convinience reason buffer descritpion in one struct
 struct devq_buf{
-    regionid_t rid; // 4
-    bufferid_t bid; // 8
-    lpaddr_t addr; // 16
-    size_t len; // 24
-    uint64_t flags; // 32
+    genoffset_t offset; // 8
+    genoffset_t length; // 16
+    genoffset_t valid_data; // 24
+    genoffset_t valid_length; // 32
+    uint64_t flags; // 40
+    regionid_t rid; // 44
 };
 
 /*
@@ -45,43 +41,49 @@ struct devq_buf{
  *
  * @param q             The device queue to call the operation on
  * @param region_id     Id of the memory region the buffer belongs to
- * @param base          Physical address of the start of the enqueued buffer
+ * @param offset        Offset into the region i.e. where the buffer starts
+ *                      that is enqueued
  * @param lenght        Lenght of the enqueued buffer
+ * @param valid_data    Offset into the buffer where the valid data of this buffer
+ *                      starts
+ * @param valid_length  Length of the valid data of this buffer
  * @param misc_flags    Any other argument that makes sense to the device queue
- * @param buffer_id     Return pointer to buffer id of the enqueued buffer 
- *                      buffer_id is assigned by the interface
  *
  * @returns error on failure or SYS_ERR_OK on success
  *
  */
 errval_t devq_enqueue(struct devq *q,
                       regionid_t region_id,
-                      lpaddr_t base,
-                      size_t length,
-                      uint64_t misc_flags,
-                      bufferid_t* buffer_id);
+                      genoffset_t offset,
+                      genoffset_t lenght,
+                      genoffset_t valid_data,
+                      genoffset_t valid_lenght,
+                      uint64_t misc_flags);
 
 /**
  * @brief dequeue a buffer from the device queue
  *
  * @param q             The device queue to call the operation on
- * @param region_id     Return pointer to the id of the memory 
+ * @param region_id     Return pointer to the id of the memory
  *                      region the buffer belongs to
- * @param base          Return pointer to the physical address of 
- *                      the of the buffer
+ * @param region_offset Return pointer to the offset into the region where
+ *                      this buffer starts.
  * @param lenght        Return pointer to the lenght of the dequeue buffer
- * @param buffer_id     Reutrn pointer to the buffer id of the dequeued buffer 
+ * @param valid_data    Return pointer to an offset into the buffer where the
+ *                      valid data of this buffer starts
+ * @param valid_length  Return pointer to the length of the valid data of
+ *                      this buffer
  * @param misc_flags    Return value from other endpoint
  *
  * @returns error on failure or SYS_ERR_OK on success
  *
  */
-
 errval_t devq_dequeue(struct devq *q,
                       regionid_t* region_id,
-                      lpaddr_t* base,
-                      size_t* length,
-                      bufferid_t* buffer_id,
+                      genoffset_t* offset,
+                      genoffset_t* langht,
+                      genoffset_t* valid_data,
+                      genoffset_t* valid_length,
                       uint64_t* misc_flags);
 
 /*
@@ -91,7 +93,7 @@ errval_t devq_dequeue(struct devq *q,
  */
 
 /**
- * @brief Add a memory region that can be used as buffers to 
+ * @brief Add a memory region that can be used as buffers to
  *        the device queue
  *
  * @param q              The device queue to call the operation on
@@ -107,10 +109,10 @@ errval_t devq_register(struct devq *q,
                        regionid_t* region_id);
 
 /**
- * @brief Remove a memory region 
+ * @brief Remove a memory region
  *
  * @param q              The device queue to call the operation on
- * @param region_id      The region id to remove from the device 
+ * @param region_id      The region id to remove from the device
  *                       queues memory
  * @param cap            The capability to the removed memory
  *
@@ -154,6 +156,10 @@ errval_t devq_prepare(struct devq *q);
  */
 errval_t devq_control(struct devq *q,
                       uint64_t request,
-                      uint64_t value);
+                      uint64_t value,
+                      uint64_t *result);
+
+void devq_set_state(struct devq *q, void *state);
+void * devq_get_state(struct devq *q);
 
 #endif /* QUEUE_INTERFACE_H_ */

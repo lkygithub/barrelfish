@@ -41,9 +41,13 @@
 #include <string.h>
 #include <barrelfish/barrelfish.h>
 #include <barrelfish/nameservice_client.h>
-#include <octopus/octopus.h>
-#include <net_queue_manager/net_queue_manager.h>
+
+#include <if/octopus_defs.h>
 #include <if/net_queue_manager_defs.h>
+
+#include <octopus/octopus.h>
+#include <octopus/trigger.h>
+#include <net_queue_manager/net_queue_manager.h>
 #include <trace/trace.h>
 #ifdef LIBRARY
 #       include <netif/e1000.h>
@@ -353,10 +357,6 @@ static errval_t transmit_pbuf_list_fn(struct driver_buffer *buffers,
                                       size_t                count)
 
 {
-    if (!count) { // flush
-        update_e1000_tdt();
-        return SYS_ERR_OK;
-    }
     E1000_DEBUG("transmit_pbuf_list_fn(count=%"PRIu64")\n", count);
     if (!can_transmit(count)){
         while(handle_free_TX_slot_fn());
@@ -385,6 +385,7 @@ static errval_t transmit_pbuf_list_fn(struct driver_buffer *buffers,
         (uint32_t)0);
 #endif // TRACE_ONLY_SUB_NNET
 
+    update_e1000_tdt();
     return SYS_ERR_OK;
 } // end function: transmit_pbuf_list_fn
 
@@ -763,7 +764,6 @@ static void e1000_interrupt_handler_fn(void *arg)
         handle_multiple_packets(1);
 #endif
     }
-    check_queues();
     while(handle_free_TX_slot_fn());
 }
 
@@ -791,7 +791,7 @@ static void exit_help(const char *program)
 }
 
 
-static void check_possible_e1000_card(octopus_mode_t mode, char *record, void *st)
+static void check_possible_e1000_card(octopus_mode_t mode, const char *record, void *st)
 {
     errval_t err;
     if (mode & OCT_ON_SET) {
@@ -826,8 +826,6 @@ static void check_possible_e1000_card(octopus_mode_t mode, char *record, void *s
         }
 
     }
-
-    free(record);
 }
 
 
@@ -1048,7 +1046,7 @@ int e1000n_driver_init(int argc, char **argv)
             // nonblocking. Need to call test_instr_periodic
             // for testing. Maybe a dedicated thread
             // would be nicer.
-            err = event_dispatch_non_block(ws); 
+            err = event_dispatch_non_block(ws);
             test_instr_periodic(&e1000_device);
 #else
             err = event_dispatch(ws);

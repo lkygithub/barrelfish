@@ -52,7 +52,32 @@ struct __attribute__((__packed__)) command_table {
 
 struct ahci_port;
 struct dev_queue;
-typedef void (*ahci_port_interrupt_handler_fn)(struct ahci_port*, struct dev_queue*);
+
+
+enum RequestStatus {
+    RequestStatus_Unused = 0,
+    RequestStatus_InProgress = 1,
+    RequestStatus_Done = 2
+};
+
+struct dev_queue_request {
+    // TODO change back to regionid_t
+    //regionid_t region_id;
+    uint32_t region_id;
+    struct dma_mem region;
+    uint64_t command_slot;
+
+    genpaddr_t offset;
+    genpaddr_t length;
+    genpaddr_t valid_data;
+    genpaddr_t valid_length;
+
+    errval_t error;
+    enum RequestStatus status;
+};
+
+
+typedef void (*ahci_port_interrupt_handler_fn)(struct ahci_port*, struct dev_queue_request* reqs, size_t slots);
 
 struct ahci_port {
     bool is_initialized; //< Port is up and running, ready to read/write.
@@ -75,28 +100,6 @@ struct ahci_disk {
 };
 
 
-enum RequestStatus {
-    RequestStatus_Unused = 0,
-    RequestStatus_InProgress = 1,
-    RequestStatus_Done = 2
-};
-
-struct dev_queue_request {
-    // TODO change back to regionid_t
-    //regionid_t region_id;
-    uint32_t region_id;
-    struct dma_mem region;
-    uint64_t command_slot;
-
-    lpaddr_t base;
-    size_t length;
-    // TODO change back to buffer_t
-    //bufferid_t buffer_id;
-    uint32_t buffer_id;
-
-    errval_t error;
-    enum RequestStatus status;
-};
 
 struct dev_queue {
     struct ahci_port* port;

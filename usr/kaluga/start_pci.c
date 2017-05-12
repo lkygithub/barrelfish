@@ -19,8 +19,12 @@
 
 #include <barrelfish/barrelfish.h>
 
-#include <octopus/octopus.h>
+#include <if/octopus_defs.h>
 #include <if/octopus_thc.h>
+
+#include <octopus/octopus.h>
+#include <octopus/trigger.h>
+
 #include <skb/skb.h>
 #include <thc/thc.h>
 
@@ -28,9 +32,11 @@
 
 static struct capref all_irq_cap;
 
-static void pci_change_event(octopus_mode_t mode, char* device_record, void* st);
+static void pci_change_event(octopus_mode_t mode, const char* device_record,
+                             void* st);
 
-static void spawnd_up_event(octopus_mode_t mode, char* spawnd_record, void* st)
+static void spawnd_up_event(octopus_mode_t mode, const char* spawnd_record,
+                            void* st)
 {
     assert(mode & OCT_ON_SET);
     uint64_t iref;
@@ -43,7 +49,6 @@ static void spawnd_up_event(octopus_mode_t mode, char* spawnd_record, void* st)
     // don't need to look again for the spawnd iref
     // XXX: Pointer
     pci_change_event(OCT_ON_SET, st, (void*)(uintptr_t)iref);
-    free(spawnd_record);
 }
 
 static errval_t wait_for_spawnd(coreid_t core, void* state)
@@ -70,7 +75,8 @@ static errval_t wait_for_spawnd(coreid_t core, void* state)
     return error_code;
 }
 
-static void pci_change_event(octopus_mode_t mode, char* device_record, void* st)
+static void pci_change_event(octopus_mode_t mode, const char* device_record,
+                             void* st)
 {
     errval_t err;
     char intcaps_debug_msg[100];
@@ -85,11 +91,11 @@ static void pci_change_event(octopus_mode_t mode, char* device_record, void* st)
         if (err_is_fail(err)) {
             USER_PANIC_ERR(err, "Got malformed device record?");
         }
-        
+
         /* duplicate device record as we may need it for later */
         device_record = strdup(device_record);
         assert(device_record);
-        
+
 
         // Ask the SKB which binary and where to start it...
         static char* query = "find_pci_driver(pci_card(%"PRIu64", %"PRIu64", _, _, _), Driver),"
@@ -159,7 +165,7 @@ static void pci_change_event(octopus_mode_t mode, char* device_record, void* st)
             cap.cnode = argnode_ref;
             cap.slot = 0;
             //err = sys_debug_create_irq_src_cap(cap, start, end);
-            err = cap_retype(cap, all_irq_cap, start, ObjType_IRQSrc, 
+            err = cap_retype(cap, all_irq_cap, start, ObjType_IRQSrc,
                     end, 1);
             if(err_is_fail(err)){
                 USER_PANIC_ERR(err, "Could not create int_src cap");
@@ -187,7 +193,7 @@ static void pci_change_event(octopus_mode_t mode, char* device_record, void* st)
         // Wait until the core where we start the driver
         // is ready
         if (st == NULL && core != my_core_id) {
-            err = wait_for_spawnd(core, device_record);
+            err = wait_for_spawnd(core, (CONST_CAST)device_record);
             if (err_no(err) == OCT_ERR_NO_RECORD) {
                 KALUGA_DEBUG("Core where driver %s runs is not up yet.\n",
                         mi->binary);
@@ -206,7 +212,7 @@ static void pci_change_event(octopus_mode_t mode, char* device_record, void* st)
                ", intcaps: %s, on core %"PRIuCOREID"\n",
                binary_name, bus, dev, fun, intcaps_debug_msg, core);
 
-        err = mi->start_function(core, mi, device_record, &driver_arg);
+        err = mi->start_function(core, mi, (CONST_CAST)device_record, &driver_arg);
         switch (err_no(err)) {
         case SYS_ERR_OK:
             KALUGA_DEBUG("Spawned PCI driver: %s\n", mi->binary);
@@ -228,7 +234,6 @@ static void pci_change_event(octopus_mode_t mode, char* device_record, void* st)
     }
 
 out:
-    free(device_record);
     free(binary_name);
 }
 
@@ -242,7 +247,8 @@ errval_t watch_for_pci_devices(void)
     return oct_trigger_existing_and_watch(pci_device, pci_change_event, NULL, &tid);
 }
 
-static void bridge_change_event(octopus_mode_t mode, char* bridge_record, void* st)
+static void bridge_change_event(octopus_mode_t mode, const char* bridge_record,
+                                void* st)
 {
     if (mode & OCT_ON_SET) {
         // No need to ask the SKB as we always start pci for
@@ -255,7 +261,7 @@ static void bridge_change_event(octopus_mode_t mode, char* bridge_record, void* 
 
         // XXX: always spawn on my_core_id; otherwise we need to check that
         // the other core is already up
-        errval_t err = mi->start_function(my_core_id, mi, bridge_record, NULL);
+        errval_t err = mi->start_function(my_core_id, mi, (CONST_CAST)bridge_record, NULL);
         switch (err_no(err)) {
         case SYS_ERR_OK:
             KALUGA_DEBUG("Spawned PCI bus driver: %s\n", mi->binary);
@@ -287,7 +293,7 @@ errval_t watch_for_pci_root_bridge(void)
     assert(err_is_ok(err));
     err = sys_debug_create_irq_src_cap(all_irq_cap, 0, 65536);
     assert(err_is_ok(err));
-    
+
 #endif
     static char* root_bridge = "r'hw\\.pci\\.rootbridge\\.[0-9]+' { "
                                " bus: _, device: _, function: _, maxbus: _,"
