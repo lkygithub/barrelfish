@@ -4,7 +4,7 @@
 #include <driverkit/driverkit.h>
 
 #include <dev/jetsontk1/jetson_uart_dev.h>
-#include <jetsontk1_map.h>
+#include <maps/jetsontk1_map.h>
 
 //
 // Serial console and debugger interfaces

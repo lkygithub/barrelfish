@@ -25,6 +25,7 @@
 #include <arch/arm/omap44xx/device_registers.h>
 #include <maps/omap44xx_map.h>
 #include <maps/vexpress_map.h>
+#include <maps/jetsontk1_map.h>
 
 #include "kaluga.h"
 

@@ -23,7 +23,7 @@
 #include <paging_kernel_arch.h>
 #include <platform.h>
 #include <serial.h>
-#include <jetsontk1_map.h>
+#include <maps/jetsontk1_map.h>
 #include <jetsontk1_uart.h>
 
 #define MSG(format, ...) printk( LOG_NOTE, "Jetosn-tk1: "format, ## __VA_ARGS__ )

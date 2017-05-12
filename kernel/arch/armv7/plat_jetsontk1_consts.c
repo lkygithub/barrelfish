@@ -14,7 +14,7 @@
 
 #include <kernel.h>
 
-#include <jetsontk1_map.h>
+#include <maps/jetsontk1_map.h>
 
 /* RAM starts at 2G (2 ** 31) on the Jetson-tk1 */
 /* XXX - MMAP */

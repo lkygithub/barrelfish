@@ -17,7 +17,7 @@
 #include <paging_kernel_arch.h>
 #include <jetsontk1_spinlock.h>
 #include <dev/jetsontk1/jetson_semaphore_dev.h>
-#include <jetsontk1_map.h>
+#include <maps/jetsontk1_map.h>
 
 
 #define MSG(format, ...) printk( LOG_NOTE, "Jetson-tk1 spinlock: "format, ## __VA_ARGS__ )
