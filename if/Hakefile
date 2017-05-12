@@ -87,6 +87,7 @@
                "xmplcr",
                "xmplmsg",
                "xmplrpc",
+			   "barrelrpc",
                "xmplthc",
                "xomp",
                "xomp_gateway",

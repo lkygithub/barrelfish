@@ -1,0 +1,7 @@
+/** \file
+ *  \brief Example rpc based interface
+ */
+
+interface barrelrpc "Example rpc interface" {
+	rpc myrpc(in int32 qqq, out String s[2048]);
+};
