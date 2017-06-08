@@ -333,9 +333,7 @@ let bin_rcce_lu = [ "/sbin/" ++ f | f <- [
                                "skb",
                                "angler",
                                "fish",
-                               "memtest",
-							   "examples/rpc_client",
-							   "examples/rpc_server"
+                               "memtest"
                                ] ]
 
 
@@ -356,9 +354,7 @@ let bin_rcce_lu = [ "/sbin/" ++ f | f <- [
                                "angler",
                                "fish",
                                "memtest",
-							   "examples/rpc_client",
-							   "examples/xmpl-rpc_msg", 
-							   "examples/rpc_server"
+							   "examples/xmpl-span"
                                ] ] ++ tests_common ++ bench_armv7
 
     -- ARMv7-A modules for Versatile Express EMM board (FVP)

@@ -112,6 +112,7 @@ static void dispatcher_initialized(struct interdisp_binding *st, genvaddr_t id)
         .handler = dispatcher_initialized_handler,
         .arg = span_domain_state,
     };
+
     waitset_chanstate_init(&span_domain_state->initev, CHANTYPE_EVENT_QUEUE);
     errval_t err = waitset_chan_trigger_closure(get_default_waitset(),
                                                 &span_domain_state->initev,
