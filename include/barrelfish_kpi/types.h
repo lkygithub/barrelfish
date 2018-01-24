@@ -94,6 +94,7 @@ typedef uint8_t	coreid_t;
 /* node id type */
 typedef coreid_t nodeid_t;
 #define PRIuNODEID PRIu8
+#define SCNuNODEID SCNu8
 #define PRIxNODEID PRIx8
 
 #ifndef MAX_NODEID
@@ -117,7 +118,8 @@ typedef uint32_t rsrcid_t;
 #define PRIxRSRCID  PRIx32
 
 /* Domain ID */
-typedef uint32_t domainid_t;
+typedef uint32_t     domainid_t;
+#define MAX_DOMAINID 0xffffffff
 #define PRIuDOMAINID    PRIu32
 #define PRIxDOMAINID    PRIx32
 

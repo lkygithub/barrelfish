@@ -14,7 +14,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -31,21 +31,27 @@
  * SUCH DAMAGE.
  *
  *	@(#)regex.h	8.2 (Berkeley) 1/3/94
- * $FreeBSD: src/include/regex.h,v 1.4 2002/03/23 17:24:53 imp Exp $
+ * $FreeBSD$
  */
 
 #ifndef _REGEX_H_
 #define	_REGEX_H_
 
 #include <sys/cdefs.h>
+#include <sys/_types.h>
 
 /* types */
-typedef off_t regoff_t;
+typedef	__off_t		regoff_t;
+
+#ifndef _SIZE_T_DECLARED
+typedef	__size_t	size_t;
+#define	_SIZE_T_DECLARED
+#endif
 
 typedef struct {
 	int re_magic;
 	size_t re_nsub;		/* number of parenthesized subexpressions */
-	__const char *re_endp;	/* end pointer for REG_PEND */
+	const char *re_endp;	/* end pointer for REG_PEND */
 	struct re_guts *re_g;	/* none of your business :-) */
 } regex_t;
 
@@ -65,6 +71,7 @@ typedef struct {
 #define	REG_DUMP	0200
 
 /* regerror() flags */
+#define	REG_ENOSYS	(-1)
 #define	REG_NOMATCH	 1
 #define	REG_BADPAT	 2
 #define	REG_ECOLLATE	 3
@@ -81,6 +88,7 @@ typedef struct {
 #define	REG_EMPTY	14
 #define	REG_ASSERT	15
 #define	REG_INVARG	16
+#define	REG_ILLSEQ	17
 #define	REG_ATOI	255	/* convert name to number (!) */
 #define	REG_ITOA	0400	/* convert number to name (!) */
 
@@ -93,10 +101,15 @@ typedef struct {
 #define	REG_BACKR	02000	/* force use of backref code */
 
 __BEGIN_DECLS
-int	regcomp(regex_t *__restrict, const char *__restrict, int);
-size_t	regerror(int, const regex_t *__restrict, char *__restrict, size_t);
-int	regexec(const regex_t *__restrict, const char *__restrict,
-			size_t, regmatch_t [__restrict], int);
+int	regcomp(regex_t * __restrict, const char * __restrict, int);
+size_t	regerror(int, const regex_t * __restrict, char * __restrict, size_t);
+/*
+ * XXX forth parameter should be `regmatch_t [__restrict]', but isn't because
+ * of a bug in GCC 3.2 (when -std=c99 is specified) which perceives this as a
+ * syntax error.
+ */
+int	regexec(const regex_t * __restrict, const char * __restrict, size_t,
+	    regmatch_t * __restrict, int);
 void	regfree(regex_t *);
 __END_DECLS
 

@@ -44,6 +44,7 @@ extern void (*_libc_assert_func)(const char *, const char *, const char *, int);
 
 void libc_exit(int);
 
+__weak_reference(libc_exit, _exit);
 void libc_exit(int status)
 {
     errval_t err;
@@ -69,7 +70,7 @@ void libc_exit(int status)
         // XXX: Leak all other domain allocations
     } else {
         err = spawn_exit(status);
-        if(err_is_fail(err)) {
+        if (err_is_fail(err)) {
             DEBUG_ERR(err, "spawn_exit");
         }
     }
