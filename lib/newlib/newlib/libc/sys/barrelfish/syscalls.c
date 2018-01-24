@@ -34,6 +34,7 @@ clock_t _times_r(struct _reent *r, struct tms *buf)
 
 int _getpid_r(struct _reent *r)
 {
+    return 1010;
     assert(!"NYI");
 }
 

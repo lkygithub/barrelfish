@@ -97,6 +97,13 @@
 #define	MQ_PRIO_MAX	64
 #endif
 
+
+#ifndef _POSIX2_RE_DUP_MAX
+/* The maximum number of repeated occurrences of a regular expression
+ *    permitted when using the interval notation `\{M,N\}'.  */
+#define _POSIX2_RE_DUP_MAX              255
+#endif /* _POSIX2_RE_DUP_MAX  */
+
 # ifdef _MB_LEN_MAX
 #  define MB_LEN_MAX  _MB_LEN_MAX
 # else

@@ -23,7 +23,8 @@
 #include "kaluga.h"
 
 #define SERIAL_IRQ 4
-#define SERIAL_BINARY "serial_pc16550d"
+//#define SERIAL_BINARY "serial_pc16550d"
+#define SERIAL_BINARY "serial_kernel"
 
 #define LPC_TIMER_IRQ 0
 #define LPC_TIMER_BINARY "lpc_timer"
@@ -64,7 +65,7 @@ static errval_t start_serial(void){
         err = sys_debug_create_irq_src_cap(cap, int_nr, int_nr);
 
         if(err_is_fail(err)){
-            DEBUG_ERR(err, "Could not create int_src cap");
+            DEBUG_ERR(err, "Could not create int_src capsdf ");
             return err;
         }
         err = mi->start_function(0, mi, "hw.legacy.uart.1 {}", &arg);

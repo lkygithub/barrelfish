@@ -1,0 +1,391 @@
+/*
+ * Copyright (c) 2007, 2008, ETH Zurich. All rights reserved.
+ *
+ * This file is distributed under the terms in the attached LICENSE file.
+ * If you do not find this file, copies can be found by writing to:
+ * ETH Zurich D-INFK, Haldeneggsteig 4, CH-8092 Zurich. Attn: Systems Group.
+ */
+
+/*
+ * rtl8169.dev based on rtl8029as.dev
+ *
+ * DESCRIPTION: RTL8169 Realtek PCI Full-Duplex Ethernet Controller
+ * 		with built-in SRAM
+ */
+
+device rtl8169 lsbfirst ( io base ) "RTL8169 Ethernet Controller"
+{
+
+    constants rd "Rx Status Desc" {
+        RxRES           = 0x00200000    "RxRES";
+	    RxCRC           = 0x00080000    "RxCRC";
+	    RxRUNT          = 0x00100000    "RxRUNT";
+	    RxRWT           = 0x00400000    "RxRWT";
+    };
+  
+    constants ccb "Chip Cmd Bits" {
+        CmdReset        = 0x10      "CmdReset";
+        CmdRxEnb        = 0x08      "CmdRxEnb";
+        CmdTxEnb        = 0x04      "CmdTxEnb";
+        RxBufEmpty      = 0x01      "RxBufEmpty";
+    };
+
+    constants c9346 "Cfg9346Bits" {
+        Cfg9346_Lock    = 0x00      "Cfg9346_Lock";
+	    Cfg9346_Unlock  = 0xC0      "Cfg9346_Unlock";
+    };
+
+    constants rxmode "rx_mode_bits" {
+        AcceptErr       = 0x20      "AcceptErr";
+        AcceptRunt      = 0x10      "AcceptRunt";
+        AcceptBroadcast = 0x08      "AcceptBroadcast";
+        AcceptMulticast = 0x04      "AcceptMulticast";
+        AcceptMyPhys    = 0x02      "AcceptMyPhys";
+        AcceptAllPhys   = 0x01      "AcceptAllPhys";
+    };
+
+    constants rcb "RxConfigBits" {
+        RxCfgFIFOShift  = 13        "RxCfgFIFOShift";
+	    RxCfgDMAShift   = 8         "RxCfgDMAShift";
+    };
+
+    constants tcb "TxConfigBits" {
+        TxInterFrameGapShift    = 24    "TxInterFrameGapShift";
+        /* DMA burst value (0-7) is shift this many bits */
+	    TxDMAShift              = 8     "TxDMAShift";
+    };
+
+    constants phys "rtl8169_PHYstatus" {
+        TBI_Enable      = 0x80      "TBI_Enable";
+        TxFlowCtrl      = 0x40      "TxFlowCtrl";
+        RxFlowCtrl      = 0x20      "RxFlowCtrl";
+        _1000bpsF       = 0x10      "_1000bpsF";
+        _100bps         = 0x08      "_100bps";
+        _10bps          = 0x04      "_10bps";
+        LinkStatus      = 0x02      "LinkStatus";
+        FullDup         = 0x01      "FullDup";
+    };
+
+    constants gpr "GIGABIT_PHY_registers" {
+        PHY_CTRL_REG        = 0     "PHY_CTRL_REG";
+        PHY_STAT_REG        = 1     "PHY_STAT_REG";
+        PHY_AUTO_NEGO_REG   = 4     "PHY_AUTO_NEGO_REG";
+        PHY_1000_CTRL_REG   = 9     "PHY_1000_CTRL_REG";
+    };
+
+    constants gprb "GIGABIT_PHY_REG_BIT" {
+        PHY_Restart_Auto_Nego   = 0x0200    "PHY_Restart_Auto_Nego";
+	    PHY_Enable_Auto_Nego    = 0x1000    "PHY_Enable_Auto_Nego";
+    };
+
+    constants psr1 "PHY_STAT_REG = 1" {
+        PHY_Auto_Nego_Comp      = 0x0020    "PHY_Auto_Nego_Comp";
+    };
+
+    constants panr4 "PHY_AUTO_NEGO_REG = 4" {
+        PHY_Cap_10_Half         = 0x0020    "PHY_Cap_10_Half";
+        PHY_Cap_10_Full         = 0x0040    "PHY_Cap_10_Full";
+        PHY_Cap_100_Half        = 0x0080    "PHY_Cap_100_Half";
+        PHY_Cap_100_Full        = 0x0100    "PHY_Cap_100_Full";
+    };
+
+    constants p1000cr9 "PHY_1000_CTRL_REG = 9" {
+        PHY_Cap_1000_Full       = 0x0200    "PHY_Cap_1000_Full";
+	    PHY_Cap_Null            = 0x0       "PHY_Cap_Null";
+    };
+
+    constants medium "Network Medium" {
+        _10_Half        = 0x01      "10_Half";
+        _10_Full        = 0x02      "10_Full";
+        _100_Half       = 0x04      "100_Half";
+        _100_Full       = 0x08      "100_Full";
+        _1000_Full      = 0x10      "1000_Full";
+    };
+
+    constants tbicsr "_TBICSRBit" {
+        TBILinkOK       = 0x02000000    "TBILinkOK";
+    };
+
+    regarray mac rw addr(base, 0x0)[6] "Ethernet hardware address" type(uint8);
+
+    regarray mar rw addr(base, 0x8)[8] "Multicast Register" type(uint8);
+
+    register tnpdsl rw addr(base, 0x20) "Transmit Normal Priority Descriptors Low" type(uint32);
+
+    register tnpdsh rw addr(base, 0x24) "Transmit Normal Priority Descriptors High" type(uint32);
+
+    register thpdsl rw addr(base, 0x28) "Transmit High Priority Descriptors Low" type(uint32);
+
+    register thpdsh rw addr(base, 0x2c) "Transmit High Priority Descriptors High" type(uint32);
+
+    register flash addr(base, 0x30) "Flash memory read/write register" {
+        md      8   rw "Flash Memory Data Bus";
+        _       3;
+        romcsb  1   wo "Chip Select";
+        oeb     1   wo "Output Enable";
+        web     1   wo "Write Enable";
+        swrwen  1   wo "Enable software access to flash memory";
+        ma      17  wo "Flash Memory Address Bus";
+    };
+
+    register erbcr addr(base, 0x34) "Early Receive (Rx) Byte Count Register" type(uint16);
+
+    register ersr ro addr(base, 0x36) "Early Rx Status Register" {
+        _       2;
+        ergood  1   "Early Rx Good packet";
+        erbad   1   "Early Rx Bad packet";
+        erovw   1   "Early Rx OverWrite";
+        erok    1   "Early Rx OK";
+    };
+
+    register chipcmd rw addr(base, 0x37) "Command Register" {
+        _       3;
+        rst     1   "Reset";
+        re      1   "Receiver Enable";
+        te      1   "Transmit Enable";
+        _       2;   
+    };
+
+    register txpoll wo addr(base, 0x38) "Transmit Priority Polling register" {
+        hpq     1   "High Priority Queue polling";
+        npq     1   "Normal Priority Queue polling";
+        _       5;
+        fswint  1   "Forced Software Interrupt";
+    };
+
+    /* Supported interrupts */
+    regtype irq "Interrupts" {
+        serr    1   "System Error";
+        timeout 1   "Time Out";
+        _       4;
+        _       1;
+        swint   1   "Software Interrupt";
+        tdu	    1   "Tx Descriptor Unavailable";
+        fovw	1   "Rx FIFO Overflow";
+        pun_lc	1   "Packet Underrun/Link Change";
+        rdu 	1   "Rx Descriptor Unavailable";
+        ter	    1   "Transmit (Tx) Error";
+        tok	    1   "Transmit (Tx) OK";
+        rer	    1   "Receive (Rx) Error";
+        rok     1   "Receive (Rx) OK";
+    };
+
+    register imr rw addr(base, 0x3c) "Interrupt Mask Register" type(irq);
+
+    register isr rw addr(base, 0x3e) "Interrupt Status Register" type(irq);
+
+    register tcr addr(base, 0x40) "Transmit (Tx) Configuration Register" {
+        _           1;
+        hwverid0    5   ro  "Hardware Version ID0";
+        ifg1_0      2   rw  "InterFrameGap Time bit 1 and bit 0";
+        hwverid0    1   ro  "Hardware Version ID1";
+        _           3;
+        ifg2        1   rw  "InterFrameGap2";
+        lbk1_0      2   rw  "Loopback test";
+        crc         1   rw  "Append CRC";
+        _           5;
+        mxdma       3   rw  "Max DMA Burst Size per Tx DMA Burst";
+        _           8;
+    };
+
+    register rcr addr (base, 0x44) "Receive (Rx) Configuration Register" {
+        _           7;
+        mulerint    1   rw  "Multiple Early Interrupt Select";
+        _           7;
+        rer8        1   rw  "#none#";
+        rxfth       3   rw  "Rx FIFO Threshold";
+        _           2;
+        mxdma       3   rw  "Max DMA Burst Size per Rx DMA Burst";
+        _           1;
+        _9356sel    1   ro  "This bit reflects what type of EEPROM is used";
+        aer         1   rw  "Accept Error Packet";
+        ar          1   rw  "Accept Runt";
+        ab          1   rw  "Accept Broadcast Packets";
+        am          1   rw  "Accept Multicast Packets";
+        apm         1   rw  "Accept Physical Match Packets";
+        aap         1   rw  "Accept All Packets with Destination Address";
+    };
+
+    register tctr rw addr(base, 0x48) "Timer CounT Register" type(uint32);
+
+    register mpc rw addr(base, 0x4c) "Missed Packet Counter" type(uint32);
+
+    register cfg9346 addr(base, 0x50) "93C46 (93C56) Command" {
+        eem1_0      2   rw  "Operating Mode";
+        _           2;
+        eecs        1   rw  "EECS";
+        eesk        1   rw  "EESK";
+        eedi        1   rw  "EEDI";
+        eedo        1   ro   "EEDO";
+    };
+
+    register cfg0 addr(base, 0x51) "Configuration Register 0" {
+        _           5;
+        bs          3   ro   "Select Boot ROM Size";
+    };
+
+    register cfg1 addr(base, 0x52) "Configuration Register 1" {
+        leds1_0     2   rw  "Refer to the LED PIN definition";
+        dvrload     1   rw  "Driver Load";
+        lwact       1   rw  "LWAKE Active Mode";
+        memmap      1   ro  "Memory Mapping";
+        iomap       1   ro  "I/O Mapping";
+        vpd         1   rw  "Vital Product Data";
+        pmen        1   rw  "Power Management Enable";
+    };
+
+    register cfg2 addr(base, 0x53) "Configuration Register 2" {
+        _           3;
+        aux_status  1   ro  "Auxiliary Power Present Status";
+        pcibusw     1   ro  "PCI Bus Width";
+        pciclkf     3   ro  "PCI clock frequency";
+    };
+
+    register cfg3 addr(base, 0x54) "Configuration Register 3" {
+        gntsel      1   ro  "Grant Select";
+        _           1;
+        magic       1   rw  "Magic Packet";
+        linkup      1   rw  "Link Up";
+        cardb_en    1   ro  "Card Bus Enable";
+        clkrun_en   1   ro  "CLKRUN Enable";
+        funcregen   1   ro  "Functions Registers Enable (CardBus only)";
+        fbtben      1   ro  "Fast Back to Back Enable";
+    };
+
+    register cfg4 addr(base, 0x55) "Configuration Register 4" {
+        _           3;
+        lwpme       1   rw  "LANWAKE vs PMEB";
+        _           1;
+        lwptn       1   rw  "LWAKE Pattern";
+        _           2;
+    };
+
+    register cfg5 addr(base, 0x56) "Configuration Register 5" {
+        _           1;
+        bwf         1   rw  "Broadcast Wakeup Frame";
+        mwf         1   rw  "Multicast Wakeup Frame";
+        uwf         1   rw  "Unicast Wakeup Frame";
+        _           2;
+        lanwake     1   rw  "LANWake Signal En/Disable";
+        pme_sts     1   rw  "PME_Status";
+    };
+
+    register mulint rw addr(base, 0x5c) "Multiple Interrupt Select" {
+        _           4;
+        mise        12      "Multiple Interrupt Select";
+    };
+
+    register phyar rw addr(base, 0x60) "PHY Access Register" {
+        flag        1       "Flag used as PCI VPD access method";
+        _           10;
+        regaddr4_0  5       "5-bit GMII/MII register address";
+        data15_0    16      "16-bit GMII/MII register data";
+    };
+
+    register tbicsr addr(base, 0x64) "Ten Bit Interface Control and Status" {
+        resettbi    1   rw  "Reset TBI";
+        tbilb       1   rw  "TBI Loopback Enable";
+        tbinwen     1   rw  "TBI Auto-negotiation Enable";
+        tbirenw     1   rw  "TBI Restart Auto-negotiation";
+        _           2;
+        tbilinkOk   1   ro  "TBI Link Ok";
+        tbinwc      1   ro  "TBI Nway Complete";
+        /* ----Reserved---- */
+        _           24;
+    };
+
+	register tbi_anar addr(base, 0x68) "TBI Auto Negotiation Advertisement Register" {
+		_			2;
+		rfbit		2	rw	"Remote Fault Bits";
+		_			3;
+		psbit		2	rw	"Asymmetric Pause";
+		_			1;
+		fulldup		1	r	"full Duplex";
+		_			5;
+	}
+    
+	register tbi_lpar addr(base, 0x6a) "TBI Auto-Negotiation Link Partner Ability" {
+		nextpage	1	ro	"Next Page Exchange Required";
+		ack			1	ro 	"Acknowledge";
+		rfbit		2	ro	"Remote Fault bits";
+		_			3;
+		psbit		2	ro	"Asymmetriic Pause";
+		halfdup		1	ro	"Half Duplex";
+		fulldup		1	ro	"Full Duplex";
+		_			5;
+	}
+
+	register phystatus addr(base, 0x6c) "PHY(GMII or TBI) Status" {
+		entbi		1	ro	"TBI Enable";
+		txflow		1	ro	"Tramsmit Flow Control";
+		rxflow		1	ro	"Receive Flow Control";
+		_1000mf		1	ro	"Link Speed is 1000Mbps and in full-duplex";
+		_100m		1 	ro	"Link Speed is 100Mbps";
+		_10m		1	ro	"Link Speed is 10Mbps";
+		linksts		1	ro	"Link Status";
+		fulldup		1	ro	"Full-Duplex Status";
+	}
+
+	register rxMaxSize addr(base, 0xda) "Receive Packet Maximum Size" {
+		_			2;
+		rms			14	rw	"Rx packet Maximum Size";
+	}
+
+	register cPlusCmd addr(base, 0xe0) "C plus Command" {
+		_			6;
+		endian		1	rw	"Endian Mode";
+		_			1;
+		_			1;
+		rxvlan		1	rw	"Receive VLAN De-tagging Enable";
+		rxchksum	1	rw	"Receive Checksum Offload Enable";
+		dac			1	rw	"PCI Dual Address Cycle Enale";
+		mulrw		1	rw	"PCI Multiple Read/Write Enable";
+		_			3;
+	}
+
+	register rdsarLow rw addr(base, 0xe4) "Receive Descriptor Start Address" {
+		rdsa		32	"Receive Descriptor Start Address";
+	}
+
+	register rdsarHigh rw addr(base, 0xe8) "Receive Descriptor Start Address" {
+		rdsa		32	"Receive Descriptor Start Address";
+	}
+
+	register etthr	rw	addr(base, 0xec) "Early Transmit Threshold" {
+		_			2;
+		etth		6	"Early Tx Thershold";
+	}
+
+	register funcEvent rw addr(base, 0xf0) "Function Event" {
+		_			16;
+		intr		1	"Interrupt";
+		_			10;
+		gwake		1	"General Wakeup";
+		_			4;
+	}
+
+	register funcEventMask	rw addr(base, 0xf4) "Function Event Mask" {
+		_			16;
+		intr		1	"Interrupt mask";
+		wkup		1	"Wakeup mask";
+		_			9;
+		gwake		1	"General wakeup mask";
+		_			4;
+	}
+
+	register funcPresetState addr(base, 0xf8) "Function Preset State" {
+		_			16;
+		intr		1	ro	"interrupt";
+		_			10;
+		gwake		1	ro	"general wakeup";
+		_			4;
+	}
+
+	register funcForceEvent addr(base, 0xfc) "Functiong Force Event" {
+		_			16;
+		intr		1	wo	"interrupt";
+		_			10;
+		gwake		1	wo	"General Wakeup";
+		_			4;
+	}
+};

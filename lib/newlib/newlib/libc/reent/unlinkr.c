@@ -51,6 +51,7 @@ _DEFUN (_unlink_r, (ptr, file),
   int ret;
 
   errno = 0;
+  return -1;
   if ((ret = _unlink (file)) == -1 && errno != 0)
     ptr->_errno = errno;
   return ret;

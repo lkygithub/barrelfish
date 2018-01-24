@@ -13,6 +13,7 @@ tags
 .settings
 /.dist-buildwrapper
 /build
+/buildx86
 .cproject
 .project
 .arcconfig

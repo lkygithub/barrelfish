@@ -27,6 +27,10 @@
 #define JETSON_APB_UARTD_SIZE							0x100
 #define JETSON_APB_UARTD_SIZE_ALLOC						0x1000
 
+// Net(RTL8196) BASE ADDR
+// FIXME: should use pci driver.
+#define JETSON_PCIE_NETBASE                             0x13000000
+
 // Jetson-tk1 DDR MEM
 #define JETSONTK1_DDR_MEM_HIGHADDR						0xFFFFFFFF
 #define JETSONTK1_DDR_MEM_BASEADDR						0x80000000

@@ -130,7 +130,7 @@ architectures :: [String]
 
 -- Optimisation flags (-Ox -g etc.) passed to compiler
 cOptFlags :: [String]
-cOptFlags = ["-gdwarf-2", "-O2"]
+cOptFlags = ["-O2"]
 
 newlib_malloc :: String
 --newlib_malloc = "sbrk"     -- use sbrk and newlib's malloc()
@@ -158,7 +158,7 @@ microbenchmarks = False
 
 -- Enable tracing
 trace :: Bool
-trace = False
+trace = True
 
 -- Enable QEMU networking. (ie. make network work in small memory)
 support_qemu_networking :: Bool
