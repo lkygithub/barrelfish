@@ -176,14 +176,20 @@ arch_init(struct arm_core_data *boot_core_data,
 
     MSG("Barrelfish CPU driver starting on ARMv7\n");
     MSG("Core data at %p\n", core_data);
-	MSG("####DEBUG: l1_low = %08x, l1_high = %08x, l2_vec = %08x.\n", core_data->kernel_l1_low
-			, core_data->kernel_l1_high, core_data->kernel_l2_vec);
     MSG("Global data at %p\n", global);
     MSG("Boot record at %p\n", bootrec);
     errval_t errval;
     assert(core_data != NULL);
     assert(paging_mmu_enabled());
 
+#if 0
+	uint8_t *netbase = (uint8_t *) 0x13000000;
+	printf ("##### test pci net io, MAC ADDR :");
+	for (int i = 0; i < 6; i++){
+		printf ("%02x:",*(netbase + i));
+	}
+	printf ("\n");
+#endif
 #if 0
 	// 3. 0xa0000000 -> 0x60000000
     union arm_l1_entry *l1_high= (union arm_l1_entry *)
@@ -206,6 +212,7 @@ arch_init(struct arm_core_data *boot_core_data,
 			MSG ("DEBUG_MMU_ERROR: address =%08x\n", testv);
 	}
 #endif
+
     if(!is_bsp) {
         MSG("APP core.\n");
         platform_notify_bsp(&bootrec->done);
