@@ -11,11 +11,11 @@
 --------------------------------------------------------------------------
 
 [ build application { target = "rtl8169",
-                      cFiles = ["rtl8169.c"],
-                      flounderBindings = [ "net_queue_manager",
-                                            "net_soft_filters" ],
-                      mackerelDevices = [ "rtl8169" ],
-                      addLibraries = libDeps [ "pci", "netQmng" ]
+                      cFiles = ["rtl8169.c"] -- ,
+--                       flounderBindings = [ "net_queue_manager",
+--                                             "net_soft_filters" ],
+--                       mackerelDevices = [ "rtl8169" ],
+--                       addLibraries = libDeps [ "pci", "netQmng" ]
                     }
 ]
 

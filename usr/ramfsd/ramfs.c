@@ -265,7 +265,12 @@ errval_t ramfs_create(struct dirent *dir, const char *name, struct dirent **ret)
     }
 
     f->next = NULL;
-    f->name = name; /* XXX: takes ownership of name buffer */
+	if(strlen(name) >=256)
+		return FS_ERR_INDEX_BOUNDS
+	char *myname = (char *) malloc(256);
+	strcpy(myname, name);
+	f->name = (const char *) myname;
+    //f->name = name; /* XXX: takes ownership of name buffer */
     f->isdir = false;
     f->refcount = 1;
     f->islive = true;
@@ -300,7 +305,12 @@ errval_t ramfs_mkdir(struct dirent *dir, const char *name, struct dirent **ret)
     }
 
     d->next = NULL;
-    d->name = name; /* XXX: takes ownership of name buffer */
+	if(strlen(name) >=256)
+		return FS_ERR_INDEX_BOUNDS
+	char *myname = (char *) malloc(256);
+	strcpy(myname, name);
+    d->name = (const char *) myname; 
+    //d->name = name; /* XXX: takes ownership of name buffer */
     d->isdir = true;
     d->refcount = 1;
     d->islive = true;

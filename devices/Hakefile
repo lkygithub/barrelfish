@@ -57,6 +57,7 @@
            "ohci",
            "pc16550d",
            "rtl8029as",
+           -- "rtl8169",
            "tulip",
            "uhci",
            "xapic",

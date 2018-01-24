@@ -33,7 +33,7 @@ module /armv7/sbin/serial_kernel irq=37
 module /armv7/sbin/corectrl auto
 
 # General user domains
-module /armv7/sbin/angler serial0.terminal dumb
+module /armv7/sbin/angler serial0.terminal linux
 module /armv7/sbin/fish nospawn
 
 # module /armv7/sbin/memtest
