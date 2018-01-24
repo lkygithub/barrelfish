@@ -20,12 +20,12 @@
 #include <barrelfish/barrelfish.h>
 #include <barrelfish/spawn_client.h>
 #include <barrelfish_kpi/platform.h>
-#include <if/monitor_blocking_rpcclient_defs.h>
+#include <if/monitor_blocking_defs.h>
 
 #include <arch/arm/omap44xx/device_registers.h>
-#include <omap44xx_map.h>
-#include <jetsontk1_map.h>
-#include <vexpress_map.h>
+#include <maps/omap44xx_map.h>
+#include <maps/vexpress_map.h>
+#include <maps/jetsontk1_map.h>
 
 #include "kaluga.h"
 
@@ -184,12 +184,12 @@ default_start_function(coreid_t where, struct module_info* driver,
 
     errval_t err;
 
-    struct monitor_blocking_rpc_client *m=
-        get_monitor_blocking_rpc_client();
+    struct monitor_blocking_binding *m=
+        get_monitor_blocking_binding();
     assert(m != NULL);
 
     uint32_t arch, platform;
-    err = m->vtbl.get_platform(m, &arch, &platform);
+    err = m->rpc_tx_vtbl.get_platform(m, &arch, &platform);
     assert(err_is_ok(err));
     assert(arch == PI_ARCH_ARMV7A);
 

@@ -15,11 +15,12 @@
 #include <stdio.h>
 #include <string.h>
 #include <barrelfish/barrelfish.h>
-#include <octopus/octopus.h>
 
 #include <if/octopus_defs.h>
-#include <if/octopus_rpcclient_defs.h>
 #include <if/octopus_thc.h>
+
+#include <octopus/octopus.h>
+#include <octopus/trigger.h>
 
 #include "xeon_phi_internal.h"
 #include "domain.h"
@@ -33,7 +34,7 @@ struct wait_state
 };
 
 static void domain_wait_trigger_handler(octopus_mode_t mode,
-                                        char* record,
+                                        const char* record,
                                         void* state)
 {
     errval_t err;
@@ -64,13 +65,13 @@ errval_t domain_lookup(const char *iface,
 {
     errval_t err;
 
-    struct octopus_rpc_client *r = get_octopus_rpc_client();
+    struct octopus_binding *r = get_octopus_binding();
     if (r == NULL) {
         return LIB_ERR_NAMESERVICE_NOT_BOUND;
     }
 
     struct octopus_get_response__rx_args reply;
-    err = r->vtbl.get(r, iface, NOP_TRIGGER, reply.output, &reply.tid,
+    err = r->rpc_tx_vtbl.get(r, iface, NOP_TRIGGER, reply.output, &reply.tid,
                       &reply.error_code);
     if (err_is_fail(err)) {
         goto out;
@@ -170,7 +171,7 @@ errval_t domain_register(const char *iface,
 {
     errval_t err = SYS_ERR_OK;
 
-    struct octopus_rpc_client *r = get_octopus_rpc_client();
+    struct octopus_binding *r = get_octopus_binding();
     if (r == NULL) {
         return LIB_ERR_NAMESERVICE_NOT_BOUND;
     }
@@ -186,7 +187,7 @@ errval_t domain_register(const char *iface,
 
     octopus_trigger_id_t tid;
     errval_t error_code;
-    err = r->vtbl.set(r, record, 0, NOP_TRIGGER, 0, NULL, &tid, &error_code);
+    err = r->rpc_tx_vtbl.set(r, record, 0, NOP_TRIGGER, 0, NULL, &tid, &error_code);
     if (err_is_fail(err)) {
         goto out;
     }
@@ -196,4 +197,3 @@ errval_t domain_register(const char *iface,
 
     return err;
 }
-

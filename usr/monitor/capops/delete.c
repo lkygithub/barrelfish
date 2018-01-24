@@ -18,7 +18,7 @@
 #include "delete_int.h"
 #include "internal.h"
 #include "ram_alloc.h"
-#include <if/mem_rpcclient_defs.h>
+#include <if/mem_defs.h>
 
 struct delete_remote_mc_st {
     struct capsend_mc_st mc_st;
@@ -70,7 +70,7 @@ send_new_ram_cap(struct capref cap)
     struct ram_alloc_state *ram_alloc_state = get_ram_alloc_state();
     thread_mutex_lock(&ram_alloc_state->ram_alloc_lock);
 
-    struct mem_rpc_client *b = get_mem_client();
+    struct mem_binding *b = get_mem_client();
     if (!b) {
         DEBUG_CAPOPS("%s: forwarding to monitor.0\n", __FUNCTION__);
         // we're not on core 0, so forward free_monitor msg to monitor.0
@@ -80,7 +80,7 @@ send_new_ram_cap(struct capref cap)
         DEBUG_CAPOPS("%s: we are monitor.0\n", __FUNCTION__);
         // XXX: This should not be an RPC! It could stall the monitor, but
         // we trust mem_serv for the moment.
-        err = b->vtbl.free_monitor(b, cap, ram.base, log2ceil(ram.bytes), &result);
+        err = b->rpc_tx_vtbl.free_monitor(b, cap, ram.base, log2ceil(ram.bytes), &result);
         assert(err_is_ok(err));
         assert(err_is_ok(result));
     }
@@ -410,8 +410,17 @@ delete_trylock_cont(void *st)
     // entry), but only this function is executed on every unlock event
     err = dom_cnode_delete(del_st->capref);
     if (err_no(err) != SYS_ERR_RETRY_THROUGH_MONITOR) {
+        // If cap is already locked, just enqueue for retry
+        if (err_no(err) == SYS_ERR_CAP_LOCKED) {
+            DEBUG_CAPOPS("%s: from cnode_delete(): cap already locked, queuing retry\n", __FUNCTION__);
+            caplock_wait(del_st->capref, &del_st->lock_qn,
+                         MKCLOSURE(delete_trylock_cont, del_st));
+            return;
+        }
+        // If cap not found, it has been deleted elsewhere, return OK
         if (err_no(err) == SYS_ERR_CAP_NOT_FOUND) {
-            err = SYS_ERR_OK;
+            DEBUG_CAPOPS("%s: from cnode_delete(): cap not found, got deleted from elsewhere\n", __FUNCTION__);
+            err = err_push(SYS_ERR_OK, err);
         }
         goto report_error;
     }
@@ -419,11 +428,13 @@ delete_trylock_cont(void *st)
     err = monitor_lock_cap(del_st->capref.croot, del_st->capref.cptr,
                            del_st->capref.level);
     if (err_no(err) == SYS_ERR_CAP_LOCKED) {
+        DEBUG_CAPOPS("%s: from lock(): cap already locked, queuing retry\n", __FUNCTION__);
         caplock_wait(del_st->capref, &del_st->lock_qn,
                      MKCLOSURE(delete_trylock_cont, del_st));
         return;
     }
     else if (err_no(err) == SYS_ERR_CAP_NOT_FOUND) {
+        DEBUG_CAPOPS("%s: from lock(): cap not found, got deleted from elsewhere\n", __FUNCTION__);
         // Some other operation (another delete or a revoke) has deleted the
         // target cap. This is OK.
         err = err_push(SYS_ERR_OK, err);
@@ -466,6 +477,7 @@ delete_trylock_cont(void *st)
     return;
 
 report_error:
+    DEBUG_CAPOPS("%s: reporting error: %s\n", __FUNCTION__, err_getcode(err));
     delete_result__rx(err, del_st, locked);
 }
 
@@ -487,14 +499,21 @@ capops_delete(struct domcapref cap,
     // try a simple delete
     DEBUG_CAPOPS("%s: trying simple delete\n", __FUNCTION__);
     err = dom_cnode_delete(cap);
-    if (err_no(err) != SYS_ERR_RETRY_THROUGH_MONITOR) {
-        DEBUG_CAPOPS("%s: err != RETRY\n", __FUNCTION__);
+    // We can also continue here if we get SYS_ERR_CAP_LOCKED, as we're going
+    // to handle already locked caps correctly in delete_trylock_cont().
+    // -SG, 2017-05-02
+    if (err_no(err) != SYS_ERR_RETRY_THROUGH_MONITOR &&
+        err_no(err) != SYS_ERR_CAP_LOCKED)
+    {
+        DEBUG_CAPOPS("%s: err != RETRY && err != LOCKED\n", __FUNCTION__);
         goto err_cont;
     }
 
-    // simple delete was not able to delete cap as it was last copy and:
-    //  - may have remote copies, need to move or revoke cap
-    //  - contains further slots which need to be cleared
+    // simple delete was not able to delete cap as:
+    // * it was last copy and:
+    //    - may have remote copies, need to move or revoke cap
+    //    - contains further slots which need to be cleared
+    // * currently locked
 
     struct delete_st *del_st;
     err = calloce(1, sizeof(*del_st), &del_st);

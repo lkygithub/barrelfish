@@ -187,7 +187,7 @@ multihop_rx_handler_proto ifn = C.GVarDecl C.Extern C.NonConst
 
 multihop_rx_handler_params :: [C.Param]
 multihop_rx_handler_params = [C.Param (C.Ptr C.Void) "arg",
-                              C.Param (C.Ptr (C.TypeName "uint8_t")) "message", C.Param (C.TypeName "size_t") "message_len"]
+                              C.Param (C.Ptr (C.ConstT (C.TypeName "uint8_t"))) "message", C.Param (C.TypeName "size_t") "message_len"]
 
 multihop_connect_handler_proto :: String -> C.Unit
 multihop_connect_handler_proto ifn = C.GVarDecl C.Extern C.NonConst
@@ -728,7 +728,6 @@ tx_fn ifn typedefs msg@(Message _ n args _) =
             C.If (C.Binary C.NotEquals tx_msgnum_field (C.NumConstant 0))
             [C.Return $ C.Variable "FLOUNDER_ERR_TX_BUSY"] [],
             C.SBlank,
-            localvar (C.Ptr $ C.Struct "waitset") "send_waitset" (Just $ C.DerefField bindvar "waitset"),
             C.SComment "register send continuation",
             C.StmtList $ register_txcont (C.Variable intf_cont_var),
             C.SBlank,
@@ -838,7 +837,7 @@ rx_handler arch ifn typedefs msgdefs msgs =
       (if (contains_overflow_frags)
        then localvar m_size_type "o_frag_size" Nothing
        else C.SBlank),
-      localvar (C.Ptr $ C.TypeName "uint8_t") "msg" Nothing,
+      localvar (C.Ptr $ C.ConstT $ C.TypeName "uint8_t") "msg" Nothing,
       localvar (C.TypeName "int") "__attribute__ ((unused)) no_register" (Just $ C.NumConstant 0),
       C.SBlank,
 
@@ -906,7 +905,6 @@ rx_handler_msg arch ifn typedefs msgdef (MsgSpec mn frags caps) =
       concat [ receive_buf b | (OverflowFragment b@(BufferFragment {})) <- frags],
       C.SBlank,
 
-      C.Ex $ C.Call "free" [C.Variable "message"],
       C.If (C.DerefField multihop_bind_var "trigger_chan")
       [C.Ex $ C.Assignment (C.DerefField multihop_bind_var "trigger_chan") (C.Variable "false"),
        C.StmtList finished_send] [],

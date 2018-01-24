@@ -64,7 +64,7 @@ size_t platform_get_ram_size(void);
 /*
  * Boot secondary processors
  */
-int platform_boot_aps(coreid_t core_id, genvaddr_t gen_entry);
+errval_t platform_boot_aps(hwid_t target, genpaddr_t gen_entry, genpaddr_t context);
 void platform_notify_bsp(uint32_t *mailbox);
 
 /*
@@ -80,5 +80,7 @@ bool     timer_interrupt(uint32_t irq);
  */
 extern const lpaddr_t uart_base[];
 extern const size_t uart_size[];
+
+
 
 #endif // __ARM_PLATFORM_H__

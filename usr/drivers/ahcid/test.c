@@ -2,8 +2,13 @@
 #include "test.h"
 
 #include <stdarg.h>
+#include <barrelfish/deferred.h>
 #include <bench/bench.h>
-//#include <devif/queue.h>
+#include <devif/backends/blk/ahci_devq.h>
+#include <devif/queue_interface.h>
+
+
+static uint64_t finish_counter = 0;
 
 struct dma_mem {
     lvaddr_t vaddr;         ///< virtual address of the mapped region
@@ -15,9 +20,11 @@ struct dma_mem {
 
 void test_runner(int n, ...)
 {
-#if 0
     va_list arguments;
     va_start(arguments, n);
+    
+    // sleep for 5 sec
+    barrelfish_usleep(5000*1000);
 
     for (size_t i=0; i<n; i++) {
         enum AhciTest test = va_arg(arguments, enum AhciTest);
@@ -84,13 +91,10 @@ void test_runner(int n, ...)
     }
     // Harness line
     printf("AHCI testing completed.\n");
-#endif
-    // Harness line
-    printf("AHCI testing not implemented.\n");
 }
 
-#if 0
-static void frame_alloc_identify(size_t size, struct capref *frame, struct frame_identity *id)
+static void frame_alloc_identify(size_t size, struct capref *frame, 
+                                 struct frame_identity *id)
 {
     errval_t err;
     size_t retbytes;
@@ -117,88 +121,106 @@ void ahci_simple_test(void)
 {
     errval_t err;
     regionid_t region_id = 0;
-    lpaddr_t base = 0;
-    size_t length = 0;
-    bufferid_t buffer_id = 0;
+    genoffset_t offset = 0;
+    genoffset_t length = 0;
+    genoffset_t valid_data = 0;
+    genoffset_t valid_length = 0;
 
     // Allocate a buffer:
     struct dma_mem mem;
-    err = frame_alloc(&mem.frame, 4096, &mem.bytes);
-    if (err_is_fail(err)) {
-        USER_PANIC_ERR(err, "frame_alloc");
-    }
+
+    struct capref frame;
     struct frame_identity id;
-    err = invoke_frame_identify(mem.frame, &id);
+    //void* va;
+
+    err = frame_alloc(&frame, 4096, NULL);
     if (err_is_fail(err)) {
-        USER_PANIC_ERR(err, "invoke_frame_identify");
+        USER_PANIC_ERR(err, "frame alloc");
     }
 
-    err = devq_register(dq, mem.frame, &region_id);
+    /*
+    err = vspace_map_one_frame_attr(&va, 4096, frame, VREGION_FLAGS_READ_WRITE,
+                                    NULL, NULL); 
+    if (err_is_fail(err)) {
+        USER_PANIC_ERR(err, "map frame");
+    }
+    */
+    
+    err = invoke_frame_identify(frame, &id);
+    if (err_is_fail(err)) {
+        USER_PANIC_ERR(err, "frame identify");
+    }
+
+    err = devq_register(dq, frame, &region_id);
     if (err_is_fail(err)) {
         USER_PANIC_ERR(err, "devq register");
     }
 
     uint64_t flags = 0x0;
-    devq_enqueue(dq, region_id, id.base, 512, 0x123, flags);
+    devq_enqueue(dq, region_id, 0, 512, 0, 512, flags);
     if (err_is_fail(err)) {
         USER_PANIC_ERR(err, "devq enqueue");
     }
 
     do {
-        err = devq_dequeue(dq, &region_id, &base, &length, &buffer_id);
+        err = devq_dequeue(dq, &region_id, &offset, &length, &valid_data, 
+                           &valid_length, &flags);
         if (err_is_ok(err)) {
             break;
         }
-        if (err_is_fail(err) && err_no(err) != DEV_ERR_QUEUE_EMPTY) {
+        if (err_is_fail(err) && err_no(err) != DEVQ_ERR_QUEUE_EMPTY) {
             USER_PANIC_ERR(err, "devq dequeue");
         }
         wait_for_interrupt();
-    } while (err_no(err) == DEV_ERR_QUEUE_EMPTY);
+    } while (err_no(err) == DEVQ_ERR_QUEUE_EMPTY);
 
-    assert (buffer_id == 0x123);
-    assert (base == id.base);
+    assert (offset == 0);
     assert (length == 512);
 
-    err = devq_remove(dq, region_id);
+    err = devq_deregister(dq, region_id, &mem.frame);
     if (err_is_fail(err)) {
-        USER_PANIC_ERR(err, "devq_remove failed.");
+        USER_PANIC_ERR(err, "devq_deregister failed.");
     }
 
     printf("[%s]: DONE\n", __FUNCTION__);
 }
 
-static void blocking_dequeue(void* q, regionid_t* region_id, lpaddr_t* base, size_t* length, bufferid_t* buffer_id)
+static void blocking_dequeue(void* q, regionid_t* region_id, 
+                             genoffset_t* offset, genoffset_t* length,
+                             genoffset_t* valid_data, genoffset_t* valid_length)
 {
+    uint64_t flags;
     errval_t err;
     do {
-        err = devq_dequeue(q, region_id, base, length, buffer_id);
+        err = devq_dequeue(q, region_id, offset, length, valid_data,
+                           valid_length, &flags);
         if (err_is_ok(err)) {
             break;
         }
-        if (err_is_fail(err) && err_no(err) != DEV_ERR_QUEUE_EMPTY) {
+        if (err_is_fail(err) && err_no(err) != DEVQ_ERR_QUEUE_EMPTY) {
             USER_PANIC_ERR(err, "devq dequeue");
         }
 
-        assert(err_no(err) == DEV_ERR_QUEUE_EMPTY);
+        assert(err_no(err) == DEVQ_ERR_QUEUE_EMPTY);
         wait_for_interrupt();
-    } while (err_no(err) == DEV_ERR_QUEUE_EMPTY);
+    } while (err_no(err) == DEVQ_ERR_QUEUE_EMPTY);
 }
 
 static void receive_block(void)
 {
     regionid_t rid = 0;
-    lpaddr_t base = 0;
-    size_t len = 0;
-    bufferid_t bid = 0;
-    blocking_dequeue(dq, &rid, &base, &len, &bid);
-
-    bool* status = (bool*) bid;
-    assert (*status == false); // Only write region once
-    *status = true;
+    genoffset_t offset = 0;
+    genoffset_t length = 0;
+    genoffset_t valid_data = 0;
+    genoffset_t valid_length = 0;
+    blocking_dequeue(dq, &rid, &offset, &length, &valid_data,
+                     &valid_length);
+    finish_counter++;
 }
 
 void ahci_perf_sequential(size_t buffer_size, size_t block_size, bool write)
 {
+    finish_counter = 0;
     bench_init();
     errval_t err;
     assert(buffer_size % block_size == 0);
@@ -216,16 +238,19 @@ void ahci_perf_sequential(size_t buffer_size, size_t block_size, bool write)
     }
 
     uint64_t write_flag = (write) ? (1ULL << 63) : 0;
-    volatile bool *received = calloc(1, sizeof(bool) * read_requests);
+    bufferid_t *received = calloc(1, sizeof(bufferid_t) * read_requests);
     cycles_t t1 = bench_tsc();
+
     for (size_t i=0; i < read_requests; i++) {
         uint64_t disk_block = write_flag | i;
         do {
-            err = devq_enqueue(dq, region_id, id.base + (i*block_size), block_size, (bufferid_t)&received[i], disk_block);
+            err = devq_enqueue(dq, region_id, (i*block_size), 
+                               block_size, 0,
+                               block_size, disk_block);
             if (err_is_ok(err)) {
                 break;
             }
-            else if (err_no(err) == DEV_ERR_QUEUE_FULL) {
+            else if (err_no(err) == DEVQ_ERR_QUEUE_FULL) {
                 receive_block();
             }
             else {
@@ -233,12 +258,12 @@ void ahci_perf_sequential(size_t buffer_size, size_t block_size, bool write)
             }
         } while (true);
     }
+
     // Make sure we have all requests:
-    for (size_t i=0; i<read_requests; i++) {
-        while (!received[i]) {
-            receive_block();
-        }
+    while (finish_counter < read_requests) {
+        receive_block();
     }
+
     cycles_t t2 = bench_tsc();
     cycles_t result = (t2 - t1 - bench_tscoverhead());
 
@@ -247,15 +272,18 @@ void ahci_perf_sequential(size_t buffer_size, size_t block_size, bool write)
     char* cmd = write ? "Write" : "Read";
     printf("[%s] %s sequential size %zu bs %zu: %.2f [MB/s]\n", __FUNCTION__, cmd, buffer_size, block_size, bw);
 
-    err = devq_remove(dq, region_id);
+    err = devq_deregister(dq, region_id, &frame);
     if (err_is_fail(err)) {
-        USER_PANIC_ERR(err, "devq_remove failed.");
+        USER_PANIC_ERR(err, "devq_deregister failed.");
     }
+
+    free(received);
 
     cap_destroy(frame);
 }
 void ahci_verify_sequential(size_t buffer_size, size_t block_size)
 {
+    finish_counter = 0;
     bench_init();
     errval_t err;
     assert(buffer_size % block_size == 0);
@@ -289,15 +317,16 @@ void ahci_verify_sequential(size_t buffer_size, size_t block_size)
     memset(retaddr, rbyte, buffer_size);
 
     uint64_t write_flag = (1ULL << 63);
-    bool *received = calloc(1, sizeof(bool) * requests);
+    bufferid_t *received = calloc(1, sizeof(bufferid_t) * requests);
     for (size_t i=0; i < requests; i++) {
         uint64_t disk_block = write_flag | i;
         do {
-            err = devq_enqueue(dq, region_id, id.base + (i*block_size), block_size, (bufferid_t)&received[i], disk_block);
+            err = devq_enqueue(dq, region_id, (i*block_size), block_size, 
+                               0, block_size, disk_block);
             if (err_is_ok(err)) {
                 break;
             }
-            else if (err_no(err) == DEV_ERR_QUEUE_FULL) {
+            else if (err_no(err) == DEVQ_ERR_QUEUE_FULL) {
                 receive_block();
             }
             else {
@@ -306,25 +335,25 @@ void ahci_verify_sequential(size_t buffer_size, size_t block_size)
         } while (true);
     }
     // Make sure we have all requests:
-    for (size_t i=0; i<requests; i++) {
-        //printf("%s:%s:%d: i: %zu requests: %zu\n", __FILE__, __FUNCTION__, __LINE__, i, requests);
-        while (!received[i]) {
-            receive_block();
-        }
+    while (finish_counter < requests) {
+        receive_block();
     }
 
     memset(retaddr, 0x00, id.bytes);
-    memset((void*)received, 0x0, sizeof(bool)*requests);
+    memset((void*)received, 0x0, sizeof(bufferid_t)*requests);
+    finish_counter = 0;
 
     for (size_t i=0; i < requests; i++) {
         //printf("%s:%s:%d: i: %zu requests: %zu\n", __FILE__, __FUNCTION__, __LINE__, i, requests);
         uint64_t disk_block = i;
         do {
-            err = devq_enqueue(dq, region_id, id.base + (i*block_size), block_size, (bufferid_t)&received[i], disk_block);
+            err = devq_enqueue(dq, region_id, (i*block_size), 
+                               block_size, 0, block_size,
+                               disk_block);
             if (err_is_ok(err)) {
                 break;
             }
-            else if (err_no(err) == DEV_ERR_QUEUE_FULL) {
+            else if (err_no(err) == DEVQ_ERR_QUEUE_FULL) {
                 receive_block();
             }
             else {
@@ -332,12 +361,10 @@ void ahci_verify_sequential(size_t buffer_size, size_t block_size)
             }
         } while (true);
     }
+
     // Make sure we have all requests:
-    for (size_t i=0; i<requests; i++) {
-        while (!received[i]) {
-            //printf("%s:%s:%d: i: %zu requests: %zu\n", __FILE__, __FUNCTION__, __LINE__, i, requests);
-            receive_block();
-        }
+    while (finish_counter < requests) {
+        receive_block();
     }
 
     for (size_t i=0; i < buffer_size; i++) {
@@ -351,9 +378,8 @@ void ahci_verify_sequential(size_t buffer_size, size_t block_size)
     printf("[%s] SUCCESS (%zu %zu)\n", __FUNCTION__, buffer_size, block_size);
     cap_destroy(fcopy);
 
-    err = devq_remove(dq, region_id);
+    err = devq_deregister(dq, region_id, &frame);
     if (err_is_fail(err)) {
-        USER_PANIC_ERR(err, "devq_remove failed.");
+        USER_PANIC_ERR(err, "devq_deregister failed.");
     }
 }
-#endif

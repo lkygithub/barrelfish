@@ -4,7 +4,7 @@
 #include <driverkit/driverkit.h>
 
 #include <dev/jetsontk1/jetson_uart_dev.h>
-#include <jetsontk1_map.h>
+#include <maps/jetsontk1_map.h>
 
 //
 // Serial console and debugger interfaces
@@ -278,7 +278,7 @@ static void serial_putchar(unsigned port, char c)
 }
 
 /** write string to serial port */
-void serial_write(char *c, size_t len)
+void serial_write(const char *c, size_t len)
 {
     for (int i = 0; i < len; i++) {
         serial_putchar(serial_console_port, c[i]);

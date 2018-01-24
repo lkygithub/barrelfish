@@ -36,8 +36,8 @@ module /armv7/sbin/angler serial0.terminal dumb
 module /armv7/sbin/fish nospawn
 
 # module /armv7/sbin/memtest
-module /armv7/sbin/examples/rpc_server core=1
-module /armv7/sbin/examples/rpc_client core=0
+# module /armv7/sbin/examples/rpc_server core=1
+# module /armv7/sbin/examples/rpc_client core=0
 
 # gem5 simulates 512MB of RAM starting at 0x80000000
 #        start       size       id

@@ -28,9 +28,9 @@ struct ele {
     struct ele* next;
 };
 
-static errval_t create(struct descq* q)
+static errval_t create(struct descq* q, bool notifications, uint8_t role,
+                       uint64_t* queue_id)
 {
-    printf("Create \n");
     if (list == NULL) {
         list = malloc(sizeof(struct ele));
         list->q = q;
@@ -47,13 +47,11 @@ static errval_t create(struct descq* q)
     }
     
     qid++;
-    printf("Create end\n");
     return SYS_ERR_OK;
 }
 
 static errval_t destroy(struct descq* q)
 {
-    printf("Destroy \n");
     return SYS_ERR_OK;
 }
 
@@ -65,20 +63,23 @@ static errval_t notify(struct descq* q)
     errval_t err = SYS_ERR_OK;
     //errval_t err2 = SYS_ERR_OK;
     regionid_t rid;
-    lpaddr_t base;
-    size_t len;
-    bufferid_t bid;
+    genoffset_t offset;
+    genoffset_t length;
+    genoffset_t valid_data;
+    genoffset_t valid_length;
     uint64_t flags;
     bool exit = false;
     uint16_t num_enq = 0;
     while(!exit) {
-        err = devq_dequeue(queue, &rid, &base, &len, &bid, &flags);
+        err = devq_dequeue(queue, &rid, &offset, &length,
+                           &valid_data, &valid_length, &flags);
         if (err_is_fail(err)) {
             exit = true;
         } else {
            bool exit2 = false;
             while(!exit2) {
-                err = devq_enqueue(queue, rid, base, len, flags, &bid);
+                err = devq_enqueue(queue, rid, offset, length, valid_data,
+                                   valid_length, flags);
                 if (err_is_ok(err)) {
                     exit2 = true;
                     num_enq++;
@@ -91,7 +92,7 @@ static errval_t notify(struct descq* q)
         err = devq_notify(queue);
     } else {
         err = SYS_ERR_OK;
-    }   
+    }
 
     return err;
 }
@@ -99,26 +100,24 @@ static errval_t notify(struct descq* q)
 static errval_t reg(struct descq* q, struct capref cap,
                     regionid_t rid)
 {
-    printf("Register \n");
     return SYS_ERR_OK;
 }
 
 
 static errval_t dereg(struct descq* q, regionid_t rid)
 {
-    printf("Deregister \n");
     return SYS_ERR_OK;
 }
 
 
-static errval_t control(struct descq* q, uint64_t cmd, uint64_t value)
+static errval_t control(struct descq* q, uint64_t cmd, uint64_t value, uint64_t* res)
 {
-    printf("Control \n");
     return SYS_ERR_OK;
 }
 
 int main(int argc, char *argv[])
 {
+    uint64_t id;
     errval_t err;
     struct descq_func_pointer* f = malloc(sizeof(struct descq_func_pointer));
     assert(f != NULL);
@@ -128,12 +127,12 @@ int main(int argc, char *argv[])
     f->destroy = destroy;
     f->reg = reg;
     f->dereg = dereg;
-    f->control = control;   
+    f->control = control;
 
     struct descq* exp_queue;
 
     err = descq_create(&exp_queue, DESCQ_DEFAULT_SIZE, "test_queue", 
-                       true, f);
+                       true, true, 0, &id, f);
 
     assert(err_is_ok(err));
 

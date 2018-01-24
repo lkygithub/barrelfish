@@ -18,8 +18,10 @@
 #include <misc.h>
 #include <stdio.h>
 #include <wakeup.h>
+#include <timers.h>
 #include <irq.h>
-#include <arch/arm/gic.h>
+#include <arch/armv8/gic_v3.h>
+#include <dev/armv8_dev.h>
 
 void handle_user_page_fault(lvaddr_t                fault_address,
                             arch_registers_state_t* save_area,
@@ -203,17 +205,20 @@ void handle_irq(arch_registers_state_t* save_area, uintptr_t fault_pc,
 {
     uint32_t irq = 0;
 
-    /* The assembly stub leaves the first 4 registers, the stack pointer, and
-     * the exception PC for us to save, as it's run out of room for the
-     * necessary instructions. */
+    /* The assembly stub leaves the first 4 registers, the stack pointer, 
+     * the exception PC, and the SPSR for us to save, as it's run out of room for
+     * the necessary instructions. */
     save_area->named.x0    = x0;
     save_area->named.x1    = x1;
     save_area->named.x2    = x2;
     save_area->named.x3    = x3;
-    save_area->named.stack = sysreg_read_sp_el0();
+    save_area->named.stack = armv8_SP_EL0_rd(NULL);
+    save_area->named.spsr  = armv8_SPSR_EL1_rd(NULL);
     save_area->named.pc    = fault_pc;
 
-    irq = gic_get_active_irq();
+    irq = gicv3_get_active_irq();
+
+   // printk(LOG_NOTE, "handle_irq IRQ %"PRIu32"\n", irq);
 
     debug(SUBSYS_DISPATCH, "IRQ %"PRIu32" while %s\n", irq,
           dcb_current ? (dcb_current->disabled ? "disabled": "enabled") :
@@ -249,13 +254,14 @@ void handle_irq(arch_registers_state_t* save_area, uintptr_t fault_pc,
      * We just acknowledge it here. */
     else
 #endif
-if(irq == 1)
-    {
-    	gic_ack_irq(irq);
-    	dispatch(schedule());
+
+    if(irq == 30 || irq==29) {
+        gicv3_ack_irq(irq);
+        timer_reset(CONFIG_TIMESLICE);
+        dispatch(schedule());
     }
     else {
-        gic_ack_irq(irq);
+        gicv3_ack_irq(irq);
         send_user_interrupt(irq);
         panic("Unhandled IRQ %"PRIu32"\n", irq);
     }
@@ -266,7 +272,7 @@ if(irq == 1)
 
 /* For unhandled faults, we print a register dump and panic. */
 void fatal_kernel_fault(lvaddr_t epc, uint64_t spsr, uint64_t esr,
-                        arch_registers_state_t* save_area)
+                        uint64_t vector, arch_registers_state_t* save_area)
 {
     size_t i;
     enum aarch64_exception_class exception_class = FIELD(26,6,esr);
@@ -275,6 +281,60 @@ void fatal_kernel_fault(lvaddr_t epc, uint64_t spsr, uint64_t esr,
 
     printk(LOG_PANIC, "Fatal (unexpected) fault at 0x%"PRIx64 " (%#" PRIx64 ")\n\n", epc, epc - (uintptr_t)&kernel_first_byte);
     printk(LOG_PANIC, "Register context saved at: %p\n", save_area);
+    printk(LOG_PANIC, "Vector: ");
+    switch(vector) {
+        case AARCH64_EVECTOR_UNDEF:
+            printk(LOG_PANIC, "UNDEF\n");
+            break;
+        case AARCH64_EVECTOR_EL0_SYNC:
+            printk(LOG_PANIC, "EL0_SYNC\n");
+            break;
+        case AARCH64_EVECTOR_EL0_IRQ:
+            printk(LOG_PANIC, "EL0_IRQ\n");
+            break;
+        case AARCH64_EVECTOR_EL0_FIQ:
+            printk(LOG_PANIC, "EL0_FIQ\n");
+            break;
+        case AARCH64_EVECTOR_EL0_SERROR:
+            printk(LOG_PANIC, "EL0_SERROR\n");
+            break;
+        case AARCH64_EVECTOR_EL1_SYNC:
+            printk(LOG_PANIC, "EL1_SYNC\n");
+            break;
+        case AARCH64_EVECTOR_EL1_IRQ:
+            printk(LOG_PANIC, "EL1_IRQ\n");
+            break;
+        case AARCH64_EVECTOR_EL1_FIQ:
+            printk(LOG_PANIC, "EL1_FIQ\n");
+            break;
+        case AARCH64_EVECTOR_EL1_SERROR:
+            printk(LOG_PANIC, "EL1_SERROR\n");
+            break;
+        case AARCH64_EVECTOR_EL2_SYNC:
+            printk(LOG_PANIC, "EL2_SYNC\n");
+            break;
+        case AARCH64_EVECTOR_EL2_IRQ:
+            printk(LOG_PANIC, "EL2_IRQ\n");
+            break;
+        case AARCH64_EVECTOR_EL2_FIQ:
+            printk(LOG_PANIC, "EL2_FIQ\n");
+            break;
+        case AARCH64_EVECTOR_EL2_SERROR:
+            printk(LOG_PANIC, "EL2_SERROR\n");
+            break;
+        case AARCH32_EVECTOR_EL0_SYNC:
+            printk(LOG_PANIC, "AARCH32_EL0_SYNC\n");
+            break;
+        case AARCH32_EVECTOR_EL0_IRQ:
+            printk(LOG_PANIC, "AARCH32_EL0_IRQ\n");
+            break;
+        case AARCH32_EVECTOR_EL0_FIQ:
+            printk(LOG_PANIC, "AARCH32_EL0_FIQ\n");
+            break;
+        case AARCH32_EVECTOR_EL0_SERROR:
+            printk(LOG_PANIC, "AARCH32_EL0_SERROR\n");
+            break;
+    }
 
     for (i = 0; i < 31; i++) {
         uint64_t reg = save_area->regs[i];
@@ -287,7 +347,7 @@ void fatal_kernel_fault(lvaddr_t epc, uint64_t spsr, uint64_t esr,
 
     printk(LOG_PANIC, "sp\t%"PRIx64"\n", save_area->regs[SP_REG]);
     printk(LOG_PANIC, "pc\t%"PRIx64"\n", epc);
-    printk(LOG_PANIC, "cpsr\t%"PRIx64"\n", spsr);
+    printk(LOG_PANIC, "spsr\t%"PRIx64"\n", spsr);
     printk(LOG_PANIC, "instruction-specific syndrome\t%x\n", iss);
 
     /* Skip the trap frame to dump the prior stack. */
@@ -325,7 +385,7 @@ void fatal_kernel_fault(lvaddr_t epc, uint64_t spsr, uint64_t esr,
 
     switch(exception_class) {
         case aarch64_ec_unknown:
-            panic("Unknown instruction.\n");
+            panic("Unknown reason/instruction.\n");
 
         case aarch64_ec_wfi:
             panic("Trapped WFI/WFI.\n");

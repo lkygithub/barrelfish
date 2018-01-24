@@ -406,7 +406,7 @@ caps_map_l1(struct capability* dest,
             entry++;
 
             /* Clean the modified entry to L2 cache. */
-            clean_to_pou(entry);
+            // clean_to_pou(entry);
 
             debug(SUBSYS_PAGING, "L2 mapping %08"PRIxLVADDR"[%"PRIuCSLOT
                                  "] @%p = %08"PRIx32"\n",
@@ -414,7 +414,7 @@ caps_map_l1(struct capability* dest,
         }
 
         // Flush TLB if remapping.
-		cp15_invalidate_d_cache();
+		cp15_invalidate_d_cache(); /* FIXME replace clean_to_pou above */
         invalidate_tlb(); /* XXX selective */
         return SYS_ERR_OK;
     }
@@ -475,13 +475,13 @@ caps_map_l1(struct capability* dest,
             (src_lpaddr + i * ARM_L2_TABLE_BYTES) >> 10;
 
         /* Clean the modified entry to L2 cache. */
-        clean_to_pou(entry);
+        // clean_to_pou(entry);
 
         debug(SUBSYS_PAGING, "L1 mapping %"PRIuCSLOT". @%p = %08"PRIx32"\n",
               slot + i, entry, entry->raw);
     }
 
-	cp15_invalidate_d_cache();
+	cp15_invalidate_d_cache(); /* FIXME replace clean_to_pou above */
     invalidate_tlb(); /* XXX selective */
 
     return SYS_ERR_OK;
@@ -546,7 +546,7 @@ caps_map_l2(struct capability* dest,
         entry->small_page.base_address = (src_lpaddr + i * BASE_PAGE_SIZE) >> 12;
 
         /* Clean the modified entry to L2 cache. */
-        clean_to_pou(entry);
+        // clean_to_pou(entry);
 
         debug(SUBSYS_PAGING, "L2 mapping %08"PRIxLVADDR"[%"PRIuCSLOT"] @%p = %08"PRIx32"\n",
                dest_lvaddr, slot, entry, entry->raw);
@@ -555,7 +555,7 @@ caps_map_l2(struct capability* dest,
     }
 
     // Flush TLB if remapping.
-	cp15_invalidate_d_cache();
+	cp15_invalidate_d_cache(); /* FIXME replace clean_to_pou above */
     invalidate_tlb(); /* XXX selective */
 
     return SYS_ERR_OK;
@@ -641,10 +641,11 @@ errval_t paging_modify_flags(struct capability *mapping, uintptr_t offset,
         paging_set_flags(entry, kpi_paging_flags);
 
         /* Clean the modified entry to L2 cache. */
-        clean_to_pou(entry);
+        // clean_to_pou(entry);
     }
 
-	cp15_invalidate_d_cache();
+	cp15_invalidate_d_cache(); /* FIXME replace clean_to_pou above */ 
+
     return paging_tlb_flush_range(cte_for_cap(mapping), offset, pages);
 }
 
@@ -714,8 +715,8 @@ void paging_map_user_pages_l1(lvaddr_t table_base, lvaddr_t va, lpaddr_t pa)
     l1_table[ARM_L1_OFFSET(va)] = e;
 
     /* Clean the modified entry to L2 cache. */
-    clean_to_pou(&l1_table[ARM_L1_OFFSET(va)]);
-	cp15_invalidate_d_cache();
+    // clean_to_pou(&l1_table[ARM_L1_OFFSET(va)]);
+	cp15_invalidate_d_cache(); /* FIXME replace clean_to_pou above */
 }
 
 /**
@@ -738,6 +739,6 @@ void paging_set_l2_entry(uintptr_t* l2e, lpaddr_t addr, uintptr_t flags)
     *l2e = e.raw;
 
     /* Clean the modified entry to L2 cache. */
-    clean_to_pou(l2e);
-	cp15_invalidate_d_cache();
+    // clean_to_pou(l2e);
+	cp15_invalidate_d_cache(); /* FIXME replace clean_to_pou above */
 }

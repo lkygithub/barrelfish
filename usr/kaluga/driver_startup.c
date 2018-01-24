@@ -16,11 +16,11 @@
 #include <pci/pci.h> // for pci_address
 
 #ifdef __arm__
-#include <if/monitor_blocking_rpcclient_defs.h>
+#include <if/monitor_blocking_defs.h>
 #endif
 
 #ifdef __aarch64__
-#include <if/monitor_blocking_rpcclient_defs.h>
+#include <if/monitor_blocking_defs.h>
 #endif
 
 #include "kaluga.h"
@@ -91,7 +91,7 @@ errval_t default_start_function(coreid_t where,
         // list.
         pci_arg_str = malloc(26);
         // Make sure pci vendor and device id fit into our argument
-        assert(vendor_id < 0x9999 && device_id < 0x9999);
+        assert(vendor_id < 0xFFFF && device_id < 0xFFFF);
         snprintf(pci_arg_str, 26, "%04"PRIx64":%04"PRIx64":%04"PRIx64":%04"
                         PRIx64":%04"PRIx64, vendor_id, device_id, bus, dev, fun);
 
@@ -155,13 +155,13 @@ errval_t start_networking(coreid_t core,
 
     struct module_info* netd = find_module("netd");
     if (netd == NULL || !is_auto_driver(netd)) {
-        printf("Kaluga: netd not found or not declared as auto.");
+        printf("Kaluga: netd not found or not declared as auto.\n");
         return KALUGA_ERR_DRIVER_NOT_AUTO;
     }
 
     struct module_info* ngd_mng = find_module("NGD_mng");
     if (ngd_mng == NULL || !is_auto_driver(ngd_mng)) {
-        printf("Kaluga: NGD_mng not found or not declared as auto.");
+        printf("Kaluga: NGD_mng not found or not declared as auto.\n");
         return KALUGA_ERR_DRIVER_NOT_AUTO;
     }
 
@@ -204,14 +204,14 @@ errval_t start_networking(coreid_t core,
 /*     debug_printf("doing pandaboard related setup...\n"); */
 /*     errval_t err; */
 
-/*     struct monitor_blocking_rpc_client *cl = get_monitor_blocking_rpc_client(); */
+/*     struct monitor_binding *cl = get_monitor_blocking_binding(); */
 /*     assert(cl != NULL); */
 
 /*     // Request I/O Cap */
 /*     struct capref requested_caps; */
 /*     errval_t error_code; */
 
-/*     err = cl->vtbl.get_io_cap(cl, &requested_caps, &error_code); */
+/*     err = cl->rpc_tx_vtbl.get_io_cap(cl, &requested_caps, &error_code); */
 /*     assert(err_is_ok(err) && err_is_ok(error_code)); */
 
 /*     // Copy into correct slot */

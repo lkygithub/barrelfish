@@ -11,14 +11,13 @@
 #define USB_MANAGER_CLIENT_H_
 
 #include <if/usb_manager_defs.h>
-#include <if/usb_manager_rpcclient_defs.h>
 #include <if/usb_driver_defs.h>
 
-extern struct usb_manager_rpc_client usb_manager;
+extern struct usb_manager_binding *usb_manager;
 
 void usb_driver_rx_detach_notify(struct usb_driver_binding *b);
 void usb_driver_rx_done_notify(struct usb_driver_binding *b,
-        uint32_t tid, uint32_t error, uint8_t *data, size_t length);
+        uint32_t tid, uint32_t error, const uint8_t *data, size_t length);
 
 struct usb_client_st {
     lib_usb_callback callback;
