@@ -16,7 +16,7 @@
 #define RTL8169_H
 
 #include <barrelfish/barrelfish.h>
-#include <if/net_queue_manager_defs.h>
+//#include <if/net_queue_manager_defs.h>
 //#include <pci/pci.h>
 #include "rtl8169_debug.h"
 

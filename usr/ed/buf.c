@@ -393,11 +393,12 @@ char open_sbuf( void )
 /* FIXME: barrelfish have not pathconf
  * just return 
  */
-static long pathconf (const char * filename, int type){
+#if 1
+long pathconf (const char * filename, int type){
 	// FIXME: it is not right!
-	return (long) type;
+	return (long) 256;
 }
-
+#endif
 
 int path_max( const char *filename )
   {

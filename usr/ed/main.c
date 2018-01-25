@@ -151,6 +151,8 @@ int main( const int argc, const char *argv[] )
   //for barrelfish vfs
   vfs_init();
 
+  int mcount = 0;
+  printf("###Here%d\n", mcount++);
   if( !ap_init( &parser, argc, argv, options, 0 ) )
     { show_error( "Memory exhausted", 0, 0 ); return 1; }
   if( ap_error( &parser ) )				/* bad option */
@@ -175,9 +177,12 @@ int main( const int argc, const char *argv[] )
       default: show_error( "internal_error: uncaught option", 0, 0 ); return 3;
       }
     }
+  printf("###Here%d\n", mcount++);
   setlocale( LC_ALL, "" );
+  printf("###Here3%d\n", mcount++);
   if( !init_buffers() ) return 1;
 
+  printf("###Here3%d\n", mcount++);
   while( argind < ap_arguments( &parser ) )
     {
     const char * arg = ap_argument( &parser, argind );
@@ -196,7 +201,10 @@ int main( const int argc, const char *argv[] )
       }
     break;
     }
+  printf("###Here%d\n", mcount++);
   ap_free( &parser );
 
+  printf("###Here%d\n", mcount++);
+  printf("###Enter main_loop!\n");
   return main_loop( loose );
   }

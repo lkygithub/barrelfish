@@ -46,7 +46,7 @@ static void page_select(uint8_t page);
 #define rtl8029as_rtlp_write_32(d,a,v)  PAGE_WRITE(d,a,32,rtl8029as_rtl8029as,v)
 
 #include <net_queue_manager/net_queue_manager.h>
-#include "rtl8029.h"
+#include "rtl8169.h"
 #include <dev/rtl8029as_dev.h>
 
 

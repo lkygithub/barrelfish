@@ -23,8 +23,8 @@
 #include "kaluga.h"
 
 #define SERIAL_IRQ 4
-//#define SERIAL_BINARY "serial_pc16550d"
-#define SERIAL_BINARY "serial_kernel"
+#define SERIAL_BINARY "serial_pc16550d"
+//#define SERIAL_BINARY "serial_kernel"
 
 #define LPC_TIMER_IRQ 0
 #define LPC_TIMER_BINARY "lpc_timer"

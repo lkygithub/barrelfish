@@ -12,11 +12,11 @@
 
 [ build application { target = "ed",
                       cFiles = [ "buf.c", "carg_parser.c", "glbl.c", "io.c",
-					             "main.c", "main_loop.c", "re.c", "signal.c" ],
-                      addIncludes = [], 
-					  addCFlags = [ "-Wall", "-W", "-O2", "-D_PC_PATH_MAX=4"],
+					             "main.c", "main_loop.c", "re.c", "signal.c"],
+                      addIncludes = [ ""], 
+					  addCFlags = [ "-Wall", "-W", "-O2"],
                       omitCFlags = [ "-Wredundant-decls",
                                      "-Werror" ],
-                      addLibraries = libDeps ["vfs", "posixcompat"]
+                      addLibraries = libDeps ["vfs_ramfs", "posixcompat"]
                     }
 ]
