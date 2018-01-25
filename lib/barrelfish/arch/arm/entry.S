@@ -3,6 +3,15 @@
  * \brief Dispatcher entry points.
  */
 
+/**
+ * \entry.S
+ * \brief 这个文件主要是设置Dispatcher的一些接口
+ * run_entry: Cpu_driver重新调度Disp后的入口函数（enable状态下）
+ * pagefault_entry：Disp pagefault处理接口（enable）
+ * disabled_pagefault_entry：同上（disable）
+ * trap_entry； 陷阱？
+ */  
+
 /*
  * Copyright (c) 2007, 2008, 2009, ETH Zurich.
  * All rights reserved.

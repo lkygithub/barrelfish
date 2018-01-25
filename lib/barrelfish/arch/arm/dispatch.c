@@ -237,6 +237,8 @@ void disp_save_rm_kcb(void)
 
 /**
  * \brief Architecture-specific dispatcher initialisation
+ * \这些函数实现与arch/arch-specific/entry.S
+ * \每个接口有独立的固定的堆栈区（位于Disp Frame中）
  */
 void disp_arch_init(dispatcher_handle_t handle)
 {
