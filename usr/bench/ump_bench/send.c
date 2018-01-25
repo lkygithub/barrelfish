@@ -45,8 +45,8 @@ void experiment(coreid_t idx)
     }
 
     for (int i = MAX_COUNT / 10; i < MAX_COUNT; i++) {
-        printf("page %d took %"PRIuCYCLES", time1: %016x, time0: %016x, tsc_overhead: %016x\n", i,
+        printf("page %d took %"PRIuCYCLES"\n", i,
                timestamps[i].time1 - timestamps[i].time0
-               - bench_tscoverhead(), timestamps[i].time1, timestamps[i].time0, bench_tscoverhead());
+               - bench_tscoverhead());
     }
 }

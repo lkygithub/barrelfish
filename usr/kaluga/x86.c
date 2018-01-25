@@ -65,7 +65,7 @@ static errval_t start_serial(void){
         err = sys_debug_create_irq_src_cap(cap, int_nr, int_nr);
 
         if(err_is_fail(err)){
-            DEBUG_ERR(err, "Could not create int_src capsdf ");
+            DEBUG_ERR(err, "Could not create int_src cap");
             return err;
         }
         err = mi->start_function(0, mi, "hw.legacy.uart.1 {}", &arg);

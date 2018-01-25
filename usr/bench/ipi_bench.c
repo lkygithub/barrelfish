@@ -16,7 +16,6 @@
 #include <stdio.h>
 #include <barrelfish/barrelfish.h>
 #include <barrelfish/sys_debug.h>
-#include <barrelfish_kpi/legacy_idc_buffer.h>
 
 #define ITERATIONS      100
 #define IPI_IRQ         18

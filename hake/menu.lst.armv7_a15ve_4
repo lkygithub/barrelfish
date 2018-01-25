@@ -36,7 +36,7 @@ module /armv7/sbin/corectrl auto
 module /armv7/sbin/angler serial0.terminal linux
 module /armv7/sbin/fish nospawn
 
-# module /armv7/sbin/memtest
+module /armv7/sbin/memtest
 # module /armv7/sbin/examples/rpc_server core=1
 # module /armv7/sbin/examples/rpc_client core=0
 

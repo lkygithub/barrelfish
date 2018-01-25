@@ -122,6 +122,8 @@ struct dcb *spawn_module(struct spawn_state *st,
 {
     errval_t err;
 
+    printf("spawn module: %s\n", name);
+
     // check for reuse of static state
 #ifndef NDEBUG
     static bool once_only;
