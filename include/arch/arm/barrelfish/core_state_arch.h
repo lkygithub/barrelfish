@@ -16,7 +16,7 @@
 #define ARCH_ARM_BARRELFISH_CORESTATE_H
 
 #include <barrelfish/core_state.h>
-
+// Disp 虚拟地址空间状态
 struct vspace_state {
     struct vspace vspace;
     struct pmap_arm pmap;
@@ -32,8 +32,11 @@ struct pinned_state {
 };
 
 struct core_state_arch {
+    // Disp通用核心状态
     struct core_state_generic c;
+    // Disp 虚拟地址空间状态
     struct vspace_state vspace_state;
+    // ?
     struct pinned_state pinned_state;
 };
 

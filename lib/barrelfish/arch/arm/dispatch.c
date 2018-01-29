@@ -53,6 +53,13 @@ STATIC_ASSERT(PC_REG   == 16, "broken context assumption");
  * e.g. when a new thread is created, it is started using this function, with r0 and r1
  * being arguments.
  */
+/*
+ * 恢复被选择线程寄存器内容
+ * 1. 重新设置Disp状态为enble
+ * 2. 恢复cpsr寄存器
+ * 3. 恢复r0-r15寄存器
+ * 4. nop
+ */ 
 static void __attribute__((naked)) __attribute__((noinline))
 disp_resume_context(struct dispatcher_shared_generic *disp, uint32_t *regs)
 {
@@ -71,7 +78,9 @@ disp_resume_context(struct dispatcher_shared_generic *disp, uint32_t *regs)
                   );
 }
 
-
+/*
+ * 保存当前寄存器状态
+ */ 
 static void __attribute__((naked))
 disp_save_context(uint32_t *regs)
 {
@@ -118,7 +127,7 @@ disp_resume(dispatcher_handle_t handle,
 
     assert_disabled(curdispatcher() == handle);
     assert_disabled(disp->d.disabled);
-    assert_disabled(disp->d.haswork);
+    assert_disabled(z`disp->d.haswork);
 
 #ifdef CONFIG_DEBUG_DEADLOCKS
     ((struct disp_priv *)disp)->yieldcount = 0;
@@ -159,6 +168,7 @@ void disp_switch(dispatcher_handle_t handle,
     assert_disabled(to_state != NULL);
 
     disp_save_context(from_state->regs);
+    // 线程被唤醒后执行 disp_switch_epilog 入口
     from_state->named.pc = (lvaddr_t)disp_switch_epilog;
     disp_resume_context(&disp->d, to_state->regs);
 
@@ -199,6 +209,7 @@ void disp_save(dispatcher_handle_t handle,
     state->named.pc = (lvaddr_t)disp_save_epilog;
 
     if (yield) {
+        // dispatcher放弃CPU，交给yield_to指定的dispatcher
         sys_yield(yield_to);
         // may fail if target doesn't exist; if so, just fall through
     }
@@ -206,11 +217,14 @@ void disp_save(dispatcher_handle_t handle,
 
     // enter thread scheduler again
     // this doesn't return, and will call disp_yield if there's nothing to do
+    // dispatcher占有CPU，调度其他线程
     thread_run_disabled(handle);
 
     __asm volatile("disp_save_epilog:");
 }
-
+/*
+ * 用在何处？
+ */ 
 void disp_save_rm_kcb(void)
 {
     dispatcher_handle_t handle = disp_disable();
@@ -249,6 +263,8 @@ void disp_arch_init(dispatcher_handle_t handle)
     disp->d.dispatcher_pagefault          = (lvaddr_t)pagefault_entry;
     disp->d.dispatcher_pagefault_disabled = (lvaddr_t)disabled_pagefault_entry;
     disp->d.dispatcher_trap               = (lvaddr_t)trap_entry;
+    // 临界代码段（disp_resume_context函数）的 PC 起始地址
     disp->crit_pc_low                     = (lvaddr_t)disp_resume_context;
+    // 临界代码段（disp_resume_context函数）的 PC 结束地址
     disp->crit_pc_high                    = (lvaddr_t)disp_resume_context_epilog;
 }

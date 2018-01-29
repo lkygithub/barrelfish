@@ -394,6 +394,7 @@ static void monitor_bind_cont(void *st, errval_t err, struct monitor_binding *b)
 void barrelfish_init_disabled(dispatcher_handle_t handle, bool init_dom_arg);
 void barrelfish_init_disabled(dispatcher_handle_t handle, bool init_dom_arg)
 {
+    //全局bool变量init_domain: 1->init进程，0->非init进程
     init_domain = init_dom_arg;
     disp_init_disabled(handle);
     thread_init_disabled(handle, init_dom_arg);

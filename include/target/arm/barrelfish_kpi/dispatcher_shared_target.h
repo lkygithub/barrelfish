@@ -20,7 +20,8 @@
 ///< Architecture specific kernel/user shared dispatcher struct
 struct dispatcher_shared_arm {
     struct dispatcher_shared_generic d; ///< Generic portion
-
+    // 所谓的临界区就是切换线程寄存器内容的那个函数
+    // 即 disp_resume_context 函数
     lvaddr_t    crit_pc_low;        ///< Critical section lower PC bound
     lvaddr_t    crit_pc_high;       ///< Critical section upper PC bound
     lvaddr_t    got_base;           ///< Global Offset Table base

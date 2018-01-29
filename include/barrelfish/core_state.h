@@ -32,7 +32,7 @@ struct v2pmap {
     genpaddr_t  pa;
     size_t      size;
 };
-
+// Dispatcher self-paging内存分配
 struct morecore_state {
     struct thread_mutex mutex;
     Header header_base;
@@ -41,7 +41,7 @@ struct morecore_state {
     struct v2pmap v2p_mappings[MAX_V2P_MAPPINGS];
     int v2p_entries;
 };
-
+// 系统内存服务状态
 struct ram_alloc_state {
     bool mem_connect_done;
     errval_t mem_connect_err;
@@ -51,12 +51,13 @@ struct ram_alloc_state {
     uint64_t default_maxlimit;
     int base_capnum;
 };
-
+// 系统skb状态
 struct skb_state {
     bool request_done;
+    // 与SKB进程的通信连接
     struct skb_binding *skb;
 };
-
+// Cap slot分配状态
 struct slot_alloc_state {
     struct multi_slot_allocator defca;
 
@@ -83,16 +84,23 @@ struct mem_binding;
 struct spawn_binding;
 struct arrakis_binding;
 struct proc_mgmt_binding;
-
+// 通用Disp核心状态
 struct core_state_generic {
+    // Disp默认 waitset
     struct waitset default_waitset;
+    // 与monitor的通信连接
     struct monitor_binding *monitor_binding;
+    // 与monitor的通信连接（阻塞接口）
     struct monitor_blocking_binding *monitor_blocking_binding;
+    // 与ram_alloc进程的通信连接
     struct mem_binding *mem_st;
     struct morecore_state morecore_state;
     struct ram_alloc_state ram_alloc_state;
+    // 与SKB服务器的通信连接
     struct octopus_binding *octopus_binding;
+    // spwan 具体?
     struct spawn_binding *spawn_bindings[MAX_CPUS];
+    // 与Domain管理服务程序的通信连接
     struct proc_mgmt_binding *proc_mgmt_binding;
     struct arrakis_binding *arrakis_bindings[MAX_CPUS];
     struct terminal_state *terminal_state;

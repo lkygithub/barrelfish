@@ -1,6 +1,7 @@
 /**
  * \file
  * \brief Generic dispatcher structure private to the user
+ * \brief 用户层通用dispatcher数据结构
  */
 
 /*
@@ -29,8 +30,10 @@ struct notificator;
 #define MAX_RECV_SLOTS   4
 
 // Architecture generic user only dispatcher struct
+// 体系结构通用用户 only Dispatcher 数据结构
 struct dispatcher_generic {
     /// stack for traps and disabled pagefaults
+    /// DISPATCHER_STACK_WORDS = 8192 / sizeof uintptr_t
     uintptr_t trap_stack[DISPATCHER_STACK_WORDS] __attribute__ ((aligned (16)));
     /// all other dispatcher upcalls run on this stack
     uintptr_t stack[DISPATCHER_STACK_WORDS] __attribute__ ((aligned (16)));
@@ -93,9 +96,9 @@ struct dispatcher_generic {
 
     /// list of polled channels
     struct waitset_chanstate *polled_channels;
-    
+    /// 实现策略和机制?
     struct notificator *notificators;
-
+    /// cap 接收队列缓冲，最大为 4
     struct capref recv_slots[MAX_RECV_SLOTS];///< Queued cap recv slots
     int8_t recv_slot_count;                 ///< number of currently queued recv slots
 

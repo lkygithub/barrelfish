@@ -1,6 +1,7 @@
 /**
  * \file
  * \brief libc startup code.
+ * \brief 用户程序启动接口_start
  */
 
 /*
