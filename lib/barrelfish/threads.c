@@ -85,6 +85,7 @@ static size_t tls_block_total_len;
 __attribute__((unused)) static bool stack_warned=0;
 
 /// Wrapper function for most threads, runs given function then deletes itself
+/// 绝大多数线程的入口
 static void thread_entry(thread_func_t start_func, void *start_data)
 {
     assert((lvaddr_t)start_func >= BASE_PAGE_SIZE);
@@ -136,6 +137,7 @@ void thread_enqueue(struct thread *thread, struct thread **queue)
 {
     assert_disabled(thread != NULL);
     assert_disabled(queue != NULL);
+	///> 只在调试时有用
     check_queue(*queue);
     if (*queue == NULL) {
         *queue = thread->prev = thread->next = thread;
