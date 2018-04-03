@@ -127,7 +127,7 @@ disp_resume(dispatcher_handle_t handle,
 
     assert_disabled(curdispatcher() == handle);
     assert_disabled(disp->d.disabled);
-    assert_disabled(z`disp->d.haswork);
+    assert_disabled(disp->d.haswork);
 
 #ifdef CONFIG_DEBUG_DEADLOCKS
     ((struct disp_priv *)disp)->yieldcount = 0;

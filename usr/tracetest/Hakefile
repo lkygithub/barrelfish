@@ -6,16 +6,13 @@
 -- If you do not find this file, copies can be found by writing to:
 -- ETH Zurich D-INFK, Haldeneggsteig 4, CH-8092 Zurich. Attn: Systems Group.
 --
--- Hakefile for drivers/rtl8029
+-- Hakefile for /usr/tests/spantest
 --
 --------------------------------------------------------------------------
 
-[ build application { target = "rtl8169",
-                      cFiles = ["rtl8169.c"] -- ,
---                       flounderBindings = [ "net_queue_manager",
---                                             "net_soft_filters" ],
---                       mackerelDevices = [ "rtl8169" ],
---                       addLibraries = libDeps [ "pci", "netQmng" ]
+[ build application { target = "tracetest" ,
+                      cFiles = [ "main.c" ],
+                      addLibraries = [ "trace" ]    
+                      -- flounderDefs = [ "monitor" ]
                     }
 ]
-

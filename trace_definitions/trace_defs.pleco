@@ -107,6 +107,13 @@ subsystem threads {
     event C_DISP_SAVE                           "calling disp_save",
 };
 
+subsystem mtrace {
+
+    event START "the thread start",
+	event RUN	"the thread run",
+	event END 	"the thread end",
+};
+
 subsystem memserv {
 
     event ALLOC "",

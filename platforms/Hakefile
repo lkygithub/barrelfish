@@ -308,7 +308,6 @@ let bin_rcce_lu = [ "/sbin/" ++ f | f <- [
                                "skb",
                                "angler",
                                "fish",
-							   "ed",
                                "memtest"
                                ] ]
 
@@ -320,6 +319,7 @@ let bin_rcce_lu = [ "/sbin/" ++ f | f <- [
                                "kaluga",
                                "mem_serv",
                                "monitor",
+                               "proc_mgmt",
                                "ramfsd",
                                "serial_jetsontk1",
                                "serial_kernel",

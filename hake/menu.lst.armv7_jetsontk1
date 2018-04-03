@@ -23,7 +23,8 @@ module /armv7/sbin/skb boot
 modulenounzip /eclipseclp_ramfs.cpio.gz nospawn
 modulenounzip /skb_ramfs.cpio.gz nospawn
 module /armv7/sbin/kaluga boot add_device_db=plat_Jetsontk1
-module /armv7/sbin/spawnd boot
+module /armv7/sbin/spawnd boot bootarm=0
+module /armv7/sbin/proc_mgmt boot
 module /armv7/sbin/startd boot
 
 # Device drivers
@@ -35,10 +36,10 @@ module /armv7/sbin/corectrl auto
 module /armv7/sbin/angler serial0.terminal xterm
 module /armv7/sbin/fish nospawn
 
-module /armv7/sbin/memtest
+#module /armv7/sbin/memtest
 module /armv7/sbin/ed nospawn
+module /armv7/sbin/examples/xmpl-hello nospawn
 # module /armv7/sbin/examples/xmpl-span core=0 3
-# module /armv7/sbin/examples/xmpl-hello nospawn
 # module /armv7/sbin/yield_test nospawn
 # module /armv7/sbin/xcorecapbench nospawn
 # module /armv7/sbin/ump_send nospawn
