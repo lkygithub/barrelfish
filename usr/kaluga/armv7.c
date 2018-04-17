@@ -35,7 +35,7 @@ static errval_t omap44xx_startup(void)
 {
     errval_t err;
 
-    err = init_cap_manager();
+    err = init_device_caps_manager();
     assert(err_is_ok(err));
 
     start_driverdomain("fdif {}");
@@ -82,9 +82,6 @@ static errval_t omap44xx_startup(void)
 static errval_t vexpress_startup(void)
 {
     errval_t err;
-    err = init_cap_manager();
-    assert(err_is_ok(err));
-
     struct module_info* mi = find_module("serial_pl011");
     if (mi != NULL) {
         err = mi->start_function(0, mi, "hw.arm.vexpress.uart {}", NULL);
@@ -151,6 +148,27 @@ errval_t arch_startup(char * add_device_db_file)
         }
     }
 
+    err = skb_execute_query("decoding_net(N),load_net(N).");
+    if(err_is_fail(err)){
+        DEBUG_SKB_ERR(err, "No decoding net loaded.");
+    }
+
+    err = skb_execute_query("decoding_net_meta(M),load_net(M).");
+    if(err_is_fail(err)){
+        DEBUG_SKB_ERR(err, "No decoding net metadata loaded.");
+    }
+
+    err = skb_execute_query("decoding_net_irq(N),load_net(N).");
+    if(err_is_fail(err)){
+        DEBUG_SKB_ERR(err, "No irq decoding net loaded.");
+    }
+    printf("Decoding net irq successfully loaded!\n");
+
+    err = skb_execute_query("decoding_net_irq_meta(M),load_net(M).");
+    if(err_is_fail(err)){
+        DEBUG_SKB_ERR(err, "No irq decoding net metadata loaded.");
+    }
+
     struct monitor_blocking_binding *m = get_monitor_blocking_binding();
     assert(m != NULL);
 
@@ -213,7 +231,6 @@ errval_t arch_startup(char * add_device_db_file)
             debug_printf("Kaluga running on a Zynq7000\n");
             return zynq7_startup();
     }
-
 
     return KALUGA_ERR_UNKNOWN_PLATFORM;
 }

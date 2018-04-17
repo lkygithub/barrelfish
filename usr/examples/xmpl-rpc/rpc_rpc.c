@@ -31,7 +31,7 @@ static void send_myrpc(void)
     errval_t err;
 
     int in;
-    char s_out[2048];
+    char *s_out;
 
     debug_printf("client: sending myrpc\n");
 
@@ -39,7 +39,7 @@ static void send_myrpc(void)
     err = xmplrpc_client->rpc_tx_vtbl.myrpc(&xmplrpc_client, in, &s_out);
 
     if (err_is_ok(err)) {
-        debug_printf("client: myrpc(in: %u, out: '%s')\n", in, &s_out);
+        debug_printf("client: myrpc(in: %u, out: '%s')\n", in, s_out);
         free(s_out);
     } else {
         DEBUG_ERR(err, "xmlrpc myrpc");
@@ -49,7 +49,6 @@ static void send_myrpc(void)
 
 static void bind_cb(void *st, errval_t err, struct xmplrpc_binding *b)
 {
-	printf("######################################################\n");
     if (err_is_fail(err)) {
         USER_PANIC_ERR(err, "bind failed");
     }
@@ -76,7 +75,6 @@ static void start_client(void)
                      NULL /* state for bind_cb */,
                      get_default_waitset(),
                      IDC_BIND_FLAGS_DEFAULT);
-	printf ("####bind success\n");
     if (err_is_fail(err)) {
         USER_PANIC_ERR(err, "bind failed");
     }
@@ -195,12 +193,9 @@ static void start_server(void)
 int main(int argc, char *argv[]) 
 {
     errval_t err;
-	int i = 0;
-	int flag = 0;
 
     if ((argc >= 2) && (strcmp(argv[1], "client") == 0)) {
         start_client();
-		flag = 1;
     } else if ((argc >= 2) && (strcmp(argv[1], "server") == 0)) {
         start_server();
     } else {
@@ -210,8 +205,6 @@ int main(int argc, char *argv[])
 
     struct waitset *ws = get_default_waitset();
     while (1) {
-		if (flag)
-			printf ("%d\n", i++);
         err = event_dispatch(ws);
         if (err_is_fail(err)) {
             DEBUG_ERR(err, "in event_dispatch");

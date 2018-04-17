@@ -393,7 +393,11 @@ static struct vnode *find_ptable(struct pmap_arm  *pmap,
     uintptr_t idx = ARM_L1_OFFSET(vaddr);
     return find_vnode(&pmap->root, idx);
 }
-
+/*
+ * 将vaddr-vend这段虚拟地址映射到 frame的 offeset处，长度为pte_count个页表项
+ * 可以是一个section -> 映射到一级页表
+ * 可以是多个page -> 映射到一个二级页表
+ */ 
 static errval_t do_single_map(struct pmap_arm *pmap, genvaddr_t vaddr, genvaddr_t vend,
                               struct capref frame, size_t offset, size_t pte_count,
                               vregion_flags_t flags)
@@ -501,7 +505,10 @@ static errval_t do_single_map(struct pmap_arm *pmap, genvaddr_t vaddr, genvaddr_
     }
     return SYS_ERR_OK;
 }
-
+/*
+ * 将vaddr-vend这段虚拟地址映射到 frame的 offeset处
+ * 多个 do_single_map
+ */ 
 static errval_t do_map(struct pmap_arm *pmap, genvaddr_t vaddr,
                        struct capref frame, size_t offset, size_t size,
                        vregion_flags_t flags, size_t *retoff, size_t *retsize)

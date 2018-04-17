@@ -62,6 +62,7 @@ static union arm_l1_entry make_dev_section(lpaddr_t pa)
     l1.section.base_address = ARM_L1_SECTION_NUMBER(pa);
     return l1;
 }
+
 /**
  * /brief Return an L1 page table entry to map a 1MB 'section' of RAM
  * located at physical address 'pa'.
@@ -116,8 +117,6 @@ void paging_init(lpaddr_t ram_base, size_t ram_size,
     //MSG("Initialising kernel paging, using RAM at %08x-%08x\n",
     //    ram_base, ram_base + (ram_size - 1));
 
-	//MSG("Kernel paging, L1_low at %08x and L1_high at %08x\n",
-	//	(lpaddr_t) l1_low, (lpaddr_t) l1_high);
     /**
      * On many ARMv7-A platforms, physical RAM (phys_memory_start) is the same
      * as the offset of mapped physical memory within virtual address space

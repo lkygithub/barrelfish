@@ -29,6 +29,7 @@ struct vspace_layout {
     struct vspace_layout_funcs f;
     lvaddr_t granularity;
     genvaddr_t size;
+    // 这个offest代表本地虚拟地址与全局虚拟地址的偏移
     genvaddr_t offset;
 };
 

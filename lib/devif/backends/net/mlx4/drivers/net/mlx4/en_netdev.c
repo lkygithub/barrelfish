@@ -68,6 +68,7 @@
 
 #include <debug.h>
 
+#include "mlx4_devif_queue.h"
 #include "mlx4_en.h"
 /*
  #include "en_port.h"
@@ -472,53 +473,59 @@
 
  }
 
- static int mlx4_en_uc_steer_add(struct mlx4_en_priv *priv, unsigned char *mac,
- int *qpn, u64 *reg_id) {
- struct mlx4_en_dev *mdev = priv->mdev;
- struct mlx4_dev *dev = mdev->dev;
- int err;
+*/
+static int mlx4_en_uc_steer_add(struct mlx4_en_priv *priv, uint64_t mac,
+                                int *qpn, u64 *reg_id) {
+    struct mlx4_en_dev *mdev = priv->mdev;
+    struct mlx4_dev *dev = mdev->dev;
+    int err;
 
- switch (dev->caps.steering_mode) {
- case MLX4_STEERING_MODE_B0: {
- struct mlx4_qp qp;
- u8 gid[16] = { 0 };
+    switch (dev->caps.steering_mode) {
+    case MLX4_STEERING_MODE_B0: {
+        struct mlx4_qp qp;
+        u8 gid[16] = { 0 };
 
- qp.qpn = *qpn;
- memcpy(&gid[10], mac, ETH_ALEN);
- gid[5] = priv->port;
+        qp.qpn = *qpn;
+        gid[15] = mac >> 40;
+        gid[14] = mac >> 32;
+        gid[13] = mac >> 24;
+        gid[12] = mac >> 16;
+        gid[11] = mac >> 8;
+        gid[10] = mac >> 0;
+        gid[5] = priv->port;
 
- err = mlx4_unicast_attach(dev, &qp, gid, 0, MLX4_PROT_ETH);
- break;
- }
- case MLX4_STEERING_MODE_DEVICE_MANAGED: {
- struct mlx4_spec_list spec_eth = { { NULL } };
- __be64 mac_mask = cpu_to_be64(MLX4_MAC_MASK << 16);
+        err = mlx4_unicast_attach(dev, &qp, gid, 0, MLX4_PROT_ETH);
+        break;
+    }
+    case MLX4_STEERING_MODE_DEVICE_MANAGED: {
+        // struct mlx4_spec_list spec_eth = { { NULL } };
+        // __be64 mac_mask = cpu_to_be64(MLX4_MAC_MASK << 16);
+        //
+        // struct mlx4_net_trans_rule rule = { .queue_mode = MLX4_NET_TRANS_Q_FIFO,
+        // .exclusive = 0, .allow_loopback = 1, .promisc_mode =
+        // MLX4_FS_REGULAR, .priority = MLX4_DOMAIN_NIC, };
+        //
+        // rule.port = priv->port;
+        // rule.qpn = *qpn;
+        // INIT_LIST_HEAD(&rule.list);
+        //
+        // spec_eth.id = MLX4_NET_TRANS_RULE_ID_ETH;
+        // memcpy(spec_eth.eth.dst_mac, mac, ETH_ALEN);
+        // memcpy(spec_eth.eth.dst_mac_msk, &mac_mask, ETH_ALEN);
+        // list_add_tail(&spec_eth.list, &rule.list);
+        //
+        // err = mlx4_flow_attach(dev, &rule, reg_id);
+        // break;
+    }
+    default:
+        return -EINVAL;
+    }
+    if (err)
+        MLX4_WARN("Failed Attaching Unicast\n");
+    return err;
+}
 
- struct mlx4_net_trans_rule rule = { .queue_mode = MLX4_NET_TRANS_Q_FIFO,
- .exclusive = 0, .allow_loopback = 1, .promisc_mode =
- MLX4_FS_REGULAR, .priority = MLX4_DOMAIN_NIC, };
-
- rule.port = priv->port;
- rule.qpn = *qpn;
- INIT_LIST_HEAD(&rule.list);
-
- spec_eth.id = MLX4_NET_TRANS_RULE_ID_ETH;
- memcpy(spec_eth.eth.dst_mac, mac, ETH_ALEN);
- memcpy(spec_eth.eth.dst_mac_msk, &mac_mask, ETH_ALEN);
- list_add_tail(&spec_eth.list, &rule.list);
-
- err = mlx4_flow_attach(dev, &rule, reg_id);
- break;
- }
- default:
- return -EINVAL;
- }
- if (err)
- MLX4_WARN("Failed Attaching Unicast\n");
-
- return err;
- }
-
+/*
  static void mlx4_en_uc_steer_release(struct mlx4_en_priv *priv,
  unsigned char *mac, int qpn, u64 reg_id)
  {
@@ -552,11 +559,11 @@ static int mlx4_en_get_qp(struct mlx4_en_priv *priv) {
 	/*struct mlx4_mac_entry *entry;*/
 	int index = 0;
 	int err = 0;
-	/*u64 reg_id;*/
+	u64 reg_id;
 	int *qpn = &priv->base_qpn;
 
 	/*HARDWIRE*/
-	u64 mac = 0xf4521463a181;/*mlx4_mac_to_u64(IF_LLADDR(priv->dev));*/
+	u64 mac = priv->devif_queue->mac_address;
 
 	MLX4_DEBUG("Registering MAC: pM for adding\n"/*, IF_LLADDR(priv->dev)*/);
 	index = mlx4_register_mac(dev, priv->port, mac);
@@ -580,20 +587,21 @@ static int mlx4_en_get_qp(struct mlx4_en_priv *priv) {
 	}
 
 	/*TODO*/
-	/*err = mlx4_en_uc_steer_add(priv, IF_LLADDR(priv->dev), qpn, &reg_id);
-	 if (err)
-	 goto steer_err;
+    err = mlx4_en_uc_steer_add(priv, mac, qpn, &reg_id);
+    assert(!err);
+    // if (err)
+    //     goto steer_err;
 
-	 entry = kmalloc(sizeof(*entry), GFP_KERNEL);
-	 if (!entry) {
-	 err = -ENOMEM;
-	 goto alloc_err;
-	 }
-	 memcpy(entry->mac, IF_LLADDR(priv->dev), sizeof(entry->mac));
-	 entry->reg_id = reg_id;
-
-	 hlist_add_head(&entry->hlist,
-	 &priv->mac_hash[entry->mac[MLX4_EN_MAC_HASH_IDX]]);*/
+    // entry = kmalloc(sizeof(*entry), GFP_KERNEL);
+    // if (!entry) {
+    //     err = -ENOMEM;
+    //     goto alloc_err;
+    // }
+    // memcpy(entry->mac, IF_LLADDR(priv->dev), sizeof(entry->mac));
+    // entry->reg_id = reg_id;
+    //
+    // hlist_add_head(&entry->hlist,
+    //     &priv->mac_hash[entry->mac[MLX4_EN_MAC_HASH_IDX]]);
 
 	return 0;
 
@@ -1936,12 +1944,10 @@ static void mlx4_en_open(void* arg) {
 
 	struct mlx4_en_priv *priv;
 	struct mlx4_en_dev *mdev;
-	struct net_device *dev;
 	int err = 0;
 
 	priv = arg;
 	mdev = priv->mdev;
-	dev = priv->dev;
 
 	/*mutex_lock(&mdev->state_lock);*/
 
@@ -2385,16 +2391,18 @@ struct en_port_attribute en_port_attr_##_name = __ATTR(_name, _mode, _show, _sto
  */
 
 int mlx4_en_init_netdev(struct mlx4_en_dev *mdev, int port,
-		struct mlx4_en_port_profile *prof) {
+		struct mlx4_en_port_profile *prof, struct mlx4_queue *queue) {
 	/*struct net_device *dev;*/
 	struct mlx4_en_priv *priv;
-	uint8_t dev_addr[ETHER_ADDR_LEN];
+	// uint8_t dev_addr[ETHER_ADDR_LEN];
 	int err;
 	int i;
 	struct thread *thread;
 	systime_t current;
 
 	priv = calloc(1, sizeof(*priv));
+    queue->priv = priv;
+    priv->devif_queue = queue;
 	/*dev = priv->dev = if_alloc(IFT_ETHER);
 	 if (dev == NULL) {
 	 MLX4_ERR( "Net device allocation failed\n");
@@ -2536,15 +2544,16 @@ int mlx4_en_init_netdev(struct mlx4_en_dev *mdev, int port,
 	 priv->vlan_detach = EVENTHANDLER_REGISTER(vlan_unconfig,
 	 mlx4_en_vlan_rx_kill_vid, priv, EVENTHANDLER_PRI_FIRST);*/
 
-	/*mdev->pndev[priv->port] = dev;*/
+	mdev->port_queue[priv->port] = queue;
 
 	priv->last_link_state = MLX4_DEV_EVENT_PORT_DOWN;
 	/*mlx4_en_set_default_moderation(priv);*/
 
 	/*Set default MAC*/
-	for (i = 0; i < ETHER_ADDR_LEN; i++)
-		dev_addr[ETHER_ADDR_LEN - 1 - i] = (u8)(priv->mac >> (8 * i));
-
+	// for (i = 0; i < ETHER_ADDR_LEN; i++)
+	// 	dev_addr[ETHER_ADDR_LEN - 1 - i] = (u8)(priv->mac >> (8 * i));
+    queue->mac_address = bswap64(priv->mac) >> 16;
+    
 	/*ether_ifattach(dev, dev_addr);
 	 if_link_state_change(dev, LINK_STATE_DOWN);
 	 ifmedia_init(&priv->media, IFM_IMASK | IFM_ETH_FMASK, mlx4_en_media_change,

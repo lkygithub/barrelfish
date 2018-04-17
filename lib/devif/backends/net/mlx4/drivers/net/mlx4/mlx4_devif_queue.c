@@ -1441,12 +1441,12 @@ static int mlx4_init_port_info(int port) {
 
 static void mlx4_init_fn(void *user_state, struct device_mem *bar_info,
                          int nr_allocated_bars) {
-    mlx4_queue_t *device;
+    mlx4_queue_t *queue;
     // struct mlx4_priv *priv;
 	errval_t err;
 	int port;
 
-    device = user_state;
+    queue = user_state;
     // priv = device->priv;
 	MLX4_DEBUG("Starting hardware initialization.\n");
 	err = map_bars(bar_info, nr_allocated_bars);
@@ -1630,7 +1630,7 @@ static void mlx4_init_fn(void *user_state, struct device_mem *bar_info,
 	// mlx4_ib_add(&priv->dev);
 
 	/*ETHERNET----------------------------------------------------------------------*/
-	mlx4_en_add(&priv->dev);
+	mlx4_en_add(&priv->dev, queue);
 }
 
 int __mlx4_counter_alloc(struct mlx4_dev *dev, int slave, int port, int *idx) {
@@ -1807,304 +1807,6 @@ static int mlx4_eq_int(struct mlx4_eq *eq) {
 			/*assert(!"not implemented!");*/
 			cqn = be32_to_cpu(eqe->event.comp.cqn) & 0xffffff;
 			mlx4_cq_completion(priv, cqn);
-
-			/*printf("mtt_entry[ 1\n");
-			 data = (uint64_t *) priv->dev.mtt_vaddr1;
-			 for (i = 0; i < 0x40000 / 8; ++i) {
-			 printf("mtt_entry[%d]: %"PRIx64"\n", i, data[i]);
-			 }
-			 printf("mtt_entry[ 2\n");
-
-			 data = (uint64_t *) priv->dev.mtt_vaddr2;
-			 for (i = 0; i < 0x40000 / 8; ++i) {
-			 printf("mtt_entry[%d]: %"PRIx64"\n", i, data[i]);
-			 }
-			 printf("mtt_entry[ 3\n");
-
-			 data = (uint64_t *) priv->dev.mtt_vaddr3;
-			 for (i = 0; i < 0x1000 / 8; ++i) {
-			 printf("mtt_entry[%d]: %"PRIx64"\n", i, data[i]);
-			 }
-			 printf("mtt_entry[ 4\n");
-
-			 data = (uint64_t *) priv->dev.mtt_vaddr4;
-			 for (i = 0; i < 0x2000 / 8; ++i) {
-			 printf("mtt_entry[%d]: %"PRIx64"\n", i, data[i]);
-			 }
-			 printf("mtt_entry[ 5\n");
-
-			 data = (uint64_t *) priv->dev.mtt_vaddr5;
-			 for (i = 0; i < 0x40000 / 8; ++i) {
-			 printf("mtt_entry[%d]: %"PRIx64"\n", i, data[i]);
-			 }
-			 printf("mtt_entry[ 6\n");
-
-			 data = (uint64_t *) priv->dev.mtt_vaddr6;
-			 for (i = 0; i < 0x40000 / 8; ++i) {
-			 printf("mtt_entry[%d]: %"PRIx64"\n", i, data[i]);
-			 }
-			 printf("mtt_entry[ 7\n");
-
-			 data = (uint64_t *) priv->dev.mtt_vaddr7;
-			 for (i = 0; i < 0x40000 / 8; ++i) {
-			 printf("mtt_entry[%d]: %"PRIx64"\n", i, data[i]);
-			 }
-			 printf("mtt_entry[ 8\n");
-
-			 data = (uint64_t *) priv->dev.mtt_vaddr8;
-			 for (i = 0; i < 0x40000 / 8; ++i) {
-			 printf("mtt_entry[%d]: %"PRIx64"\n", i, data[i]);
-			 }
-			 printf("mtt_entry[ 9\n");
-
-			 data = (uint64_t *) priv->dev.mtt_vaddr9;
-			 for (i = 0; i < 0x40000 / 8; ++i) {
-			 printf("mtt_entry[%d]: %"PRIx64"\n", i, data[i]);
-			 }
-			 printf("mtt_entry[ 10\n");
-
-			 data = (uint64_t *) priv->dev.mtt_vaddr10;
-			 for (i = 0; i < 0x40000 / 8; ++i) {
-			 printf("mtt_entry[%d]: %"PRIx64"\n", i, data[i]);
-			 }
-			 printf("mtt_entry[ 11\n");
-
-			 data = (uint64_t *) priv->dev.mtt_vaddr11;
-			 for (i = 0; i < 0x40000 / 8; ++i) {
-			 printf("mtt_entry[%d]: %"PRIx64"\n", i, data[i]);
-			 }
-			 printf("mtt_entry[ 12\n");
-
-			 printf("\n");
-			 data = (uint64_t *) priv->dev.mtt_vaddr12;
-			 for (i = 0; i < 0x40000 / 8; ++i) {
-			 printf("mtt_entry[%d]: %"PRIx64"\n", i, data[i]);
-			 }
-			 printf("mtt_entry[ 13\n");
-
-			 printf("\n");
-			 data = (uint64_t *) priv->dev.mtt_vaddr13;
-			 for (i = 0; i < 0x40000 / 8; ++i) {
-			 printf("mtt_entry[%d]: %"PRIx64"\n", i, data[i]);
-			 }
-			 printf("mtt_entry[ 14\n");
-
-			 printf("\n");
-			 data = (uint64_t *) priv->dev.mtt_vaddr14;
-			 for (i = 0; i < 0x40000 / 8; ++i) {
-			 printf("mtt_entry[%d]: %"PRIx64"\n", i, data[i]);
-			 }
-			 printf("mtt_entry[ 15\n");
-
-			 printf("\n");
-			 data = (uint64_t *) priv->dev.mtt_vaddr15;
-			 for (i = 0; i < 0x40000 / 8; ++i) {
-			 printf("mtt_entry[%d]: %"PRIx64"\n", i, data[i]);
-			 }
-			 printf("mtt_entry[ 16\n");
-
-			 printf("\n");
-			 data = (uint64_t *) priv->dev.mtt_vaddr16;
-			 for (i = 0; i < 0x40000 / 8; ++i) {
-			 printf("mtt_entry[%d]: %"PRIx64"\n", i, data[i]);
-			 }
-			 printf("mtt_entry[ 17\n");
-
-			 printf("\n");
-			 data = (uint64_t *) priv->dev.mtt_vaddr17;
-			 for (i = 0; i < 0x40000 / 8; ++i) {
-			 printf("mtt_entry[%d]: %"PRIx64"\n", i, data[i]);
-			 }
-			 printf("mtt_entry[ 18\n");
-
-			 printf("\n");
-			 data = (uint64_t *) priv->dev.mtt_vaddr18;
-			 for (i = 0; i < 0x40000 / 8; ++i) {
-			 printf("mtt_entry[%d]: %"PRIx64"\n", i, data[i]);
-			 }
-			 printf("mtt_entry[ 19\n");
-
-			 printf("\n");
-			 data = (uint64_t *) priv->dev.mtt_vaddr19;
-			 for (i = 0; i < 0x40000 / 8; ++i) {
-			 printf("mtt_entry[%d]: %"PRIx64"\n", i, data[i]);
-			 }
-			 printf("mtt_entry[ 20\n");
-
-			 printf("\n");
-			 data = (uint64_t *) priv->dev.mtt_vaddr20;
-			 for (i = 0; i < 0x40000 / 8; ++i) {
-			 printf("mtt_entry[%d]: %"PRIx64"\n", i, data[i]);
-			 }
-			 printf("mtt_entry[ 21\n");
-
-			 printf("\n");
-			 data = (uint64_t *) priv->dev.mtt_vaddr21;
-			 for (i = 0; i < 0x40000 / 8; ++i) {
-			 printf("mtt_entry[%d]: %"PRIx64"\n", i, data[i]);
-			 }
-			 printf("mtt_entry[ 22\n");
-
-			 printf("\n");
-			 data = (uint64_t *) priv->dev.mtt_vaddr22;
-			 for (i = 0; i < 0x40000 / 8; ++i) {
-			 printf("mtt_entry[%d]: %"PRIx64"\n", i, data[i]);
-			 }
-			 printf("mtt_entry[ 23\n");
-
-			 printf("\n");
-			 data = (uint64_t *) priv->dev.mtt_vaddr23;
-			 for (i = 0; i < 0x40000 / 8; ++i) {
-			 printf("mtt_entry[%d]: %"PRIx64"\n", i, data[i]);
-			 }
-			 printf("mtt_entry[ 24\n");
-
-			 printf("\n");
-			 data = (uint64_t *) priv->dev.mtt_vaddr24;
-			 for (i = 0; i < 0x40000 / 8; ++i) {
-			 printf("mtt_entry[%d]: %"PRIx64"\n", i, data[i]);
-			 }
-			 printf("mtt_entry[ 25\n");
-
-			 printf("\n");
-			 data = (uint64_t *) priv->dev.mtt_vaddr25;
-			 for (i = 0; i < 0x40000 / 8; ++i) {
-			 printf("mtt_entry[%d]: %"PRIx64"\n", i, data[i]);
-			 }
-			 printf("mtt_entry[ 26\n");
-
-			 printf("\n");
-			 data = (uint64_t *) priv->dev.mtt_vaddr26;
-			 for (i = 0; i < 0x40000 / 8; ++i) {
-			 printf("mtt_entry[%d]: %"PRIx64"\n", i, data[i]);
-			 }
-			 printf("mtt_entry[ 27\n");
-
-			 printf("\n");
-			 data = (uint64_t *) priv->dev.mtt_vaddr27;
-			 for (i = 0; i < 0x40000 / 8; ++i) {
-			 printf("mtt_entry[%d]: %"PRIx64"\n", i, data[i]);
-			 }
-			 printf("mtt_entry[ 28\n");
-
-			 printf("\n");
-			 data = (uint64_t *) priv->dev.mtt_vaddr28;
-			 for (i = 0; i < 0x40000 / 8; ++i) {
-			 printf("mtt_entry[%d]: %"PRIx64"\n", i, data[i]);
-			 }
-			 printf("mtt_entry[ 29\n");
-
-			 printf("\n");
-			 data = (uint64_t *) priv->dev.mtt_vaddr29;
-			 for (i = 0; i < 0x40000 / 8; ++i) {
-			 printf("mtt_entry[%d]: %"PRIx64"\n", i, data[i]);
-			 }
-			 printf("mtt_entry[ 30\n");
-
-			 printf("\n");
-			 data = (uint64_t *) priv->dev.mtt_vaddr30;
-			 for (i = 0; i < 0x40000 / 8; ++i) {
-			 printf("mtt_entry[%d]: %"PRIx64"\n", i, data[i]);
-			 }
-			 printf("mtt_entry[ 31\n");
-
-			 printf("\n");
-			 data = (uint64_t *) priv->dev.mtt_vaddr31;
-			 for (i = 0; i < 0x40000 / 8; ++i) {
-			 printf("mtt_entry[%d]: %"PRIx64"\n", i, data[i]);
-			 }
-			 printf("mtt_entry[ 32\n");
-
-			 printf("\n");
-			 data = (uint64_t *) priv->dev.mtt_vaddr32;
-			 for (i = 0; i < 0x40000 / 8; ++i) {
-			 printf("mtt_entry[%d]: %"PRIx64"\n", i, data[i]);
-			 }
-			 printf("mtt_entry[ 33\n");
-
-			 printf("\n");
-			 data = (uint64_t *) priv->dev.mtt_vaddr33;
-			 for (i = 0; i < 0x40000 / 8; ++i) {
-			 printf("mtt_entry[%d]: %"PRIx64"\n", i, data[i]);
-			 }
-			 printf("mtt_entry[ 34\n");
-
-			 printf("\n");
-			 data = (uint64_t *) priv->dev.mtt_vaddr34;
-			 for (i = 0; i < 0x40000 / 8; ++i) {
-			 printf("mtt_entry[%d]: %"PRIx64"\n", i, data[i]);
-			 }
-			 printf("mtt_entry[ 35\n");
-
-			 printf("\n");
-			 data = (uint64_t *) priv->dev.mtt_vaddr35;
-			 for (i = 0; i < 0x40000 / 8; ++i) {
-			 printf("mtt_entry[%d]: %"PRIx64"\n", i, data[i]);
-			 }
-			 printf("mtt_entry[ 36\n");
-
-			 printf("\n");
-			 data = (uint64_t *) priv->dev.mtt_vaddr36;
-			 for (i = 0; i < 0x40000 / 8; ++i) {
-			 printf("mtt_entry[%d]: %"PRIx64"\n", i, data[i]);
-			 }
-			 printf("mtt_entry[ 37\n");
-
-			 printf("\n");
-			 data = (uint64_t *) priv->dev.mtt_vaddr37;
-			 for (i = 0; i < 0x40000 / 8; ++i) {
-			 printf("mtt_entry[%d]: %"PRIx64"\n", i, data[i]);
-			 }
-			 printf("mtt_entry[ 38\n");
-
-			 printf("\n");
-			 data = (uint64_t *) priv->dev.mtt_vaddr38;
-			 for (i = 0; i < 0x40000 / 8; ++i) {
-			 printf("mtt_entry[%d]: %"PRIx64"\n", i, data[i]);
-			 }
-			 printf("mtt_entry[ 39\n");
-
-			 printf("\n");
-			 data = (uint64_t *) priv->dev.mtt_vaddr39;
-			 for (i = 0; i < 0x40000 / 8; ++i) {
-			 printf("mtt_entry[%d]: %"PRIx64"\n", i, data[i]);
-			 }
-			 printf("mtt_entry[ 40\n");
-
-			 printf("\n");
-			 data = (uint64_t *) priv->dev.mtt_vaddr40;
-			 for (i = 0; i < 0x40000 / 8; ++i) {
-			 printf("mtt_entry[%d]: %"PRIx64"\n", i, data[i]);
-			 }
-			 printf("mtt_entry[ 41\n");
-
-			 printf("\n");
-			 data = (uint64_t *) priv->dev.mtt_vaddr41;
-			 for (i = 0; i < 0x40000 / 8; ++i) {
-			 printf("mtt_entry[%d]: %"PRIx64"\n", i, data[i]);
-			 }
-			 printf("mtt_entry[ 42\n");
-
-			 printf("\n");
-			 data = (uint64_t *) priv->dev.mtt_vaddr42;
-			 for (i = 0; i < 0x40000 / 8; ++i) {
-			 printf("mtt_entry[%d]: %"PRIx64"\n", i, data[i]);
-			 }
-			 printf("mtt_entry[ 43\n");
-
-			 printf("\n");
-			 data = (uint64_t *) priv->dev.mtt_vaddr43;
-			 for (i = 0; i < 0x40000 / 8; ++i) {
-			 printf("mtt_entry[%d]: %"PRIx64"\n", i, data[i]);
-			 }
-			 printf("mtt_entry[ 44\n");
-
-			 printf("\n");
-			 data = (uint64_t *) priv->dev.mtt_vaddr44;
-			 for (i = 0; i < 0x40000 / 8; ++i) {
-			 printf("mtt_entry[%d]: %"PRIx64"\n", i, data[i]);
-			 }
-			 printf("\n");*/
 
 			break;
 
@@ -2422,15 +2124,16 @@ static int mlx4_eq_int(struct mlx4_eq *eq) {
 }
 
 static void mlx4_interrupt_handler_fn(void *arg) {
-    // struct mlx4_priv *priv = arg;
-	/*int work = 0;*/
+    mlx4_queue_t *device = arg;
 	int i;
 
-    debug_printf("%s.%d:\n", __func__, __LINE__);
+    // debug_printf("%s.%d: %p\n", __func__, __LINE__, device->isr);
 	__raw_writel(priv->eq_table.clr_mask, priv->eq_table.clr_int);
 
 	for (i = 0; i < priv->dev.caps.num_comp_vectors + 1; ++i)
 		mlx4_eq_int(&priv->eq_table.eq[i]);
+    if (device->isr)
+        device->isr(device);
 }
 
 static void mlx4_reregister_handler(void *arg) {
@@ -2464,14 +2167,14 @@ static errval_t mlx4_register(struct devq* q, struct capref cap,
     device->region_id = rid;
     device->region_base = id.base;
     device->region_size = id.bytes;
-    debug_printf("%s:%s:  rid:%d:%lx:%lx\n", device->name, __func__, rid, device->region_base, device->region_size);
+    
+    err = vspace_map_one_frame_attr(&device->region_mapped, id.bytes, cap, VREGION_FLAGS_READ_WRITE, NULL, NULL);
+    assert(err_is_ok(err));
     return SYS_ERR_OK;
 }
 
 static errval_t mlx4_deregister(struct devq* q, regionid_t rid)
 {
-    mlx4_queue_t *device = (mlx4_queue_t *)q;
-    debug_printf("%s:%s:\n", device->name, __func__);
     return SYS_ERR_OK;
 }
 
@@ -2480,21 +2183,10 @@ static errval_t mlx4_control(struct devq* q, uint64_t cmd, uint64_t value,
                                  uint64_t *result)
 {
     mlx4_queue_t *device = (mlx4_queue_t *)q;
-    debug_printf("%s:%s:\n", device->name, __func__);
     *result = device->mac_address;
     return SYS_ERR_OK;
 }
 
-static errval_t mlx4_enqueue_tx(mlx4_queue_t *device, regionid_t rid,
-                               genoffset_t offset, genoffset_t length,
-                               genoffset_t valid_data, genoffset_t valid_length,
-                               uint64_t flags)
-{
-    debug_printf("%s:%s: %lx:%ld:%ld:%ld:%lx\n", device->name, __func__, offset, length, valid_data, valid_length, flags);
-    // struct mlx4_en_priv *priv =
-    // mlx4_en_xmit(device->priv, 0, device->region_base + offset + valid_data, valid_length);
-    return SYS_ERR_OK;
-}
 
 static errval_t mlx4_enqueue(struct devq* q, regionid_t rid,
                                  genoffset_t offset, genoffset_t length,
@@ -2507,17 +2199,17 @@ static errval_t mlx4_enqueue(struct devq* q, regionid_t rid,
     // debug_printf("%s: %lx:%ld:%ld:%ld\n", __func__, offset, length, valid_data, valid_length);
     if (flags & NETIF_RXFLAG) {
         /* can not enqueue receive buffer larger than 2048 bytes */
-        // assert(length <= 2048);
-        //
-        // err = mlx4_enqueue_rx(device, rid, offset, length, valid_data, valid_length,
-        //                      flags);
-        // if (err_is_fail(err)) {
-        //     return err;
-        // }
+        assert(length <= 2048);
+        
+        err = mlx4_en_enqueue_rx(device, rid, offset, length, valid_data, valid_length,
+                             flags);
+        if (err_is_fail(err)) {
+            return err;
+        }
     } else if (flags & NETIF_TXFLAG) {
         assert(length <= BASE_PAGE_SIZE);
     
-        err = mlx4_enqueue_tx(device, rid, offset, length, valid_data, valid_length,
+        err = mlx4_en_enqueue_tx(device, rid, offset, length, valid_data, valid_length,
                              flags);
         if (err_is_fail(err)) {
             return err;
@@ -2534,12 +2226,12 @@ static errval_t mlx4_dequeue(struct devq* q, regionid_t* rid, genoffset_t* offse
                                  genoffset_t* length, genoffset_t* valid_data,
                                  genoffset_t* valid_length, uint64_t* flags)
 {
-    // mlx4_queue_t *device = (mlx4_queue_t *)q;
-    //
-    // if (mlx4_dequeue_tx(device, rid, offset, length, valid_data, valid_length, flags) == SYS_ERR_OK)
-    //     return SYS_ERR_OK;
-    // if (mlx4_dequeue_rx(device, rid, offset, length, valid_data, valid_length, flags) == SYS_ERR_OK)
-    //     return SYS_ERR_OK;
+    mlx4_queue_t *device = (mlx4_queue_t *)q;
+    
+    if (mlx4_en_dequeue_tx(device, rid, offset, length, valid_data, valid_length, flags) == SYS_ERR_OK)
+        return SYS_ERR_OK;
+    if (mlx4_en_dequeue_rx(device, rid, offset, length, valid_data, valid_length, flags) == SYS_ERR_OK)
+        return SYS_ERR_OK;
     // debug_printf("%s:%s:\n", device->name, __func__);
     return DEVQ_ERR_QUEUE_EMPTY;
 }
@@ -2566,9 +2258,6 @@ errval_t mlx4_queue_create(mlx4_queue_t ** q, uint32_t vendor, uint32_t deviceid
     errval_t err;
     mlx4_queue_t *device;
     
-    debug_printf("%s: %x:%x:%x:%x:%x  %d\n", __func__, vendor, deviceid, bus,
-        pci_device, function, interrupt_mode);
-
     device = malloc(sizeof(mlx4_queue_t));
     assert(device);
 
@@ -2582,7 +2271,8 @@ errval_t mlx4_queue_create(mlx4_queue_t ** q, uint32_t vendor, uint32_t deviceid
         pci_device, function);
 
     device->region_id = 0;
-
+    device->isr = isr;
+    
 	err = pci_client_connect();
 	assert(err_is_ok(err));
 

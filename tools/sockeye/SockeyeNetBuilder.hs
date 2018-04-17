@@ -20,9 +20,6 @@
 module SockeyeNetBuilder
 ( buildSockeyeNet ) where
 
-import Control.Monad.State
-
-import Data.List (sort)
 import Data.Map (Map)
 import qualified Data.Map as Map
 import Data.Set (Set)
@@ -53,26 +50,28 @@ data Context = Context
     , inPortMap    :: PortMap
     , outPortMap   :: PortMap
     , nodes        :: Set String
-    , mappedBlocks :: [InstAST.BlockSpec]
     }
 
-buildSockeyeNet :: InstAST.SockeyeSpec -> Either (FailedChecks NetBuildFail) NetAST.NetSpec
-buildSockeyeNet ast = do
+buildSockeyeNet :: InstAST.SockeyeSpec -> Maybe String -> Either (FailedChecks NetBuildFail) NetAST.NetSpec
+buildSockeyeNet ast rootNs = do
     let
         context = Context
             { modules      = Map.empty
             , curModule    = ""
-            , curNamespace = []
+            , curNamespace = initNs
             , curNode      = ""
             , inPortMap    = Map.empty
             , outPortMap   = Map.empty
             , nodes        = Set.empty
-            , mappedBlocks = []
-            }        
+            }
     net <- runChecks $ transform context ast
     return net
+    where
+      initNs = case rootNs of
+        Just ns -> [ns]
+        Nothing -> []
 
---            
+--
 -- Build net
 --
 class NetTransformable a b where
@@ -101,7 +100,7 @@ instance NetTransformable InstAST.Module NetAST.NetSpec where
         inPortDecls <- transform modContext inPorts
         outPortDecls <- transform modContext outPorts
         netDecls <- transform modContext nodeDecls
-        netInsts <- transform modContext moduleInsts     
+        netInsts <- transform modContext moduleInsts
         return $ Map.unions (inPortDecls ++ outPortDecls ++ netDecls ++ netInsts)
 
 instance NetTransformable InstAST.Port NetAST.NetSpec where
@@ -134,14 +133,17 @@ portNode :: NetAST.NodeId -> Integer -> NetAST.NodeSpec
 portNode destNode width =
     let base = 0
         limit = 2^width - 1
+        props = NetAST.PropSpec {NetAST.identifiers = [] } {- TODO: LH what is this? -}
         srcBlock = NetAST.BlockSpec
             { NetAST.base  = base
             , NetAST.limit = limit
+            , NetAST.props = props
             }
         map = NetAST.MapSpec
                 { NetAST.srcBlock = srcBlock
                 , NetAST.destNode = destNode
                 , NetAST.destBase = base
+                , NetAST.destProps = props {- TODO: LH what is this? -}
                 }
     in portNodeTemplate { NetAST.translate = [map] }
 
@@ -150,6 +152,8 @@ portNodeTemplate = NetAST.NodeSpec
     { NetAST.nodeType  = NetAST.Other
     , NetAST.accept    = []
     , NetAST.translate = []
+    , NetAST.reserved  = []
+    , NetAST.overlay   = Nothing
     }
 
 instance NetTransformable InstAST.ModuleInst NetAST.NetSpec where
@@ -210,17 +214,17 @@ instance NetTransformable InstAST.NodeSpec NetAST.NodeSpec where
             reserved = InstAST.reserved ast
             overlay = InstAST.overlay ast
         netTranslate <- transform context translate
-        let
-            mapBlocks = map NetAST.srcBlock netTranslate
-            nodeContext = context
-                { mappedBlocks = accept ++ mapBlocks ++ reserved }
         netOverlay <- case overlay of
-                Nothing -> return []
-                Just o  -> transform nodeContext o
+            Nothing -> return Nothing
+            Just o  -> do
+                over <- transform context o
+                return $ Just over
         return NetAST.NodeSpec
             { NetAST.nodeType  = nodeType
             , NetAST.accept    = accept
-            , NetAST.translate = netTranslate ++ netOverlay
+            , NetAST.translate = netTranslate
+            , NetAST.reserved  = reserved
+            , NetAST.overlay   = netOverlay
             }
 
 instance NetTransformable InstAST.MapSpec NetAST.MapSpec where
@@ -229,6 +233,7 @@ instance NetTransformable InstAST.MapSpec NetAST.MapSpec where
             srcBlock = InstAST.srcBlock ast
             destNode = InstAST.destNode ast
             destBase = InstAST.destBase ast
+            destProps = InstAST.destProps ast
             errorContext = "tranlate set of node '" ++ curNode context ++ "'"
         checkReference context (UndefinedReference errorContext) destNode
         netDestNode <- transform context destNode
@@ -236,84 +241,21 @@ instance NetTransformable InstAST.MapSpec NetAST.MapSpec where
             { NetAST.srcBlock = srcBlock
             , NetAST.destNode = netDestNode
             , NetAST.destBase = destBase
+            , NetAST.destProps = destProps
             }
 
-instance NetTransformable InstAST.OverlaySpec [NetAST.MapSpec] where
+instance NetTransformable InstAST.OverlaySpec NetAST.OverlaySpec where
     transform context ast = do
         let
             over = InstAST.over ast
             width = InstAST.width ast
-            blocks = mappedBlocks context
             errorContext = "overlay of node '" ++ curNode context ++ "'"
         checkReference context (UndefinedReference errorContext) over
         netOver <- transform context over
-        let maps = overlayMaps netOver width blocks
-        return maps
-
-overlayMaps :: NetAST.NodeId -> Integer -> [NetAST.BlockSpec] -> [NetAST.MapSpec]
-overlayMaps destId width blocks =
-    let
-        blockPoints = concat $ map toScanPoints blocks
-        maxAddress = 2^width
-        overStop  = BlockStart $ maxAddress
-        scanPoints = filter ((maxAddress >=) . address) $ sort (overStop:blockPoints)
-        startState = ScanLineState
-            { insideBlocks    = 0
-            , startAddress    = 0
+        return NetAST.OverlaySpec
+            { NetAST.over = netOver
+            , NetAST.width = width
             }
-    in evalState (scanLine scanPoints []) startState
-    where
-        toScanPoints (NetAST.BlockSpec base limit) =
-                [ BlockStart base
-                , BlockEnd   limit
-                ]
-        scanLine [] ms = return ms
-        scanLine (p:ps) ms = do
-            maps <- pointAction p ms
-            scanLine ps maps
-        pointAction (BlockStart a) ms = do
-            s <- get       
-            let
-                i = insideBlocks s
-                base = startAddress s
-                limit = a - 1
-            maps <- if (i == 0) && (base <= limit)
-                then
-                    let
-                        baseAddress = startAddress s
-                        limitAddress = a - 1
-                        srcBlock = NetAST.BlockSpec baseAddress limitAddress
-                        m = NetAST.MapSpec srcBlock destId baseAddress
-                    in return $ m:ms
-                else return ms
-            modify (\s -> s { insideBlocks = i + 1})
-            return maps
-        pointAction (BlockEnd a) ms = do
-            s <- get
-            let
-                i = insideBlocks s
-            put $ ScanLineState (i - 1) (a + 1)
-            return ms
-
-data StoppingPoint
-    = BlockStart { address :: !NetAST.Address }
-    | BlockEnd   { address :: !NetAST.Address }
-    deriving (Eq, Show)
-
-instance Ord StoppingPoint where
-    (<=) (BlockStart a1) (BlockEnd   a2)
-        | a1 == a2 = True
-        | otherwise = a1 <= a2
-    (<=) (BlockEnd   a1) (BlockStart a2)
-        | a1 == a2 = False
-        | otherwise = a1 <= a2
-    (<=) sp1 sp2 = (address sp1) <= (address sp2)
-
-data ScanLineState
-    = ScanLineState
-        { insideBlocks :: !Integer
-        , startAddress :: !NetAST.Address
-        } deriving (Show)
 
 instance (Traversable t, NetTransformable a b) => NetTransformable (t a)  (t b) where
     transform context as = mapM (transform context) as
