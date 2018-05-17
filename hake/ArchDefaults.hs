@@ -349,6 +349,7 @@ strip :: String -> String -> Options -> String -> String ->
          String -> [RuleToken]
 strip arch objcopy opts src debuglink target =
     [ Str objcopy,
+      -- Str "-g",
       Str "-g",
       NStr "--add-gnu-debuglink=", In BuildTree arch debuglink,
       In BuildTree arch src,

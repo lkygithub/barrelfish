@@ -51,6 +51,21 @@ in
                       addLibraries = ["usb", "driverkit"],
                       architectures = [ "x86_64", "armv8", "x86_32", "k1om" ]
                     },
+  build application { target = "usb_manager_0",
+                      cFiles = commonCFiles,
+
+                      flounderDefs = [ "usb_manager", "usb_driver", "monitor_blocking" ],
+                      flounderBindings = [ "usb_manager", "usb_driver" ],
+                      flounderExtraBindings = [ ("usb_manager",["rpcclient"])],
+
+                      flounderExtraDefs = [ ("monitor_blocking", ["rpcclient"]) ],
+
+                      mackerelDevices = [ "ohci", "omap/ohci",
+                                          "ehci", "omap/ehci"],
+                      addIncludes = [ "include" ],
+                      addLibraries = ["usb", "driverkit"],
+                      architectures = [ "armv7" ]
+                    },
   build application { target = "usb_manager",
                       cFiles = commonCFiles ++ [ "omap44xx.c" ],
                       

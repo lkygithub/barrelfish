@@ -42,6 +42,7 @@
 #  include <fpu.h>
 #endif
 
+//#include <a15_gt.h>
 /**
  * \brief The kernel timeslice given in system ticks
  */

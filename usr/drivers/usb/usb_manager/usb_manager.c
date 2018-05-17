@@ -346,9 +346,9 @@ int main(int argc, char *argv[])
 
         /* ARM / PandaBoard related setup and checks */
 
-        if (platform_checkup(base, argc, argv) != USB_ERR_OK) {
-            USER_PANIC("Pandaboard checkup failed!\n");
-        }
+        //if (platform_checkup(base, argc, argv) != USB_ERR_OK) {
+        //    USER_PANIC("Pandaboard checkup failed!\n");
+        //}
 
         /*
          * the argument tuple size must be 3, i.e. the host usb manager expects

@@ -16,6 +16,7 @@
 #include <dispatch.h>
 #include <paging_kernel_arch.h>
 
+#include <a15_gt.h>
 /**
  * \brief Switch context to 'dcb'.
  *
@@ -36,7 +37,10 @@ context_switch(struct dcb *dcb) {
         assert(dcb->disp != 0);
     }
 
+    //uint64_t time_pcs_1 = a15_gt_counter();
     paging_context_switch(dcb->vspace);
+    //uint64_t time_pcs_2 = a15_gt_counter();
+    //printf("@@%lld\n", time_pcs_2 - time_pcs_1);
     context_switch_counter++;
 
     /* Write the CONTEXTID register, so that the debugger can tell dispatchers
@@ -44,6 +48,7 @@ context_switch(struct dcb *dcb) {
      * Note that the low 10 bits of dcb are zero, and the lower 8 bits of the
      * register hold the ASID, which we're not yet using. */
     cp15_write_contextidr(((uint32_t)dcb) & ~MASK(8));
+    //cp15_write_contextidr(((uint32_t)dcb));
 
     if (!dcb->is_vm_guest) {
         assert(dcb->disp_cte.cap.type == ObjType_Frame);

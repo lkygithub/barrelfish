@@ -37,6 +37,8 @@
 #include <useraccess.h>
 #include <systime.h>
 
+//#include <a15_gt.h>
+
 errval_t sys_print(const char *str, size_t length)
 {
     /* FIXME: check that string is mapped and accessible to caller! */
@@ -621,6 +623,9 @@ struct sysret sys_resize_l1cnode(struct capability *root, capaddr_t newroot_cptr
 
 struct sysret sys_yield(capaddr_t target)
 {
+#ifdef TEST_SYSCALL_YIELD
+    //uint64_t time_yield_1 = a15_gt_counter();
+#endif
     dispatcher_handle_t handle = dcb_current->disp;
     struct dispatcher_shared_generic *disp =
         get_dispatcher_shared_generic(handle);
@@ -652,6 +657,9 @@ struct sysret sys_yield(capaddr_t target)
         }
         /* FIXME: check rights? */
     }
+#ifdef TEST_SYSCALL_YIELD
+    //uint64_t time_yield_2 = a15_gt_counter();
+#endif
 
     // Since we've done a yield, we explicitly ensure that the
     // dispatcher is upcalled the next time (on the understanding that
@@ -676,6 +684,9 @@ struct sysret sys_yield(capaddr_t target)
         // Otherwise yield for the timeslice
         scheduler_yield(dcb_current);
     }
+#ifdef TEST_SYSCALL_YIELD
+    //uint64_t time_yield_3 = a15_gt_counter();
+#endif
 
     if (yield_to != NULL) {
         struct dcb *target_dcb = NULL;
@@ -696,7 +707,16 @@ struct sysret sys_yield(capaddr_t target)
 //            0);
 
         /* undirected yield */
+#ifdef TEST_SYSCALL_YIELD
+        struct dcb *my_target = NULL;
+        uint64_t time_yield_4 = a15_gt_counter();
+        my_target = schedule();
+        uint64_t time_yield_5 = a15_gt_counter();
+        printf("@%lld\n", time_yield_5 - time_yield_4);
+        dispatch(my_target);
+#else
         dispatch(schedule());
+#endif
     }
 
     panic("Yield returned!");

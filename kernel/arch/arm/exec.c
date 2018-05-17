@@ -24,6 +24,8 @@
 #include <misc.h>
 /* XXX - not AArch64-compatible. */
 #include <cp15.h>   // for invalidating tlb and cache
+#include <a15_gt.h>
+#include <syscall.h>
 
 static arch_registers_state_t upcall_state;
 
@@ -91,6 +93,14 @@ void __attribute__ ((noreturn)) resume(arch_registers_state_t *state)
       If we hold the execution here after the first execption, we are still good
     */
     //    while(ctr>1);
+#ifdef TEST_SYSCALL
+    if (testflag){
+        uint64_t kernel_still_time_end = a15_gt_counter();
+        printf("@CORE:%d @TYPE:%d @TIME:%lld\n", my_core_id, syscall_type,
+                kernel_still_time_end - kernel_still_time_start);
+        testflag = 0;
+    }
+#endif
     do_resume(state->regs);
 }
 

@@ -9,7 +9,7 @@ timeout 0
 
 title	Barrelfish
 #root	(nd)
-kernel	/armv7/sbin/cpu_tegrak1 loglevel=3 consolePort=3 cntfrq=12500000
+kernel	/armv7/sbin/cpu_tegrak1 loglevel=3 consolePort=3 cntfrq=12000000 timeslice=1
 module	/armv7/sbin/cpu_tegrak1
 module	/armv7/sbin/init
 
@@ -36,8 +36,11 @@ module /armv7/sbin/corectrl auto
 module /armv7/sbin/angler serial0.terminal xterm
 module /armv7/sbin/fish nospawn
 
-#module /armv7/sbin/memtest
-module /armv7/sbin/ed nospawn
+module /armv7/sbin/memtest
+module /armv7/sbin/helloWorld nospawn
+module /armv7/sbin/signalTest nospawn
+module /armv7/sbin/usb_manager_0 auto
+# module /armv7/sbin/ed nospawn
 module /armv7/sbin/examples/xmpl-hello nospawn
 # module /armv7/sbin/examples/xmpl-span core=0 3
 # module /armv7/sbin/yield_test nospawn
@@ -54,9 +57,8 @@ module /armv7/sbin/examples/xmpl-hello nospawn
 # module /armv7/sbin/examples/rpc_client core=0
 # module /armv7/sbin/examples/xmpl-rpc_msg core=1 server
 # module /armv7/sbin/examples/xmpl-rpc_msg core=0 client
-# module /armv7/sbin/ump_send core=0
+# module /armv7/sbin/ump_send core=2
 # module /armv7/sbin/ump_receive core=1
-# module /armv7/sbin/ump_receive
 
 # 1GB of RAM starting at 0x80000000
 #        start       size       id

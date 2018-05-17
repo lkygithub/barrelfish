@@ -28,7 +28,11 @@
 #include <platform.h>
 #include <startup_arch.h>
 #include <systime.h>
+#include <a15_gt.h>
 
+int testflag = 0;
+uint64_t kernel_still_time_start = 0;
+int syscall_type = -1;
 // helper macros  for invocation handler definitions
 #define INVOCATION_HANDLER(func) \
 static struct sysret \
@@ -1279,14 +1283,18 @@ void sys_syscall(arch_registers_state_t* context,
     // Set dcb_current->disabled correctly.  This should really be
     // done in exceptions.S
     // XXX
+#ifdef TEST_SYSCALL
+    kernel_still_time_start = a15_gt_counter();
+    testflag = 1;
+#endif
     assert(dcb_current != NULL);
     assert((struct dispatcher_shared_arm *)(dcb_current->disp) == disp);
     if (dispatcher_is_disabled_ip((dispatcher_handle_t)disp, context->named.pc)) {
-	assert(context == dispatcher_get_disabled_save_area((dispatcher_handle_t)disp));
-	dcb_current->disabled = true;
+        assert(context == dispatcher_get_disabled_save_area((dispatcher_handle_t)disp));
+        dcb_current->disabled = true;
     } else {
-	assert(context == dispatcher_get_enabled_save_area((dispatcher_handle_t)disp));
-	dcb_current->disabled = false;
+        assert(context == dispatcher_get_enabled_save_area((dispatcher_handle_t)disp));
+        dcb_current->disabled = false;
     }
     assert(disabled == dcb_current->disabled);
 
@@ -1302,6 +1310,9 @@ void sys_syscall(arch_registers_state_t* context,
 	  context, disp );
 
     struct sysret r = { .error = SYS_ERR_INVARGS_SYSCALL, .value = 0 };
+#ifdef TEST_SYSCALL
+    syscall_type = syscall;
+#endif
 
     switch (syscall)
     {

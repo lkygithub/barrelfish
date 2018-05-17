@@ -158,27 +158,6 @@ let bin_rcce_lu = [ "/sbin/" ++ f | f <- [
                         "benchmarks/xomp_work",
                         "benchmarks/xphi_ump_bench",
                         "benchmarks/xphi_xump_bench" ] ] ++ bench_x86
-    
-	bench_armv7 = [ "/sbin/" ++ f | f <- [
-                "channel_cost_bench",
-                --"flounder_stubs_buffer_bench",
-                --"flounder_stubs_empty_bench",
-                --"flounder_stubs_payload_bench",
- 					--"benchmarks/vspace_map",
- 					--"benchmarks/mem_latency",
- 					"xcorecapbench",
- 					"ump_latency",
- 					--"ump_latency_cache",
- 					"ump_throughput",
- 					"ump_send",
- 					"ump_receive",
- 					"ump_exchange",
- 					--"lrpc_bench",
- 					"tsc_bench",
- 					--"shared_mem_clock_bench",
- 					--"ipi_bench",
- 					"mdb_bench",
- 					"freemem" ] ]
 
     -- Example program modules
     modules_xmpl = [ "/sbin/" ++ f | f <- [
@@ -329,7 +308,23 @@ let bin_rcce_lu = [ "/sbin/" ++ f | f <- [
                                ] ]
 
 
-    -- ARMv7-A modules for Jetson-tk1 board 
+    -- ARMv7-A modules for Jetson-tk1 board
+    bench_jetsontk1 =  [ "/sbin/" ++ f | f <- [
+                         -- "multihop_latency_bench",
+                         -- "net_openport_test",
+                         -- "perfmontest",
+                         -- "thc_v_flounder_empty",
+                         "mdb_bench",
+                         "helloWorld",
+                         "timer_test",
+                         "udp_throughput",
+                         "ump_exchange",
+                         "ump_latency",
+                         -- "ump_latency_cache",
+                         "ump_receive",
+                         "ump_send",
+                         "ump_throughput" ]]
+
     jetsontk1Modules_A15 = [ "/sbin/" ++ f | f <- [
                                "cpu_tegrak1",
                                "init",
@@ -347,9 +342,9 @@ let bin_rcce_lu = [ "/sbin/" ++ f | f <- [
                                "angler",
                                "fish",
                                "memtest"
-							   -- "ed",
-							   -- "examples/xmpl-span"
-                               ] ] ++ tests_common ++ bench_armv7
+                               -- "ed",
+                               -- "examples/xmpl-span"
+                               ] ] ++ bench_jetsontk1
 
     -- ARMv7-A modules for Versatile Express EMM board (FVP)
     vExpressEMMModules_A9 = [ "/sbin/" ++ f | f <- [
@@ -510,11 +505,11 @@ let bin_rcce_lu = [ "/sbin/" ++ f | f <- [
        ("root", "/armv7_omap44xx_image-gdb.gdb") ])
     "Standard Pandaboard ES build image and modules",
 
-	platform "JetsonTK1" [ "armv7" ]
-	([ ("armv7", f) | f <- jetsontk1Modules_A15] ++
-	 [ ("root", "/armv7_jetsontk1_image"),
-	   ("root", "/armv7_jetsontk1_image-gdb.gdb") ])
-	"Standard Jetson TK1 build image and modules",
+    platform "JetsonTK1" [ "armv7" ]
+    ([ ("armv7", f) | f <- jetsontk1Modules_A15] ++
+     [ ("root", "/armv7_jetsontk1_image"),
+       ("root", "/armv7_jetsontk1_image-gdb.gdb") ])
+    "Standard Jetson TK1 build image and modules",
 
     platform "VExpressEMM-A15" [ "armv7" ]
     ([ ("armv7", f) | f <- vExpressEMMModules_A15 ] ++
@@ -557,8 +552,8 @@ let bin_rcce_lu = [ "/sbin/" ++ f | f <- [
     -- Build the default PandaBoard boot image
     armv7Image "armv7_omap44xx" "omap44xx" "omap44xx" "0x80000000" pandaModules,
 
-	-- Build the default Jetson-tk1 boot image
-	armv7Image "armv7_jetsontk1" "tegrak1" "tegrak1" "0x80000000" jetsontk1Modules_A15,
+    -- Build the default Jetson-tk1 boot image
+    armv7Image "armv7_jetsontk1" "tegrak1" "tegrak1" "0x80000000" jetsontk1Modules_A15,
 
     -- Build the A15 simulation image (VersatileExpress EMM board, 1 core)
     armv7Image "armv7_a15ve_1" "ve" "a15ve" "0x80000000" vExpressEMMModules_A15,
@@ -611,7 +606,7 @@ let bin_rcce_lu = [ "/sbin/" ++ f | f <- [
                      "armv7_a15ve_gem5",
                      "armv7_a15a7ve",
                      "armv7_omap44xx",
-					 "armv7_jetsontk1",
+                     "armv7_jetsontk1",
                      "armv7_zynq7" ]],
     Rules [ copyFile SrcTree "root" ("/hake/menu.lst." ++ p)
                      "root" ("/platforms/x86/menu.lst." ++ p)

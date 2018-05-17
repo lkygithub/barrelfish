@@ -21,6 +21,14 @@
 #include <barrelfish_kpi/types.h>
 #include <capabilities.h>
 
+//#define TEST_SYSCALL_YIELD
+
+#ifdef TEST_SYSCALL
+extern int testflag;
+extern uint64_t kernel_still_time_start;
+extern int syscall_type;
+#endif
+
 errval_t sys_print(const char *str, size_t length);
 struct sysret sys_yield(capaddr_t target);
 struct sysret sys_suspend(bool halt);

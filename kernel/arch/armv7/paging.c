@@ -128,7 +128,7 @@ void paging_context_switch(lpaddr_t ttbr)
         /* Clean and invalidate. */
         //invalidate_data_caches_pouu(true);
         //invalidate_instruction_cache();
-		cp15_invalidate_i_and_d_caches_fast();
+        //cp15_invalidate_i_and_d_caches_fast();
         /* Make sure the invalidates are completed and visible before any
          * user-level code can execute. */
         dsb(); isb();

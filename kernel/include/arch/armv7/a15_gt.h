@@ -14,6 +14,7 @@
 
 #include <kernel.h>
 
+
 /* Return the current value of the CNTFRQ (count frequency) register, the rate
  * at which the system counter counts. */
 static inline uint32_t
