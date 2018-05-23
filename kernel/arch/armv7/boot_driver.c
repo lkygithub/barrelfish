@@ -193,15 +193,21 @@ void boot_app_core(struct armv7_boot_record *bootrec) {
     my_core_id = cp15_get_cpu_id();
 
 #if 0
-	__asm volatile(
-		"ldr	r5, =#0x70006300\n\t"
-		"mov	r6, #68\n\t"
-		"str	r6, [r5]\n\t"
-		"mov	r7, #500\n\t"
-		"mov	r6, #69\n\t"
-		"str	r6, [r5]\n\t"
-	);
-	while(1);
+    __asm volatile(
+        "ldr    r7, =0x10\n\t"
+        "Loopu:\n\t"
+        "ldr    r5, =#0x70006314\n\t"
+        "ldr    r6, [r5]\n\t"
+        "ands   r6, #0x20\n\t"
+        "beq    Loopu\n\t"
+        "ldr    r5, =#0x70006300\n\t"
+        "mov    r6, #69\n\t"
+        "str    r6, [r5]\n\t"
+        "sub    r7, r7, #1\n\t"
+        "cmp    r7, #0\n\t"
+        "bgt    Loopu\n\t"
+    );
+    //while(1);
 #endif
     //MSG("APP core %"PRIu32" booting.\n", bootrec->target_mpid);
 

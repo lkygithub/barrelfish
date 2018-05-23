@@ -79,7 +79,7 @@ timers_init(int timeslice) {
     kernel_timeslice = ns_to_systime(timeslice * 1000000);
 
     MSG("System counter frequency is %uHz.\n", systime_frequency);
-    MSG("Timeslice interrupt every %u_u ticks (%dms).\n",
+    MSG("Timeslice interrupt every %u_%u ticks (%dms).\n",
             kernel_timeslice, timeslice);
 
     a15_gt_init();

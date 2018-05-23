@@ -52,6 +52,7 @@ cache_get_ccsidr(size_t level, int icache) {
 
     /* Select the cache level and type. */
     cp15_write_csselr((((level - 1) & MASK(3)) << 1) | (icache & MASK(1)));
+    isb();
 
     /* Read the size register. */
     return cp15_read_ccsidr();
@@ -75,7 +76,8 @@ invalidate_data_cache(size_t level, bool clean) {
 
     /* Get the details of the data cache at this level. See TRM B4.1.19. */
     uint32_t ccsidr= cache_get_ccsidr(level, 0);
-    /* +4 rather than +2, LINELEN is count by Byte rather than Word */
+
+    //XXX: L = log2(LINELEN), and LINELEN is count by Byte(+4) not Word(+2).
     size_t L= (ccsidr & MASK(3)) + 4;       /* log2(LINELEN) */
 
     size_t x=    (ccsidr >>  3) & MASK(10); /* WAYS - 1 */

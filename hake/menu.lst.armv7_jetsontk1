@@ -9,7 +9,7 @@ timeout 0
 
 title	Barrelfish
 #root	(nd)
-kernel	/armv7/sbin/cpu_tegrak1 loglevel=3 consolePort=3 cntfrq=12500000
+kernel	/armv7/sbin/cpu_tegrak1 loglevel=3 consolePort=3 cntfrq=12000000 timeslice=50
 module	/armv7/sbin/cpu_tegrak1
 module	/armv7/sbin/init
 
