@@ -36,9 +36,9 @@ module /armv7/sbin/corectrl auto
 module /armv7/sbin/angler serial0.terminal xterm
 module /armv7/sbin/fish nospawn
 
-#module /armv7/sbin/memtest
-module /armv7/sbin/ed nospawn
-module /armv7/sbin/examples/xmpl-hello nospawn
+module /armv7/sbin/memtest
+# module /armv7/sbin/ed nospawn
+# module /armv7/sbin/examples/xmpl-hello nospawn
 # module /armv7/sbin/examples/xmpl-span core=0 3
 # module /armv7/sbin/yield_test nospawn
 # module /armv7/sbin/xcorecapbench nospawn

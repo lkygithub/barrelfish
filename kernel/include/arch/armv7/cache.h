@@ -75,7 +75,8 @@ invalidate_data_cache(size_t level, bool clean) {
 
     /* Get the details of the data cache at this level. See TRM B4.1.19. */
     uint32_t ccsidr= cache_get_ccsidr(level, 0);
-    size_t L= (ccsidr & MASK(3)) + 2;       /* log2(LINELEN) */
+    /* +4 rather than +2, LINELEN is count by Byte rather than Word */
+    size_t L= (ccsidr & MASK(3)) + 4;       /* log2(LINELEN) */
 
     size_t x=    (ccsidr >>  3) & MASK(10); /* WAYS - 1 */
     size_t A=    csb(x);                    /* ceil(log2(WAYS)) */

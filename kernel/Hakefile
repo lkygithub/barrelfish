@@ -211,7 +211,6 @@ let
     assemblyFiles = [ "arch/armv7/exceptions.S",
                       "arch/armv7/set_stack_for_mode.S",
                       "arch/armv7/bsp_start.S",
-                      "arch/armv7/cp15.S",
                       "arch/armv7/cpu_start.S"
                     ],
     cFiles = [
@@ -409,9 +408,7 @@ let
   bootDriver {
      target = "tegrak1",
      architectures = [ "armv7" ],
-     assemblyFiles = [ "arch/armv7/boot.S",
-	 				             "arch/armv7/cp15.S" --temp
-	 				 ],
+     assemblyFiles = [ "arch/armv7/boot.S"],
      cFiles = [
                 "logging.c",
                 "arch/armv7/boot_driver.c",
@@ -428,7 +425,7 @@ let
      mackerelDevices = [ "arm",
                          "cpuid_arm",
                          "jetsontk1/jetson_exception_vectors",
-						             "jetsontk1/jetson_flow_controller",
+                         "jetsontk1/jetson_flow_controller",
                          "jetsontk1/jetson_uart"
                        ],
      addLibraries = [ ]
@@ -439,8 +436,7 @@ let
      assemblyFiles = [ "arch/armv7/exceptions.S",
                        "arch/armv7/set_stack_for_mode.S",
                        "arch/armv7/bsp_start.S",
-                       "arch/armv7/cpu_start.S",
-					   "arch/armv7/cp15.S" --temp
+                       "arch/armv7/cpu_start.S"
                      ],
      cFiles = [
                 "arch/armv7/a15_gt.c",
