@@ -36,9 +36,7 @@ sftp-config.json
 .tags
 
 # Cscope
-cscope.out
-cscope.in.out
-cscope.po.out
+cscope.*
 
 # Builds
 build*/
