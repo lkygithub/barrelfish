@@ -9,17 +9,17 @@
 /*
  * zynq_slcr.dev
  *
- * DESCRIPTION: Xilinx Zynq System-Level Control Registers
+ * DESCRIPTION: Xilinx ZynqMP System-Level Control Registers
  *
- * This is derived from:
+ * This is derived from: zynq7/zynq_slcr.dev
  *
- * Zynq-7000 All Programmable SoC Technical Reference Manual (UG585)
+ * ZynqMP All Programmable SoC Technical Reference Manual (UG1085 and UG1087)
  *
  */
 
 /* There are a lot of control registers packed into this block, and we've only
  * included those which we need so far. */
-device zynq_slcr msbfirst (addr base) "Zynq System-Level Control Registers" {
+device zynqMP_slcr msbfirst (addr base) "ZynqMP System-Level Control Registers" {
 
     regtype pll_ctrl "PLL Control" {
         _ 13;

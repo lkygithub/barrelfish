@@ -7,17 +7,17 @@
  */
 
 /*
- * zynq_uart.dev
+ * zynqmp_uart.dev
  *
- * DESCRIPTION: Xilinx Zynq UART controller
+ * DESCRIPTION: Xilinx ZynqMP UART controller
  *
- * This is derived from:
+ * This is derived from: zynq7/zynq_uart.dev
  *
- * Zynq-7000 All Programmable SoC Technical Reference Manual (UG585)
+ * ZynqMP All Programmable SoC Technical Reference Manual (UG1085 and UG1087)
  *
  */
 
-device zynq_uart msbfirst (addr base) "Zynq UART" {
+device zynqmp_uart msbfirst (addr base) "ZynqMP UART" {
 
     constants en_hi "Enable high" {
         disabled_hi = 0b0 "disabled";
