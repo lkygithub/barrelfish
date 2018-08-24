@@ -16,7 +16,6 @@
 #include <offsets.h>
 #include <platform.h>
 #include <serial.h>
-#include <dev/zynqmp/zynqmp_uart.h>
 #include <arch/arm/gic.h>
 #include <sysreg.h>
 #include <dev/armv8_dev.h>
@@ -25,12 +24,11 @@
 #include <arch/armv8/global.h>
 #include <arch/armv8/gic_v3.h>
 #include <paging_kernel_arch.h>
+#include <arch/arm/zynqmp_uart.h>
+#include <maps/zynqmp_map.h>
 
 /* the maximum number of UARTS supported */
-#define MAX_NUM_UARTS 4
-
-static apm88xxxx_pc16550_t ports[MAX_NUM_UARTS];
-
+#define MAX_NUM_UARTS ZYNQMP_UART_MAX_PORTS
 
 errval_t serial_init(unsigned port, bool initialize_hw)
 {
@@ -38,19 +36,15 @@ errval_t serial_init(unsigned port, bool initialize_hw)
         return SYS_ERR_SERIAL_PORT_INVALID;
     }
 
-    if ((lpaddr_t)ports[port].base == (uart_base[port] + KERNEL_OFFSET)) {
-        return SYS_ERR_OK;
-    }
-
-    apm88xxxx_pc16550_t *uart = &ports[port];
-    apm88xxxx_pc16550_initialize(uart, (mackerel_addr_t)(uart_base[port] + KERNEL_OFFSET));
-
     if (!initialize_hw) {
         // hw initialized, this is for non-bsp cores, where hw has been
         // initialized by bsp core and we come through here just to setup our
-        // local apm88xxxx_pc16550 struct for the port.
+        // local zynqmp_uart struct for the port.
+        zynqmp_uart_init(port, (mackerel_addr_t)(uart_base[port] + KERNEL_OFFSET),0);
         return SYS_ERR_OK;
     }
+     /* initialize_hw is 1 means that the hardware need initializing */
+    zynqmp_uart_init(port, (mackerel_addr_t)(uart_base[port] + KERNEL_OFFSET),1);
 
     panic("device init NYI");
     return SYS_ERR_OK;
@@ -62,15 +56,10 @@ errval_t serial_early_init(unsigned port)
         return SYS_ERR_SERIAL_PORT_INVALID;
     }
 
-    if ((lpaddr_t)ports[port].base == uart_base[port]) {
-        return SYS_ERR_OK;
-    }
-
-    apm88xxxx_pc16550_t *uart = &ports[port];
-    apm88xxxx_pc16550_initialize(uart, (mackerel_addr_t)uart_base[port]);
+    zynqmp_uart_early_init(port, (mackerel_addr_t)uart_base[port]);
     return SYS_ERR_OK;
 }
-
+/* what the fuck */
 errval_t serial_early_init_mmu_enabled(unsigned port)
 {
     return serial_early_init(port);
@@ -83,11 +72,7 @@ errval_t serial_early_init_mmu_enabled(unsigned port)
 void serial_putchar(unsigned port, char c)
 {
     assert(port < MAX_NUM_UARTS);
-    assert(ports[port].base != 0);
-    // Wait until FIFO can hold more characters
-    while(!apm88xxxx_pc16550_LSR_thre_rdf(&ports[port]));
-    // Write character
-    apm88xxxx_pc16550_THR_thr_wrf(&ports[port], c);
+    zynqmp_uart_putchar(port,c);
 }
 
 /**
@@ -97,29 +82,78 @@ void serial_putchar(unsigned port, char c)
 char serial_getchar(unsigned port)
 {
     assert(port < MAX_NUM_UARTS);
-    assert(ports[port].base != 0);
-
-    // Wait until character available
-    while(!apm88xxxx_pc16550_LSR_dr_rdf(&ports[port]));
-    // Read a character from FIFO
-    return apm88xxxx_pc16550_RBR_rbr_rdf(&ports[port]);
+    return zynqmp_uart_getchar(port);
 }
 
 
 void platform_get_info(struct platform_info *pi)
 {
     pi->arch = PI_ARCH_ARMV8A;
-    pi->platform = PI_PLATFORM_APM88XXXX;
+    pi->platform = PI_PLATFORM_ZYNQMP;
 }
 
+/**
+ * TODO
+ */
 void armv8_get_info(struct arch_info_armv8 *ai)
 {
 
 }
 
+size_t platform_get_ram_size(void)
+{
+    return (ZYNQMP_PSDDR_MEM_HIGHADDR - ZYNQMP_PSDDR_MEM_BASEADDR + 1);
+}
+
+/*
+ * Return the address of the UART device.
+ */
+lpaddr_t platform_get_uart_address(unsigned port)
+{
+    // is this nessacery ??
+    return uart_base[port];
+}
+void platform_set_uart_address(unsigned port, lpaddr_t uart_base)
+{
+    // ?????
+}
+
+/*
+lpaddr_t platform_get_private_region(void)
+{
+    // todo 
+}
+*/
+/*
+ * Do any extra initialisation for this particular CPU (e.g. A9/A15).
+ */
+void platform_revision_init(void)
+{
+    // todo
+}
+
+/*
+ * Return the core count
+ */
+size_t platform_get_core_count(void)
+{
+    return 4;
+}
+
+/*
+ * Print system identification. MMU is NOT yet enabled.
+ */
+void platform_print_id(void)
+{
+    printf("This is zynqMP on ZCU104\n");
+}
+
+
 /* GIC */
 
 errval_t platform_gic_init(void) {
+    /* GIC v3 ?????? */
+    # warning "GIC mismatches"
     gicv3_init();
     return SYS_ERR_OK;
 }
@@ -148,6 +182,18 @@ lpaddr_t platform_get_distributor_address(void) {
     assert(paging_mmu_enabled());
     return platform_gic_dist_base;
 }
+/*
+lpaddr_t platform_get_distributor_size(void)
+{
+    // todo
+}
+lpaddr_t platform_get_gic_cpu_size(void)
+{
+    // todo
+}
+*/
+void platform_set_gic_cpu_address(lpaddr_t){}
+void platform_set_distributor_address(lpaddr_t){}
 
 
 errval_t platform_boot_core(hwid_t target, genpaddr_t gen_entry, genpaddr_t context)

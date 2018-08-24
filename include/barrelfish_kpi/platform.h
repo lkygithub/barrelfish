@@ -36,6 +36,7 @@ enum pi_platform {
 	PI_PLATFORM_JETSONTK1,
     // armv8 platforms
     PI_PLATFORM_APM88XXXX,
+    PI_PLATFORM_ZYNQMP,
     PI_PLATFORM_FVP,
     PI_PLATFORM_CN88XX,
 };
