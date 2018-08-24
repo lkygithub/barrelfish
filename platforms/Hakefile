@@ -504,6 +504,15 @@ let bin_rcce_lu = [ "/sbin/" ++ f | f <- [
     )
     "Cavium ThunderX-1 (CN88xx) boards",
 
+    platform "ZynqmpZCU104" ["armv8"]
+    ([ ("armv8", "/sbin/cpu_zynqmp"), ("armv8", "/sbin/boot_armv8_generic") ]
+       ++
+       [ ("armv8", f) | f <- armv8_modules ]
+       ++
+       [ ("",      f) | f <- modules_generic ]
+    )
+    "Xilinx Zynq UltraScale+ MPSoC ZCU104 boards",
+
     platform "PandaboardES" [ "armv7" ]
     ([ ("armv7", f) | f <- pandaModules ] ++
      [ ("root", "/armv7_omap44xx_image"),
@@ -602,6 +611,7 @@ let bin_rcce_lu = [ "/sbin/" ++ f | f <- [
                      "armv8_a57v_1",
                      "armv8_apm88xxxx",
                      "armv8_cn88xx",
+                     "armv8_zynqmp",
                      "armv7_a9ve_1",
                      "armv7_a9ve_4",
                      "armv7_a15ve_1",
