@@ -1,5 +1,5 @@
 /**
- * \file plat_arm_vm_consts.c
+ * \file plat_zynqmp_const.c
  * \brief
  */
 
@@ -14,9 +14,9 @@
  */
 
 #include <kernel.h>
-
+#include <maps/zynqmp_map.h>
 /* RAM starts at 0, provided by the MMAP */
-lpaddr_t phys_memory_start= 0;
+lpaddr_t phys_memory_start= ZYNQMP_PSDDR_MEM_BASEADDR;
 
 /*
  * ----------------------------------------------------------------------------
@@ -24,19 +24,9 @@ lpaddr_t phys_memory_start= 0;
  * ----------------------------------------------------------------------------
  */
 
-// These values are from the APM88xx manual
-//lpaddr_t platform_gic_cpu_base  = 0x00000000781e2000;
-//lpaddr_t platform_gic_dist_base = 0x0000000078121000;
-
 // These values are from linux devicetree file
-lpaddr_t platform_gic_cpu_base  = 0x0000000078020000;
-lpaddr_t platform_gic_dist_base = 0x0000000078010000;
-
-/*
-lpaddr_t platform_gic_cpu_base  = 0x0000000078010000;
-lpaddr_t platform_gic_dist_base = 0x0000000078020000;
-*/
-
+lpaddr_t platform_gic_cpu_base  = ZYNQMP_APU_GIC_CPU_BASE;
+lpaddr_t platform_gic_dist_base = ZYNQMP_APU_GIC_D1ST_BASE;
 
 /*
  * ----------------------------------------------------------------------------
@@ -45,7 +35,7 @@ lpaddr_t platform_gic_dist_base = 0x0000000078020000;
  */
 
 /* the maximum number of UARTS supported */
-#define MAX_NUM_UARTS 4
+#define MAX_NUM_UARTS 2
 
 /* the serial console port */
 unsigned int serial_console_port = 0;
@@ -54,16 +44,16 @@ unsigned int serial_console_port = 0;
 unsigned int serial_debug_port = 0;
 
 /* the number of physical ports */
-unsigned serial_num_physical_ports = 4;
+unsigned serial_num_physical_ports = 2;
 
 /* uart bases */
 const lpaddr_t
 uart_base[MAX_NUM_UARTS]= {
-        0x1C020000, 0x1C021000, 0x1C02200, 0x1C023000
+        ZYNQMP_UART0_BASEADDR, ZYNQMP_UART1_BASEADDR
 };
 
-/* uart sizes */
+/* uart sizes, for one page each*/
 const size_t
 uart_size[MAX_NUM_UARTS]= {
-    4096, 4096, 4096, 4096
+    4096, 4096
 };

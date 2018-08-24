@@ -746,6 +746,7 @@ let
         "gic_v3",
         "armv8/armv8_cache_ctrl",
         "zynqmp/zynqmp_uart",
+        "zynqmp/zynqmp_slcr",
         "pl130_gic",
         "arm_icp_pit"
      ],

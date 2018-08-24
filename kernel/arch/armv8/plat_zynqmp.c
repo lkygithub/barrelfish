@@ -1,5 +1,5 @@
 /**
- * \file plat_apm88xxxx.c
+ * \file plat_zynqmp.c
  * \brief
  */
 
@@ -16,7 +16,7 @@
 #include <offsets.h>
 #include <platform.h>
 #include <serial.h>
-#include <dev/apm88xxxx/apm88xxxx_pc16550_dev.h>
+#include <dev/zynqmp/zynqmp_uart.h>
 #include <arch/arm/gic.h>
 #include <sysreg.h>
 #include <dev/armv8_dev.h>

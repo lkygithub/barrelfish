@@ -131,6 +131,8 @@
            "vtd_iotlb",
            "zynq7/zynq_uart",
            "zynq7/zynq_slcr",
+           "zynqmp/zynqmp_uart",
+           "zynqmp/zynqmp_slcr",
            "sfn5122f",
            "sfn5122f_q"
          ], arch <- allArchitectures

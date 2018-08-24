@@ -19,7 +19,7 @@
 
 /* There are a lot of control registers packed into this block, and we've only
  * included those which we need so far. */
-device zynqMP_slcr msbfirst (addr base) "ZynqMP System-Level Control Registers" {
+device zynqmp_slcr msbfirst (addr base) "ZynqMP System-Level Control Registers" {
 
     regtype pll_ctrl "PLL Control" {
         _ 13;
