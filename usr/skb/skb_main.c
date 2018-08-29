@@ -60,9 +60,7 @@ int main(int argc, char**argv)
 
     printf("vfs_initializing\n");
     vfs_init();
-
-    //printf("init dmalloc\n");
-    //init_dmalloc();
+//    init_dmalloc();
     // we'll be needing this...
     printf("making dir /tmp\n");
     vfs_mkdir("/tmp");

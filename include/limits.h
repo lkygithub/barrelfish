@@ -136,18 +136,6 @@
 #define	NL_NMAX			1
 #endif
 
-#ifndef _POSIX2_RE_DUP_MAX
-/* The maximum number of repeated occurrences of a regular expression
- *    permitted when using the interval notation `\{M,N\}'.  */
-#define _POSIX2_RE_DUP_MAX              255
-#endif /* _POSIX2_RE_DUP_MAX  */
-
-/* Minimum and maximum values a `signed long long int' can hold.  */
-#undef LONG_LONG_MIN
-#define LONG_LONG_MIN (-LONG_LONG_MAX - 1LL)
-#undef LONG_LONG_MAX
-#define LONG_LONG_MAX __LONG_LONG_MAX__
-
 #define	MB_LEN_MAX		6	/* 31-bit UTF-8 */
 
 #include <sys/limits.h>

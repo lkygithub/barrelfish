@@ -159,27 +159,6 @@ let bin_rcce_lu = [ "/sbin/" ++ f | f <- [
                         "benchmarks/xphi_ump_bench",
                         "benchmarks/xphi_xump_bench" ] ] ++ bench_x86
 
-    bench_armv7 = [ "/sbin/" ++ f | f <- [
-                        "channel_cost_bench",
-                        --"flounder_stubs_buffer_bench",
-                        --"flounder_stubs_empty_bench",
-                        --"flounder_stubs_payload_bench",
-                        --"benchmarks/vspace_map",
-                        --"benchmarks/mem_latency",
-                        "xcorecapbench",
-                        "ump_latency",
-                        --"ump_latency_cache",
-                        "ump_throughput",
-                        "ump_send",
-                        "ump_receive",
-                        "ump_exchange",
-                        --"lrpc_bench",
-                        "tsc_bench",
-                        --"shared_mem_clock_bench",
-                        --"ipi_bench",
-                        "mdb_bench",
-                        "freemem" ] ]
-
     -- Example program modules
     modules_xmpl = [ "/sbin/" ++ f | f <- [
         --"examples/xmpl-call-response",
@@ -478,13 +457,21 @@ let bin_rcce_lu = [ "/sbin/" ++ f | f <- [
        [ ("",       f) | f <- modules_generic])
       "Xeon Phi build with benchmarks and test suites",
 
-    platform "QEMU" [ "armv8" ]
-      ([ ("armv8", "/sbin/cpu_a57v"), ("armv8", "/sbin/boot_armv8_generic")  ]
+    platform "FVP" [ "armv8" ]
+      ([ ("armv8", "/sbin/cpu_a57_fvp"), ("armv8", "/sbin/boot_armv8_generic")  ]
        ++
        [ ("armv8", f) | f <- armv8_modules ]
        ++
        [ ("",       f) | f <- modules_generic])
-    "ARM Virtual Machine Board with ARM Cortex A57 processors in Qemu.",
+    "ARM Virtual Machine Board with ARM Cortex A57 processors in Fixed Virtual Platform.",
+
+    platform "QEMU" [ "armv8" ]
+      ([ ("armv8", "/sbin/cpu_a57_qemu"), ("armv8", "/sbin/boot_armv8_generic")  ]
+       ++
+       [ ("armv8", f) | f <- armv8_modules ]
+       ++
+       [ ("",       f) | f <- modules_generic])
+    "ARM Virtual Machine Board with ARM Cortex A57 processors in QEMU.",
 
     platform "APM88xxxx" [ "armv8" ]
     ([ ("armv8", "/sbin/cpu_apm88xxxx"), ("armv8", "/sbin/boot_armv8_generic")]
