@@ -38,7 +38,9 @@ void boot_app_init(lpaddr_t context)
     __attribute__((noreturn));
 
 /* low level debugging facilities */
-#if DEBUG
+#define DEBUG 
+#define ZYNQMP 
+#ifdef DEBUG 
 #ifdef THUNDERX
 #include <dev/pl011_uart_dev.h>
 
@@ -73,6 +75,22 @@ static void debug_serial_putc(char c)
     // Write character
     apm88xxxx_pc16550_THR_thr_wrf(&uart, c);
 }
+#elif defined(ZYNQMP)
+#include <dev/zynqmp/zynqmp_uart_dev.h>
+#include <maps/zynqmp_map.h>
+
+zynqmp_uart_t uart;
+static void debug_uart_initialize(void) {
+    zynqmp_uart_initialize(&uart, (mackerel_addr_t)ZYNQMP_UART0_BASEADDR);
+}
+
+static void debug_serial_putc(char c)
+{
+    // Wait until FIFO can hold more characters
+    while(zynqmp_uart_SR_TXFULL_rdf(&uart));
+    /* Write character. */
+    zynqmp_uart_FIFO_FIFO_wrf(&uart, c);
+} 
 
 #endif
 
@@ -644,6 +662,7 @@ boot_bsp_init(uint32_t magic, lpaddr_t pointer, lpaddr_t stack) {
     boot_generic_init(magic, pointer, stack);
 
     stop:
+    debug_print_string("BAD BOOTLOADER MAGIC\n");
     while(1) {
         __asm volatile("wfi \n");
     }

@@ -42,6 +42,8 @@ void handle_user_page_fault(lvaddr_t                fault_address,
            disabled ? " WHILE DISABLED" : "", DISP_NAME_LEN,
            disp->d.name, fault_address, saved_pc);
 
+    //paging_dump_tables(dcb_current);
+
     if (disabled) {
         assert(save_area == &disp->trap_save_area);
         handler = disp->d.dispatcher_pagefault_disabled;

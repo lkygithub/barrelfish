@@ -150,8 +150,11 @@ save_vm_status(vmcode *fail_code, int options)
      */
 
     /* push a dummy return address (needed in the GC) */
+
+	printf("SP:%0x fail:%0x\n",SP,&fail_return_env_0_[1]);
     SP = (pword *) (((vmcode **) SP) -1);
     *((vmcode **) SP) = &fail_return_env_0_[1];
+
 
     i = VM_FLAGS;
     Disable_Int()			/* will be reset in ..._emulc() */

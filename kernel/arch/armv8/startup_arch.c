@@ -342,8 +342,12 @@ static void create_phys_caps(lpaddr_t reserved_start, lpaddr_t reserved_end)
             local_phys_to_mem(armv8_glbl_core_data->efi_mmap);
 
     lpaddr_t last_end_addr = 0;
+    
     for (size_t i = 0; i < (mmap->size - sizeof(struct multiboot_tag_efi_mmap)) / mmap->descr_size; i++) {
-        efi_memory_descriptor *desc = (efi_memory_descriptor *)(mmap->efi_mmap + mmap->descr_size * i);
+        efi_memory_descriptor *desc = (efi_memory_descriptor *)(mmap->efi_mmap) + i;
+        //lpaddr_t end = desc->PhysicalStart + desc->NumberOfPages * BASE_PAGE_SIZE - 1;
+        //printf("start:%016lx  end:%016lx pages:%-6d %016lx  rvs:%lx  rve:%lx\n",
+        //    desc->PhysicalStart,end, desc->NumberOfPages,last_end_addr,reserved_start,reserved_end);
 
         enum region_type region_type = RegionType_Max;
         switch(desc->Type) {

@@ -145,6 +145,7 @@ ec_init(void)
      * happen AFTER initializing the message passing system.
      *----------------------------------------------------------------*/
     mem_init(ec_options.init_flags);	/* depends on -c and -m options */
+    printf("ec_mem_init ok\n");
 
     /*
      * Init the global (shared) eclipse structures, dictionary, code...
@@ -152,6 +153,7 @@ ec_init(void)
      * Note that we don't have an engine yet!
      */
     eclipse_global_init(ec_options.init_flags);
+    printf("ec_global_init ok\n");
 
 
     /*----------------------------------------------------------------
@@ -161,6 +163,7 @@ ec_init(void)
      * Initialize the Prolog engine
      */
     emu_init(ec_options.init_flags, 0);
+    printf("ec_emu_init ok\n");
 
     initfile = strcat(strcpy(filename_buf, ec_eclipse_home), "/lib/kernel.eco");
     if (ec_access(initfile, R_OK) < 0)
@@ -170,17 +173,25 @@ ec_init(void)
 	{
 	    ec_panic("Aborting: Can't find boot file! Please check either\na) your program's setting for eclipsedir in ec_set_option(), or\nb) your setting for ECLIPSEDIR environment variable.\n","ec_init()");
 	}
-    }	    
+    }
+    printf("ec_eccess ok\n");	    
 
     res = eclipse_boot(initfile);
     if (res != PSUCCEED)
     	return res;
 
+    printf("ec_boot ok\n");	
+
     goal = ec_term(ec_did("main",1), ec_long(ec_options.init_flags & INIT_SHARED ? 0 : 1));
+
+    printf("ec_term ok\n");	
+
     module.val.did = ec_.d.kernel_sepia;
     module.tag.kernel = ModuleTag(ec_.d.kernel_sepia);
     if (main_emulc_noexit(goal.val, goal.tag, module.val, module.tag) != PYIELD)
-	return PFAIL;
+	    return PFAIL;
+
+    printf("ec_main_emulc_noexit ok\n");	
     return PSUCCEED;
 }
 

@@ -21,21 +21,6 @@
 /* Serial console and debugger interfaces. */
 static zynqmp_uart_t ports[ZYNQMP_UART_MAX_PORTS];
 
-void
-zynqmp_uart_init(unsigned port, lvaddr_t base, bool initialize_hw) {
-    assert(port < ZYNQMP_UART_MAX_PORTS);
-    zynqmp_uart_initialize(&ports[port], (mackerel_addr_t) base);
-    if(initialize_hw) zynqmp_uart_hw_init(&ports[port]);
-}
-
-void
-zynqmp_uart_early_init(unsigned port, lpaddr_t addr)
-{
-    assert(port < ZYNQMP_UART_MAX_PORTS);
-    zynqmp_uart_initialize(&ports[port], (mackerel_addr_t) addr);
-    zynqmp_uart_hw_init(&ports[port]);
-}
-
 /*
  * Initialise Zynq UART
  */
@@ -56,6 +41,22 @@ zynqmp_uart_hw_init(zynqmp_uart_t *uart) {
     /* Enable receiver. */
     zynqmp_uart_CR_rx_dis_wrf(uart, 0);
     zynqmp_uart_CR_rx_en_wrf(uart, 1);
+}
+
+
+void
+zynqmp_uart_init(unsigned port, lvaddr_t base, bool initialize_hw) {
+    assert(port < ZYNQMP_UART_MAX_PORTS);
+    zynqmp_uart_initialize(&ports[port], (mackerel_addr_t) base);
+    if(initialize_hw) zynqmp_uart_hw_init(&ports[port]);
+}
+
+void
+zynqmp_uart_early_init(unsigned port, lpaddr_t addr)
+{
+    assert(port < ZYNQMP_UART_MAX_PORTS);
+    zynqmp_uart_initialize(&ports[port], (mackerel_addr_t) addr);
+    zynqmp_uart_hw_init(&ports[port]);
 }
 
 /**

@@ -43,7 +43,7 @@ unsigned int serial_console_port = 0;
 unsigned int serial_debug_port = 0;
 
 /* the number of physical ports */
-unsigned serial_num_physical_ports = 2;
+unsigned serial_num_physical_ports = 1;
 
 /* uart bases */
 const lpaddr_t

@@ -66,15 +66,27 @@ static void mmap_find_memory(struct multiboot_tag_efi_mmap *mmap)
     lpaddr_t physical_mem = 0;
     uint64_t pages = ARMV8_CORE_DATA_PAGES;
 
-    for (size_t i = 0; i < mmap->size; i += mmap->descr_size) {
-        efi_memory_descriptor *desc = (efi_memory_descriptor *)(mmap->efi_mmap + i);
+    MSG("mmap->size: %d\n",mmap->size);
+    MSG("mmap->descr_size : %d\n",mmap->descr_size);
+    MSG("mmap->descr_ver %d\n",mmap->descr_vers);
+    MSG("mmap->mmap_addr %016lx\n",mmap->efi_mmap);
+
+    int find_flag = 0;
+    int desc_count = (mmap->size - sizeof(struct multiboot_tag_efi_mmap)) /mmap->descr_size;
+
+    for (size_t i = 0; i < desc_count; i ++) {
+        efi_memory_descriptor *desc = (efi_memory_descriptor *)(mmap->efi_mmap) + i;
+
+        // find the last one ???
         if (desc->Type == EfiConventionalMemory && desc->NumberOfPages > pages) {
             physical_mem = ROUND_UP(desc->PhysicalStart, BASE_PAGE_SIZE);
             pages = desc->NumberOfPages;
+            find_flag = 1;
+            break;
         }
     }
 
-    if (!physical_mem) {
+    if (!find_flag) {
         panic("No free memory found!\n");
     }
 
@@ -90,6 +102,7 @@ static void mmap_find_memory(struct multiboot_tag_efi_mmap *mmap)
     armv8_glbl_core_data->start_free_ram += sizeof(*global);
     armv8_glbl_core_data->start_free_ram = ROUND_UP(armv8_glbl_core_data->start_free_ram, BASE_PAGE_SIZE);
 
+    MSG("start_kernel_ram:%016x  start_free_rame:%016x\n",physical_mem,armv8_glbl_core_data->start_free_ram);
 }
 
 bool cpu_is_bsp(void)
@@ -102,7 +115,16 @@ bool arch_core_is_bsp(void)
 {
     return cpu_is_bsp();
 }
+void print_multiboot_layout(void* pointer);
+/*
+void print_multiboot_layout(void* pointer)
+{
+    struct multiboot_header * mbhdr = (struct multiboot_header*)pointer;
+    int image_size  = mbhdr->header_length;
 
+    struct multiboot_header_tag* tag = (struct multiboot_header_tag*)(mbhdr+1);
+}
+*/
 /**
  * @param Entry point to architecture specific initialization
  *
@@ -117,8 +139,19 @@ bool arch_core_is_bsp(void)
  */
 void
 arch_init(uint32_t magic, void *pointer, uintptr_t stack) {
+
+    
     global = &global_temp;
+    // is that nessacery here ??
     memset(&global->locks, 0, sizeof(global->locks));
+
+    // initialize the serial console.
+    serial_init(serial_console_port, false);
+    
+    MSG("comes into zynqmp cpu_driver now\n");
+    MSG("multiboot addr is %016lx\n",pointer);
+    MSG("multiboot magic is %u\n",magic);
+    MSG("multiboot stack addr is %016lx\n",stack);
 
     switch (magic) {
     case MULTIBOOT2_BOOTLOADER_MAGIC:
@@ -148,16 +181,12 @@ arch_init(uint32_t magic, void *pointer, uintptr_t stack) {
         // parse the cmdline
         parse_commandline(kernel_cmd->string, cmdargs);
 
-        // initialize the serial console.
-        serial_init(serial_console_port, false);
-//        serial_console_init(false);
-
         struct multiboot_tag_efi_mmap *mmap = (struct multiboot_tag_efi_mmap *)
                 multiboot2_find_header(mb, size, MULTIBOOT_TAG_TYPE_EFI_MMAP);
         if (!mmap) {
             panic("Multiboot image does not have EFI mmap!");
         } else {
-            printf("Found EFI mmap: %p\n", mmap);
+            MSG("Found EFI mmap: %p\n", mmap);
         }
 
         mmap_find_memory(mmap);
@@ -173,10 +202,7 @@ arch_init(uint32_t magic, void *pointer, uintptr_t stack) {
         break;
     }
     case ARMV8_BOOTMAGIC_PSCI :
-        //serial_init(serial_console_port, false);
-
-        serial_init(serial_console_port, false);
-
+        {
         struct armv8_core_data *core_data = (struct armv8_core_data*)pointer;
         armv8_glbl_core_data = core_data;
         global = (struct global *)core_data->cpu_driver_globals_pointer;
@@ -189,8 +215,8 @@ arch_init(uint32_t magic, void *pointer, uintptr_t stack) {
         MSG("ARMv8 Core magic...\n");
 
         break;
+        }
     default: {
-        serial_init(serial_console_port, false);
 
         serial_console_putchar('x');
         serial_console_putchar('x');
@@ -202,7 +228,7 @@ arch_init(uint32_t magic, void *pointer, uintptr_t stack) {
     }
     }
 
-
+    MSG("Current EL level \n");
     MSG("Barrelfish CPU driver starting on ARMv8\n");
     MSG("Global data at %p\n", global);
     MSG("Multiboot record at %p\n", pointer);
@@ -213,6 +239,7 @@ arch_init(uint32_t magic, void *pointer, uintptr_t stack) {
     MSG("Exception vectors (VBAR_EL1): %p\n", &vectors);
     sysreg_write_vbar_el1((uint64_t)&vectors);
 
+    MSG("Initilizing GIC400v2\n");
     platform_gic_init();
 
     MSG("Setting coreboot spawn handler\n");

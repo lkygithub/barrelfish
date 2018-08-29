@@ -40,11 +40,11 @@ errval_t serial_init(unsigned port, bool initialize_hw)
         // hw initialized, this is for non-bsp cores, where hw has been
         // initialized by bsp core and we come through here just to setup our
         // local zynqmp_uart struct for the port.
-        zynqmp_uart_init(port, (mackerel_addr_t)(uart_base[port] + KERNEL_OFFSET),0);
+        zynqmp_uart_init(port, (lvaddr_t)(uart_base[port] + KERNEL_OFFSET),0);
         return SYS_ERR_OK;
     }
      /* initialize_hw is 1 means that the hardware need initializing */
-    zynqmp_uart_init(port, (mackerel_addr_t)(uart_base[port] + KERNEL_OFFSET),1);
+    zynqmp_uart_init(port, (lvaddr_t)(uart_base[port] + KERNEL_OFFSET),1);
 
     panic("device init NYI");
     return SYS_ERR_OK;
@@ -56,7 +56,7 @@ errval_t serial_early_init(unsigned port)
         return SYS_ERR_SERIAL_PORT_INVALID;
     }
 
-    zynqmp_uart_early_init(port, (mackerel_addr_t)uart_base[port]);
+    zynqmp_uart_early_init(port, (lvaddr_t)uart_base[port]);
     return SYS_ERR_OK;
 }
 /* what the fuck */
@@ -113,12 +113,12 @@ lpaddr_t platform_get_uart_address(unsigned port)
     // is this nessacery ??
     return uart_base[port];
 }
+/*
 void platform_set_uart_address(unsigned port, lpaddr_t uart_base)
 {
     // ?????
 }
 
-/*
 lpaddr_t platform_get_private_region(void)
 {
     // todo 
@@ -153,7 +153,7 @@ void platform_print_id(void)
 
 errval_t platform_gic_init(void) {
     /* GIC v3 ?????? */
-    # warning "GIC mismatches"
+    //# warning "GIC mismatches"
     gicv3_init();
     return SYS_ERR_OK;
 }
@@ -192,8 +192,8 @@ lpaddr_t platform_get_gic_cpu_size(void)
     // todo
 }
 */
-void platform_set_gic_cpu_address(lpaddr_t){}
-void platform_set_distributor_address(lpaddr_t){}
+void platform_set_gic_cpu_address(lpaddr_t gic_cpu_addr){}
+void platform_set_distributor_address(lpaddr_t gic_dist_addr){}
 
 
 errval_t platform_boot_core(hwid_t target, genpaddr_t gen_entry, genpaddr_t context)
