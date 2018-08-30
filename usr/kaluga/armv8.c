@@ -124,6 +124,18 @@ static errval_t cn88xx_startup(void)
     return armv8_startup_common();
 }
 
+static errval_t zynqmp_startup(void)
+{
+    errval_t err;
+
+    err = skb_execute_query("[plat_zynqmp].");
+    if(err_is_fail(err)){
+        USER_PANIC_SKB_ERR(err, "Additional device db file 'plat_zynqmp' not loaded.");
+    }
+
+    return armv8_startup_common();
+}
+
 errval_t arch_startup(char * add_device_db_file)
 {
     errval_t err;
@@ -168,6 +180,9 @@ errval_t arch_startup(char * add_device_db_file)
     case PI_PLATFORM_CN88XX:
         debug_printf("Kaluga running on CN88xx\n");
         return cn88xx_startup();
+    case PI_PLATFORM_ZYNQMP:
+        debug_printf("Kaluga running on ZynqMP\n");
+        return zynqmp_startup();
     }
 
     return KALUGA_ERR_UNKNOWN_PLATFORM;
