@@ -130,7 +130,7 @@ architectures :: [String]
 
 -- Optimisation flags (-Ox -g etc.) passed to compiler
 cOptFlags :: [String]
-cOptFlags = ["-g", "-O2"]
+cOptFlags = ["-O2"]
 
 newlib_malloc :: String
 --newlib_malloc = "sbrk"     -- use sbrk and newlib's malloc()
@@ -336,6 +336,7 @@ mdb_check_invariants_user = True
 data Scheduler = RBED | RR deriving (Show,Eq)
 scheduler :: Scheduler
 scheduler = RBED
+-- scheduler = TT
 
 -- Physical Address Extensions (PAE)-enabled paging on x86-32
 pae_paging :: Bool
