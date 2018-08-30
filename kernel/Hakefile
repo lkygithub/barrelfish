@@ -788,17 +788,16 @@ let
          "arch/armv8/syscall.c",
          "arch/armv8/timers.c",
          "arch/arm/debug.c",
-         "arch/arm/gic.c",
-         "arch/arm/irq.c"
+         "arch/armv8/irq_v2.c"
      ],
      mackerelDevices = [
         "arm",
         "armv8",
         "gic_v3",
+        "gic_v2_cpu",
         "armv8/armv8_cache_ctrl",
         "zynqmp/zynqmp_uart",
         "zynqmp/zynqmp_slcr",
-        "pl130_gic",
         "arm_icp_pit"
      ],
      addLibraries = [
