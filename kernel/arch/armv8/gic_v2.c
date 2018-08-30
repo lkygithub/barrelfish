@@ -193,9 +193,30 @@ errval_t gicv3_cpu_interface_enable(void)
 }
 
 /**
+ * \brief Returns the IRQ type based on the interrupt ID
+ *
+ * We have three types of interrupts
+ * 1) Software generated Interrupts (SGI): IDs 0-15
+ * 2) Private Peripheral Interrupts (PPI): IDs 16-31
+ * 3) Shared Peripheral Interrups (SPI): IDs 32-
+ *
+ * \return The type of the interrupt.
+ */
+static enum IrqType get_irq_type(uint32_t int_id)
+{
+    if (int_id < 16) {
+        return IrqType_SGI;
+    } else if (int_id < 32) {
+        return IrqType_PPI;
+    } else {
+        return IrqType_SPI;
+    }
+}
+
+/**
  * \brief Enable an interrupt
  *
- * \see ARM Generic Interrupt Controller Architecture Specification v1.0
+ * \see ARM Generic Interrupt Controller Architecture Specification v2.0
  *
  * \param int_id
  * \param cpu_targets 8 Bit mask. One bit for each core in the system.
@@ -233,9 +254,9 @@ void gicv3_enable_interrupt(uint32_t int_id, uint8_t cpu_targets, uint16_t prio,
 
     // Enable
     // 1 Bit per interrupt
-    regval = pl130_gic_ICDISER_rd(&gic, ind);
+    regval = gic_v3_GICD_ISENABLER_rd(&gic_v3_dev, ind);
     regval |= bit_mask;
-    pl130_gic_ICDISER_wr(&gic, ind, regval);
+    gic_v3_GICD_ISENABLER_wr(&gic_v3_dev, ind, regval);
 
     // TODO: cleanup pl130 mackerel file so that we don't need bit magic
     // here.  -SG, 2012/12/13
@@ -243,23 +264,24 @@ void gicv3_enable_interrupt(uint32_t int_id, uint8_t cpu_targets, uint16_t prio,
     // Priority
     // 8 Bit per interrupt
     // chp 4.3.10
-    ind = int_id/4;
+    //ind = int_id/4;
     // XXX: check that priorities work properly, -SG, 2012/12/13
     prio = (prio & 0xF)<<4;
-    switch(int_id % 4) {
-    case 0:
-        pl130_gic_ICDIPR_prio_off0_wrf(&gic, ind, prio);
-        break;
-    case 1:
-        pl130_gic_ICDIPR_prio_off1_wrf(&gic, ind, prio);
-        break;
-    case 2:
-        pl130_gic_ICDIPR_prio_off2_wrf(&gic, ind, prio);
-        break;
-    case 3:
-        pl130_gic_ICDIPR_prio_off3_wrf(&gic, ind, prio);
-        break;
-    }
+    gic_v3_GICD_IPRIORITYR_wr(&gic_v3_dev, ind_id, prio);
+    //switch(int_id % 4) {
+    //case 0:
+    //    gic_v3_ICDIPR_prio_off0_wrf(&gic, ind, prio);
+    //    break;
+    //case 1:
+    //    gic_v3_ICDIPR_prio_off1_wrf(&gic, ind, prio);
+    //    break;
+    //case 2:
+    //    gic_v3_ICDIPR_prio_off2_wrf(&gic, ind, prio);
+    //    break;
+    //case 3:
+    //    gic_v3_ICDIPR_prio_off3_wrf(&gic, ind, prio);
+    //    break;
+    //}
 
     // Target processors (only SPIs)
     // 8 Bit per interrupt
@@ -267,16 +289,16 @@ void gicv3_enable_interrupt(uint32_t int_id, uint8_t cpu_targets, uint16_t prio,
     if (irq_type == IrqType_SPI) { // rest is ro
         switch (int_id % 4) {
         case 0:
-            pl130_gic_ICDIPTR_targets_off0_wrf(&gic, ind, cpu_targets);
+            gic_v3_GICD_ITARGETSR_targets_off0_wrf(&gic_v3_dev, ind, cpu_targets);
             break;
         case 1:
-            pl130_gic_ICDIPTR_targets_off1_wrf(&gic, ind, cpu_targets);
+            gic_v3_GICD_ITARGETSR_targets_off1_wrf(&gic_v3_dev, ind, cpu_targets);
             break;
         case 2:
-            pl130_gic_ICDIPTR_targets_off2_wrf(&gic, ind, cpu_targets);
+            gic_v3_GICD_ITARGETSR_targets_off2_wrf(&gic_v3_dev, ind, cpu_targets);
             break;
         case 3:
-            pl130_gic_ICDIPTR_targets_off3_wrf(&gic, ind, cpu_targets);
+            gic_v3_GICD_ITARGETSR_targets_off3_wrf(&gic_v3_dev, ind, cpu_targets);
             break;
         }
     }
@@ -287,52 +309,52 @@ void gicv3_enable_interrupt(uint32_t int_id, uint8_t cpu_targets, uint16_t prio,
     uint8_t val = ((edge_triggered&0x1) << 1) | (one_to_n&0x1);
     switch (int_id % 16) {
     case 0:
-        pl130_gic_ICDICR_conf0_wrf(&gic, ind, val);
+        gic_v3_GICD_ICFGR_conf0_wrf(&gic_v3_dev, ind, val);
         break;
     case 1:
-        pl130_gic_ICDICR_conf1_wrf(&gic, ind, val);
+        gic_v3_GICD_ICFGR_conf1_wrf(&gic_v3_dev, ind, val);
         break;
     case 2:
-        pl130_gic_ICDICR_conf2_wrf(&gic, ind, val);
+        gic_v3_GICD_ICFGR_conf2_wrf(&gic_v3_dev, ind, val);
         break;
     case 3:
-        pl130_gic_ICDICR_conf3_wrf(&gic, ind, val);
+        gic_v3_GICD_ICFGR_conf3_wrf(&gic_v3_dev, ind, val);
         break;
     case 4:
-        pl130_gic_ICDICR_conf4_wrf(&gic, ind, val);
+        gic_v3_GICD_ICFGR_conf4_wrf(&gic_v3_dev, ind, val);
         break;
     case 5:
-        pl130_gic_ICDICR_conf5_wrf(&gic, ind, val);
+        gic_v3_GICD_ICFGR_conf5_wrf(&gic_v3_dev, ind, val);
         break;
     case 6:
-        pl130_gic_ICDICR_conf6_wrf(&gic, ind, val);
+        gic_v3_GICD_ICFGR_conf6_wrf(&gic_v3_dev, ind, val);
         break;
     case 7:
-        pl130_gic_ICDICR_conf7_wrf(&gic, ind, val);
+        gic_v3_GICD_ICFGR_conf7_wrf(&gic_v3_dev, ind, val);
         break;
     case 8:
-        pl130_gic_ICDICR_conf8_wrf(&gic, ind, val);
+        gic_v3_GICD_ICFGR_conf8_wrf(&gic_v3_dev, ind, val);
         break;
     case 9:
-        pl130_gic_ICDICR_conf9_wrf(&gic, ind, val);
+        gic_v3_GICD_ICFGR_conf9_wrf(&gic_v3_dev, ind, val);
         break;
     case 10:
-        pl130_gic_ICDICR_conf10_wrf(&gic, ind, val);
+        gic_v3_GICD_ICFGR_conf10_wrf(&gic_v3_dev, ind, val);
         break;
     case 11:
-        pl130_gic_ICDICR_conf11_wrf(&gic, ind, val);
+        gic_v3_GICD_ICFGR_conf11_wrf(&gic_v3_dev, ind, val);
         break;
     case 12:
-        pl130_gic_ICDICR_conf12_wrf(&gic, ind, val);
+        gic_v3_GICD_ICFGR_conf12_wrf(&gic_v3_dev, ind, val);
         break;
     case 13:
-        pl130_gic_ICDICR_conf13_wrf(&gic, ind, val);
+        gic_v3_GICD_ICFGR_conf13_wrf(&gic_v3_dev, ind, val);
         break;
     case 14:
-        pl130_gic_ICDICR_conf14_wrf(&gic, ind, val);
+        gic_v3_GICD_ICFGR_conf14_wrf(&gic_v3_dev, ind, val);
         break;
     case 15:
-        pl130_gic_ICDICR_conf15_wrf(&gic, ind, val);
+        gic_v3_GICD_ICFGR_conf15_wrf(&gic_v3_dev, ind, val);
         break;
     }
 }

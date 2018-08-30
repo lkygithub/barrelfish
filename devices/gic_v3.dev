@@ -107,9 +107,35 @@ device gic_v3 msbfirst (addr dist) "GIC v3 architecture" {
 
     regarray GICD_IPRIORITYR addr(dist, 0x400)[1020] "Interrupt Priority Registers" type(uint8);
 
-    regarray GICD_ITARGETSR addr(dist, 0x800)[255] "Interrupt Processor Targets Registers" type(uint32);
+    regtype cpu_targets_reg "CPU targets" {
+        targets_off3    8       rw      "CPU targets, byte offset 3";
+        targets_off2    8       rw      "CPU targets, byte offset 2";
+        targets_off1    8       rw      "CPU targets, byte offset 1";
+        targets_off0    8       rw      "CPU targets, byte offset 0";
+    };
 
-    regarray GICD_ICFGR addr(dist, 0xC00)[64] "Interrupt Configuration Registers" type(uint32);
+    regarray GICD_ITARGETSR addr(dist, 0x800)[255] "Interrupt Processor Targets Registers" type(cpu_targets_reg);
+
+    regtype conf_reg "Configuration registers" {
+        conf15           2       "Configuration 15";
+        conf14           2       "Configuration 14";
+        conf13           2       "Configuration 13";
+        conf12           2       "Configuration 12";
+        conf11           2       "Configuration 11";
+        conf10           2       "Configuration 10";
+        conf9            2       "Configuration 9";
+        conf8            2       "Configuration 8";
+        conf7            2       "Configuration 7";
+        conf6            2       "Configuration 6";
+        conf5            2       "Configuration 5";
+        conf4            2       "Configuration 4";
+        conf3            2       "Configuration 3";
+        conf2            2       "Configuration 2";
+        conf1            2       "Configuration 1";
+        conf0            2       "Configuration 0";
+    };
+
+    regarray GICD_ICFGR addr(dist, 0xC00)[64] "Interrupt Configuration Registers" type(conf_reg);
 
     regarray GICD_IGRPMODR addr(dist, 0xD00)[32] "Interrupt Group Modifier Registers" type(uint32);
 
