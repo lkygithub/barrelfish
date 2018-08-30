@@ -164,11 +164,7 @@ errval_t pci_msix_vector_init_addr(struct pci_addr *addr, uint16_t index,
                                    uint8_t destination, uint8_t vector);
 
 errval_t pci_setup_int_routing_with_cap(int irq_idx, 
-<<<<<<< HEAD
-                                        struct capref* irq_src_cap,
-=======
                                         struct capref irq_src_cap,
->>>>>>> f5ab4a56f1a18e83315cc28cae6f0b00e404f4de
                                         interrupt_handler_fn handler,
                                         void *handler_arg,
                                         interrupt_handler_fn reloc_handler,

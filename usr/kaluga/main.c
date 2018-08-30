@@ -143,7 +143,6 @@ int main(int argc, char** argv)
     if (err_is_fail(err)) {
         USER_PANIC_ERR(err, "arch startup");
     }
-
     THCFinish();
     return EXIT_SUCCESS;
 }
