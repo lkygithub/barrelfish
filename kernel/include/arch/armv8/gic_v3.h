@@ -28,4 +28,6 @@ void gicv3_ack_irq(uint32_t irq);
 
 void gicv3_raise_softirq(coreid_t cpuid, uint8_t irq);
 
+void gicv3_enable_interrupt(uint32_t int_id, uint8_t cpu_targets, uint16_t prio,
+                          bool edge_triggered, bool one_to_n);
 #endif // __GIC_V3_H__
