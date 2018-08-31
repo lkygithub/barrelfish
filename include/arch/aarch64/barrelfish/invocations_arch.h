@@ -205,7 +205,7 @@ invoke_idcap_identify(struct capref idcap, idcap_id_t *id)
     assert(id != NULL);
     assert(get_croot_addr(idcap) == CPTR_ROOTCN);
 
-    struct sysret sysret = cap_invoke1(idcap, IDCmd_Identify);
+    struct sysret sysret = cap_invoke2(idcap, IDCmd_Identify, (uintptr_t) id);
 
     if (err_is_ok(sysret.error)) {
         *id = sysret.value;

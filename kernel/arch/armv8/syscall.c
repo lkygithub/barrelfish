@@ -32,6 +32,7 @@
 #include <systime.h>
 #include <timers.h>
 #include <psci.h>
+#include <serial.h>
 
 // helper macros  for invocation handler definitions
 #define INVOCATION_HANDLER(func) \
@@ -830,6 +831,16 @@ static struct sysret handle_idcap_identify(struct capability *to,
                                            int argc)
 {
     assert(to->type == ObjType_ID);
+    if(3!=argc)
+    {
+        struct registers_aarch64_syscall_args* sa = &context->syscall_args;
+
+        printf("argc:%d ",argc);
+        for(int i =0;i<argc;i++)
+        {
+            printf("arg %d is %lu\n",i,((uint64_t *)sa)[i]);
+        }
+    }
     assert(3 == argc);
 
     struct registers_aarch64_syscall_args* sa = &context->syscall_args;
@@ -1233,6 +1244,11 @@ void sys_syscall(uint64_t a0, uint64_t a1, uint64_t a2, uint64_t a3,
                  * here! */
                 r.error = sys_print((const char*)a1, (size_t)a2);
             }
+            break;
+
+        case SYSCALL_GETCHAR:
+            r.value = serial_console_getchar();
+            r.error = SYS_ERR_OK;
             break;
 
         case SYSCALL_DEBUG:

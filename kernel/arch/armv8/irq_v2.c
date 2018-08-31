@@ -38,7 +38,7 @@ errval_t irq_table_set(unsigned int nidt, capaddr_t endpoint)
 {
     errval_t err;
     struct cte *recv;
-
+    
     err = caps_lookup_slot(&dcb_current->cspace.cap, endpoint,
                            2, &recv, CAPRIGHTS_WRITE);
     if (err_is_fail(err)) {
@@ -136,6 +136,7 @@ void send_user_interrupt(int irq)
     assert(irq >= 0 && irq < NDISPATCH);
     struct capability *cap = &irq_dispatch[irq].cap;
 
+    printk(LOG_NOTE, "IRQ %"PRIu32"\n", irq);
     // Return on null cap (unhandled interrupt)
     if (cap->type == ObjType_Null) {
         printk(LOG_WARN, "unhandled IRQ %d\n", irq);

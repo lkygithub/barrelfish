@@ -16,8 +16,13 @@
 #include <paging_kernel_arch.h>
 #include <arch/armv8/gic_v3.h>
 
+#include <dev/zynqmp/zynqmp_uart_dev.h>
+#include <maps/zynqmp_map.h>
+
 static gic_v3_t gic_v3_dev;
 static gic_v2_cpu_t gic_v2_cpu_dev;
+
+#define MSG(format, ...) printk( LOG_NOTE, "GICv2: "format, ## __VA_ARGS__ )
 
 /*
  * This should return 1<<my_core_id
@@ -63,6 +68,8 @@ errval_t gicv3_init(void)
         printk(LOG_NOTE, "gic_v2: In init. GIC does not support secure mode\n"); 
     }
 
+    MSG("gic_init done\n");
+
     return SYS_ERR_OK;
 }
 
@@ -76,6 +83,13 @@ uint32_t gicv3_get_active_irq(void)
     return res;
 }
 
+struct zynqmp_uart_t test_uart = 
+{
+    (mackerel_addr_t)(ZYNQMP_UART0_BASEADDR + KERNEL_OFFSET),
+    0,
+    0
+};
+
 /*
  * ACKs group 1 interrupt
  */
@@ -85,6 +99,11 @@ void gicv3_ack_irq(uint32_t irq)
     reg = gic_v2_cpu_EOIR_intid_insert(reg, irq);
     gic_v2_cpu_EOIR_rawwr(&gic_v2_cpu_dev, irq);
     check_cpu_if_statusr();
+    
+    if(irq==53){
+        zynqmp_uart_ISR_rtrig_wrf(&test_uart, 1);
+        printf("irq acked\n");
+    }       
 }
 
 /*
@@ -192,6 +211,12 @@ errval_t gicv3_cpu_interface_enable(void)
     return SYS_ERR_OK;
 }
 
+enum IrqType {
+    IrqType_SGI,
+    IrqType_PPI,
+    IrqType_SPI
+};
+
 /**
  * \brief Returns the IRQ type based on the interrupt ID
  *
@@ -240,6 +265,7 @@ void gicv3_enable_interrupt(uint32_t int_id, uint8_t cpu_targets, uint16_t prio,
            int_id, bit_mask, ind);
 
     enum IrqType irq_type = get_irq_type(int_id);
+    MSG("TYPE %d\n",irq_type);
 
     // Set the Interrupt Set Enable register to enable the interupt
     // See ARM GIC TRM
@@ -250,7 +276,7 @@ void gicv3_enable_interrupt(uint32_t int_id, uint8_t cpu_targets, uint16_t prio,
 
     // XXX: check what we need to do if int_id > it_num_lines
     //  -SG, 2012/12/13
-    assert(int_id <= it_num_lines);
+    // assert(int_id <= it_num_lines);
 
     // Enable
     // 1 Bit per interrupt
@@ -267,7 +293,7 @@ void gicv3_enable_interrupt(uint32_t int_id, uint8_t cpu_targets, uint16_t prio,
     //ind = int_id/4;
     // XXX: check that priorities work properly, -SG, 2012/12/13
     prio = (prio & 0xF)<<4;
-    gic_v3_GICD_IPRIORITYR_wr(&gic_v3_dev, ind_id, prio);
+    gic_v3_GICD_IPRIORITYR_wr(&gic_v3_dev, int_id, prio);
     //switch(int_id % 4) {
     //case 0:
     //    gic_v3_ICDIPR_prio_off0_wrf(&gic, ind, prio);

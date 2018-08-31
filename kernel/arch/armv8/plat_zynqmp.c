@@ -46,7 +46,6 @@ errval_t serial_init(unsigned port, bool initialize_hw)
      /* initialize_hw is 1 means that the hardware need initializing */
     zynqmp_uart_init(port, (lvaddr_t)(uart_base[port] + KERNEL_OFFSET),1);
 
-    panic("device init NYI");
     return SYS_ERR_OK;
 }
 

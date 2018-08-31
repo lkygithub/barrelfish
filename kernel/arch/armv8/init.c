@@ -146,7 +146,7 @@ arch_init(uint32_t magic, void *pointer, uintptr_t stack) {
     memset(&global->locks, 0, sizeof(global->locks));
 
     // initialize the serial console.
-    serial_init(serial_console_port, false);
+    serial_init(serial_console_port, true);
     
     MSG("comes into zynqmp cpu_driver now\n");
     MSG("multiboot addr is %016lx\n",pointer);

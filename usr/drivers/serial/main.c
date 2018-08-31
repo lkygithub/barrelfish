@@ -84,6 +84,10 @@ int main(int argc, char *argv[])
         .membase        = SERIAL_MEMBASE_INVALID,
     };
 
+    for(int i=0;i<argc;i++){
+        printf("arg %d : %s\n",i,argv[i]);
+    }
+
     // Parse args
     for (int i = 1; i < argc; i++) {
         if (strncmp(argv[i], "portbase=", sizeof("portbase=") - 1) == 0) {

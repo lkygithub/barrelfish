@@ -1384,16 +1384,15 @@ int main(int argc, const char *argv[])
         int cmd_argc;
         char *cmd_argv[64]; // Support a max of 64 cmd args
         struct cmd *cmd;
-
         input = linenoise("> ");
         if (input == NULL || input[0] == '\0') {
             continue;
         }
-
+        printf("6\n");
         linenoiseHistoryAdd(input); /* Add to the history. */
         linenoiseHistorySave("history.txt"); /* Save the history on disk. */
         cmd_argc = makeargs(input, cmd_argv);
-
+        printf("7\n");
         /* check for trailing '&' (== run in background) */
         bool wait = true;
         if (cmd_argc > 0) {
