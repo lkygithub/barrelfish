@@ -342,7 +342,7 @@ struct dcb *schedule(void)
         debug(SUBSYS_DISPATCH, "schedule: no dcb runnable\n");
 #endif
         lastdisp = NULL;
-        printf("scheduler null 1\n");
+        //printf("scheduler null 1\n");
         return NULL;
     }
 
