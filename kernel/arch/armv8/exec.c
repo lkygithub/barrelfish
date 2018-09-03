@@ -106,8 +106,8 @@ void wait_for_interrupt(void)
     // Switch to system mode with interrupts enabled. -- OLD
     // Switch to priviledged mode with interrupts enabled.
     __asm volatile(
-        "mov    x0, #" XTR(AARCH64_MODE_PRIV) "              \n\t"
-        "0:                                             \n\t"
+        "mov    x0, #" XTR(AARCH64_MODE_PRIV) "             \n\t"
+        "0:                                                 \n\t"                             
 #if defined(__ARM_ARCH_8A__)
         "wfi                  \n\t"
 #else

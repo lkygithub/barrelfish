@@ -22,6 +22,7 @@
 #include <irq.h>
 #include <arch/armv8/gic_v3.h>
 #include <dev/armv8_dev.h>
+#include <systime.h>
 
 void handle_user_page_fault(lvaddr_t                fault_address,
                             arch_registers_state_t* save_area,
@@ -258,6 +259,7 @@ void handle_irq(arch_registers_state_t* save_area, uintptr_t fault_pc,
     if (irq == 30 || irq==29) {
         gicv3_ack_irq(irq);
         timer_reset(CONFIG_TIMESLICE);
+        wakeup_check(systime_now());
         dispatch(schedule());
     }
     else {

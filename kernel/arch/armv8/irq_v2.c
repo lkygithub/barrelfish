@@ -136,7 +136,7 @@ void send_user_interrupt(int irq)
     assert(irq >= 0 && irq < NDISPATCH);
     struct capability *cap = &irq_dispatch[irq].cap;
 
-    printk(LOG_NOTE, "IRQ %"PRIu32"\n", irq);
+    // printk(LOG_NOTE, "IRQ %"PRIu32"\n", irq);
     // Return on null cap (unhandled interrupt)
     if (cap->type == ObjType_Null) {
         printk(LOG_WARN, "unhandled IRQ %d\n", irq);

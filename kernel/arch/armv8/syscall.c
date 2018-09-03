@@ -1090,6 +1090,9 @@ handle_invoke(uint64_t a0, uint64_t a1, uint64_t a2, uint64_t a3,
                         assert(context == &disp->enabled_save_area);
                         context->named.x0 = r.error;
                     }
+                    if(!listener){
+                        printf("----listener: null\n");
+                    }
                     dispatch(listener);
                 }
             }

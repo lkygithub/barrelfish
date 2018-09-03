@@ -102,7 +102,7 @@ void gicv3_ack_irq(uint32_t irq)
     
     if(irq==53){
         zynqmp_uart_ISR_rtrig_wrf(&test_uart, 1);
-        printf("irq acked\n");
+        //printf("irq acked\n");
     }       
 }
 
