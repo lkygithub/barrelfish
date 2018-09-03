@@ -1388,11 +1388,11 @@ int main(int argc, const char *argv[])
         if (input == NULL || input[0] == '\0') {
             continue;
         }
-        printf("6\n");
+
         linenoiseHistoryAdd(input); /* Add to the history. */
         linenoiseHistorySave("history.txt"); /* Save the history on disk. */
         cmd_argc = makeargs(input, cmd_argv);
-        printf("7\n");
+
         /* check for trailing '&' (== run in background) */
         bool wait = true;
         if (cmd_argc > 0) {
