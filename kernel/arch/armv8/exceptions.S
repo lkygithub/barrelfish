@@ -75,7 +75,93 @@ el1_sp_el0_sync:
     invalid_exception AARCH64_EVECTOR_EL0_SYNC    
 .align 7 /* 0x080 */
 el1_sp_el0_irq:
-    invalid_exception AARCH64_EVECTOR_EL0_IRQ /* TODO: Waait, wenn we do wait for interrupt in kernel, that shouldnt be invalid */
+    /* Reenable breakpoints and aborts.  Interrupts remain disabled. */
+    msr daifset, #3 /* IRQ and FIQ masked, Debug and Abort enabled. */
+
+    /* Free scratch registers. */
+    stp x2, x3, [sp, #-(2 * 8)]!
+    stp x0, x1, [sp, #-(2 * 8)]!
+
+    /* Find the dispatcher. */
+    mrs x3, tpidr_el1
+
+    /* Get the exception address (EPC) */
+    mrs x1, elr_el1
+
+    /* x0 = crit_pc_low, x1 = EPC,
+       x2 = crit_pc_high, x3 = dispatcher_shared_aarch64 */
+
+    /* Dispatcher disabled? */
+    ldp x0, x2, [x3, #OFFSETOF_DISP_CRIT_PC_LOW]
+
+    /* Condition LS holds iff low <= PC. */
+    cmp x0, x1
+    /* Short-circuit computation of P /\ Q: If the success condition for P
+     * (low <= PC) holds, here LS (Less or Same), then test Q (PC < high),
+     * giving either HI (true) or LS (false).  Otherwise, set the condition
+     * flags to a failing state for Q (LS), as the conjunction cannot hold if
+     * the P does not. */
+    ccmp x2, x1, #0, ls
+    /* If HI (C=1, Z=0) holds, then the test executed and passed, which means
+     * that P held previously (low <= PC), and Q holds now (PC < high).
+     * Otherwise LS holds, and thus either HI held before this test, and thus
+     * PC < low, or the test executed and failed, in which case high <= PC.
+     * Thus condition HI holds iff low <= PC /\ PC < high. */
+    ldr w0, [x3, #OFFSETOF_DISP_DISABLED]
+    /* We do the same to calculate (P /\ Q) \/ R: If P /\ Q doesn't hold, we
+     * need to test R (is the disabled flag 0), giving either EQ or NE.  If
+     * P /\ Q holds, we skip the test, as it doesn't affect the result, and
+     * instead set the condition code directly NE, i.e. disabled=1. */
+    ccmp x0, xzr, #0, ls
+    /* NE <-> (low <= PC && PC < high) || disabled != 0 */
+
+    /* x1 = EPC, x3 = dispatcher_shared_aarch64 */
+
+    /* Choose the right save area, using the condition flags. */
+    add x0, x3, #OFFSETOF_DISP_ENABLED_AREA
+    add x2, x3, #OFFSETOF_DISP_DISABLED_AREA
+    csel x0, x2, x0, ne
+
+    /* x0 = save area, x1 = EPC */
+
+    /* 13 instructions. */
+
+    /* Save the register context, starting from x4.  x0-x3, the scratch
+     * registers, can be copied to the trap frame from within the C handler,
+     * as can the user stack pointer and SPSR, which are sitting in their own
+     * system registers. */
+    stp  x4,  x5, [x0, #( 4 * 8)]
+    stp  x6,  x7, [x0, #( 6 * 8)]
+    stp  x8,  x9, [x0, #( 8 * 8)]
+    stp x10, x11, [x0, #(10 * 8)]
+    stp x12, x13, [x0, #(12 * 8)]
+    stp x14, x15, [x0, #(14 * 8)]
+    stp x16, x17, [x0, #(16 * 8)]
+    stp x18, x19, [x0, #(18 * 8)]
+    stp x20, x21, [x0, #(20 * 8)]
+    stp x22, x23, [x0, #(22 * 8)]
+    stp x24, x25, [x0, #(24 * 8)]
+    stp x26, x27, [x0, #(26 * 8)]
+    stp x28, x29, [x0, #(28 * 8)]
+    str x30,      [x0, #(30 * 8)]
+
+    /* 27 instructions. */
+
+    /* Load the saved scratch registers, and pass them as arguments to the
+     * handler.  We can't save them ourselves as we've run out of
+     * instructions.  We need to do at least this, to clear our stack frame.
+     * */
+    ldp x2, x3, [sp], #16 /* x0, x1 */
+    ldp x4, x5, [sp], #16 /* x2, x3 */
+
+    /* x0 = save area, x1 = EPC,
+     * x2 = user x0, x3 = user x1,
+     * x4 = user x2, x5 = user x3 */
+    b handle_irq_kernel
+
+    /* 30 instructions. */
+    //invalid_exception AARCH64_EVECTOR_EL0_IRQ /* TODO: Waait, wenn we do wait for interrupt in kernel, that shouldnt be invalid */
+
 .align 7 /* 0x100 */
 el1_sp_el0_fiq:
     invalid_exception AARCH64_EVECTOR_EL0_FIQ 

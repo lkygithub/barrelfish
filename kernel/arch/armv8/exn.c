@@ -268,6 +268,29 @@ void handle_irq(arch_registers_state_t* save_area, uintptr_t fault_pc,
 
 }
 
+void handle_irq_kernel(arch_registers_state_t* save_area, uintptr_t fault_pc,
+                uint64_t x0, uint64_t x1, uint64_t x2, uint64_t x3)
+{
+    /* In-kernel interrupts are bugs, except if we'd gone to sleep in
+     * wait_for_interrupt(), in which case there is no current dispatcher. */
+    if(waiting_for_interrupt) {
+        waiting_for_interrupt= 0;
+    }
+    else {
+        uint64_t spsr, esr;
+
+        __asm volatile(
+            "mrs %[spsr], spsr_el1           \n\t" 
+            /* Exception Syndrome Register */
+            "mrs %[esr], esr_el1            \n\t": [spsr] "=r" (spsr), [esr] "=r" (esr)
+        );
+        
+        fatal_kernel_fault(fault_pc, spsr, esr, AARCH64_EVECTOR_EL0_IRQ, save_area);
+    }
+
+    handle_irq(save_area, fault_pc, x0, x1, x2, x3);
+}
+
 #define STACK_DUMP_LIMIT 32
 
 /* For unhandled faults, we print a register dump and panic. */

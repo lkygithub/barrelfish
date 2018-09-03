@@ -152,6 +152,10 @@ void handle_irq(arch_registers_state_t* save_area, uintptr_t fault_pc,
                 uint64_t x0, uint64_t x1, uint64_t x2, uint64_t x3)
     __attribute__((noreturn));
 
+void handle_irq_kernel(arch_registers_state_t* save_area, uintptr_t fault_pc,
+                uint64_t x0, uint64_t x1, uint64_t x2, uint64_t x3)
+    __attribute__((noreturn));
+
 #endif // !defined(__ASSEMBLER__)
 
 #endif // __KERNEL_ARMV8_EXCEPTIONS_H__
