@@ -85,11 +85,12 @@ zynqmp_uart_getchar(unsigned port) {
     zynqmp_uart_t *uart = &ports[port];
 
     /* Drain the FIFO. */
+    // while(zynqmp_uart_SR_RXEMPTY_rdf(uart));
     char c= zynqmp_uart_FIFO_FIFO_rdf(uart);
     while(!zynqmp_uart_SR_RXEMPTY_rdf(uart)) {
         c= zynqmp_uart_FIFO_FIFO_rdf(uart);
     }
-    
+    //char c = 'a';
 
    //while(zynqmp_uart_SR_RXEMPTY_rdf(uart));
    //char c= zynqmp_uart_FIFO_FIFO_rdf(uart);

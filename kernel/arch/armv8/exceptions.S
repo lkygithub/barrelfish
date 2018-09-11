@@ -76,7 +76,6 @@ el1_sp_el0_sync:
 .align 7 /* 0x080 */
 el1_sp_el0_irq:
     invalid_exception AARCH64_EVECTOR_EL0_IRQ /* TODO: Waait, wenn we do wait for interrupt in kernel, that shouldnt be invalid */
-
 .align 7 /* 0x100 */
 el1_sp_el0_fiq:
     invalid_exception AARCH64_EVECTOR_EL0_FIQ 
