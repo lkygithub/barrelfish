@@ -24,8 +24,6 @@ serial_interrupt(void *arg) {
     errval_t err= sys_getchar(&c);
     assert(err_is_ok(err));
 
-    printf("'%c'\n", c);
-
     serial_input(&c, 1);
 }
 
