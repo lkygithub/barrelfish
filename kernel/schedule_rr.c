@@ -37,7 +37,7 @@ struct dcb *schedule(void)
     #ifdef CONFIG_ONESHOT_TIMER
     update_sched_timer(kernel_now + kernel_timeslice);
     #endif
-    return ring_current;
+    return kcb_current->ring_current;
 }
 
 void make_runnable(struct dcb *dcb)

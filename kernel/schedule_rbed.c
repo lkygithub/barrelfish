@@ -298,6 +298,12 @@ struct dcb *schedule(void)
     systime_t now = systime_now();
 
     // Assert we are never overloaded
+    //uint64_t kcb_addr = (uint64_t)kcb_current;
+    //printf("kcb_current addr:%lx\n",kcb_addr);
+    //if(kcb_addr==0x01)
+    //{
+    //    panic("kcb_current error\n");
+    //}
     assert(kcb_current->u_hrt + kcb_current->u_srt + BETA <= SPECTRUM);
 
     // Update executed time of last dispatched task
