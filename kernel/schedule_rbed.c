@@ -378,9 +378,6 @@ struct dcb *schedule(void)
         if(lastdisp == todisp && dcb_current != NULL && in_queue(dcb_current)) {
             /* trace_event(TRACE_SUBSYS_KERNEL, TRACE_EVENT_KERNEL_SCHED_CURRENT, */
             /*             (uint32_t)(lvaddr_t)dcb_current & 0xFFFFFFFF); */
-            if(!dcb_current){
-                printf("scheduler null 2\n");
-            }
             return dcb_current;
         }
 
@@ -394,9 +391,6 @@ struct dcb *schedule(void)
         // (e.g., check if there is only one task in the queue)
         update_sched_timer(now + (todisp->wcet - todisp->etime));
         #endif
-        if(!todisp){
-                printf("scheduler null 3\n");
-            }
         return todisp;
     }
 
