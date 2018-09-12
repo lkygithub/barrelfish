@@ -279,15 +279,15 @@ void handle_irq_kernel(arch_registers_state_t* save_area, uintptr_t fault_pc,
         waiting_for_interrupt= 0;
     }
     else {
-        uint64_t spsr, esr;
+        //uint64_t spsr, esr;
 
-        __asm volatile(
-            "mrs %[spsr], spsr_el1           \n\t" 
-            /* Exception Syndrome Register */
-            "mrs %[esr], esr_el1            \n\t": [spsr] "=r" (spsr), [esr] "=r" (esr)
-        );
-        
-        fatal_kernel_fault(fault_pc, spsr, esr, AARCH64_EVECTOR_EL0_IRQ, save_area);
+        //__asm volatile(
+        //    "mrs %[spsr], spsr_el1           \n\t" 
+        //    /* Exception Syndrome Register */
+        //    "mrs %[esr], esr_el1            \n\t": [spsr] "=r" (spsr), [esr] "=r" (esr)
+        //);
+        assert(0);
+        //fatal_kernel_fault(fault_pc, spsr, esr, AARCH64_EVECTOR_EL0_IRQ, save_area);
     }
 
     uint32_t irq = 0;
