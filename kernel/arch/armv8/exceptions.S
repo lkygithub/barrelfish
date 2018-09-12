@@ -93,6 +93,10 @@ el1_irq:
     /* Reenable breakpoints and aborts.  Interrupts remain disabled. */
     msr daifset, #3 /* IRQ and FIQ masked, Debug and Abort enabled. */
 
+    /* Reset the kernel stack pointer. */
+    ldr x1, =kernel_stack   // load the address of the kernel sack
+    ldr x2,  [x1]           // read the entry of the kernel stack
+    mov sp, x2
     /* x0 = XXX, x1 = XXX,
      * x2 = XXX, x3 = XXX,
      * x4 = XXX, x5 = XXX */
