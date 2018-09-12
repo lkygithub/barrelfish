@@ -289,7 +289,20 @@ void handle_irq_kernel(arch_registers_state_t* save_area, uintptr_t fault_pc,
         fatal_kernel_fault(fault_pc, spsr, esr, AARCH64_EVECTOR_EL0_IRQ, save_area);
     }
 
-    handle_irq(save_area, fault_pc, x0, x1, x2, x3);
+    uint32_t irq = 0;
+
+    irq = gicv3_get_active_irq();
+
+    if (irq == 30 || irq==29) {
+        gicv3_ack_irq(irq);
+        timer_reset(CONFIG_TIMESLICE);
+        dispatch(schedule());
+    }
+    else {
+        gicv3_ack_irq(irq);
+        send_user_interrupt(irq);
+        panic("Unhandled IRQ %"PRIu32"\n", irq);
+    }
 }
 
 #define STACK_DUMP_LIMIT 32
