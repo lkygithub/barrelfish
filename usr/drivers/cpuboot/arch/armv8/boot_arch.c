@@ -108,6 +108,7 @@ static errval_t get_arch_config(hwid_t hwid, struct arch_config * config)
     }
 
     /* Query the SKB for the CPU driver to use. */
+    DEBUG("skb_execute_query: cpu_driver!\n");
     err = skb_execute_query("cpu_driver(S), write(res(S)).");
     if (err_is_fail(err)) {
         DEBUG_SKB_ERR(err, "skb_execute_query");
@@ -117,6 +118,7 @@ static errval_t get_arch_config(hwid_t hwid, struct arch_config * config)
     if (err_is_fail(err)) return err;
 
     /* Query the SKB for the monitor binary to use. */
+    DEBUG("skb_execute_query: monitor!\n");
     err = skb_execute_query("monitor(S), write(res(S)).");
     if (err_is_fail(err)) {
         DEBUG_SKB_ERR(err, "skb_execute_query");
@@ -125,6 +127,7 @@ static errval_t get_arch_config(hwid_t hwid, struct arch_config * config)
     err = skb_read_output("res(%255[^)])", config->monitor_binary);
     if (err_is_fail(err)) return err;
 
+    DEBUG("skb_execute_query: boot_driver_entry!\n");
     err = skb_execute_query("boot_driver_entry(%"PRIu64",T), entry_symbol(T,S),"
                             " write(res(S)).", hwid);
     if (err_is_fail(err)) {
@@ -138,6 +141,7 @@ static errval_t get_arch_config(hwid_t hwid, struct arch_config * config)
     }
 
 
+    DEBUG("skb_execute_query: boot_driver!\n");
     err = skb_execute_query("boot_driver(S), write(res(S)).");
     if (err_is_fail(err)) {
         printf("error: \n %s\n", skb_get_error_output());
@@ -149,6 +153,7 @@ static errval_t get_arch_config(hwid_t hwid, struct arch_config * config)
         return err;
     }
     
+    DEBUG("skb_execute_query: psci_use_hvc!\n");
     err = skb_execute_query("psci_use_hvc(C), write(C).");
     if (err_is_fail(err)) {
         printf("error: \n %s\n", skb_get_error_output());
