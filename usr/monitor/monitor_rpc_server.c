@@ -570,6 +570,9 @@ static void get_platform_arch(struct monitor_blocking_binding *b)
         case PI_ARCH_ARMV7A:
             struct_size= sizeof(struct arch_info_armv7);
             break;
+        case PI_ARCH_ARMV8A:
+            struct_size = sizeof(struct arch_info_armv8);
+            break;
         default:
             struct_size= 0;
     }
