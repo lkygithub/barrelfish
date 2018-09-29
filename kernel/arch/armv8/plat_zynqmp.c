@@ -89,6 +89,8 @@ void platform_get_info(struct platform_info *pi)
 {
     pi->arch = PI_ARCH_ARMV8A;
     pi->platform = PI_PLATFORM_ZYNQMP;
+    // XXX: init struct arch_info_armv8.
+    armv8_get_info(&(pi->arch_info.armv8));
 }
 
 /**
@@ -97,6 +99,14 @@ void platform_get_info(struct platform_info *pi)
 void armv8_get_info(struct arch_info_armv8 *ai)
 {
 
+    ai->ncores  = platform_get_core_count();
+    /* TODO */
+    //ai->midr    = cp15_read_midr();
+    //ai->ctr     = cp15_read_ctr();
+    //ai->id_pfr0 = cp15_read_id_pfr0();
+    //ai->id_pfr1 = cp15_read_id_pfr1();
+    //ai->id_dfr0 = cp15_read_id_dfr0();
+    //ai->id_afr0 = cp15_read_id_afr0();
 }
 
 size_t platform_get_ram_size(void)
@@ -120,7 +130,7 @@ void platform_set_uart_address(unsigned port, lpaddr_t uart_base)
 
 lpaddr_t platform_get_private_region(void)
 {
-    // todo 
+    // todo
 }
 */
 /*
@@ -207,13 +217,11 @@ errval_t platform_boot_core(hwid_t target, genpaddr_t gen_entry, genpaddr_t cont
 
     /*
      * An IRQ interrupt, even if the PSTATE I-bit is set.
-An FIQ interrupt, even if the PSTATE F-bit is set.
+     * An FIQ interrupt, even if the PSTATE F-bit is set.
      *
      *
      */
-
     gicv3_raise_softirq(target, 1);
-     
+
     return SYS_ERR_OK;
 }
-
