@@ -13,10 +13,16 @@ cpu_driver("/armv8/sbin/cpu_zynqmp").
 monitor("/armv8/sbin/monitor").
 
 
+% One cluster of four Cortex A53s
+arm_core(16'000000, cortexA57).
+arm_core(16'000001, cortexA57).
+arm_core(16'000002, cortexA57).
+arm_core(16'000003, cortexA57).
+
 % boot dirver entry points
 entry_symbol(armBootBSP, "boot_entry_bsp").
 entry_symbol(armBootPSCI, "boot_entry_psci").
 entry_symbol(armBootParking, "boot_entry_parking").
 
 % ACPI quirks
-acpi_quirk(AcpiInitializeObjects, 16'00).
+acpi_quirk(AcpiInitializeObjects, 16'20).
