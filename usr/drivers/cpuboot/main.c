@@ -15,6 +15,7 @@
 #include "coreboot.h"
 #include <hw_records.h>
 #include <if/monitor_blocking_defs.h>
+#include <barrelfish_kpi/platform.h>
 
 
 hwid_t my_arch_id;
@@ -25,9 +26,10 @@ coreid_t core_max = 0;
 bool done = false;
 
 bool benchmark_flag = false;
-bool debug_flag = false;
+bool debug_flag = true;
 bool new_kcb_flag = false;
 bool nomsg_flag = false;
+bool use_acpi_flag = true;
 
 struct bench_data *bench_data = NULL;
 
@@ -70,14 +72,32 @@ static void load_ipi_cap(void)
 static void initialize(void)
 {
     errval_t err;
+    //XXX: check if our platform support acpi
+    struct monitor_blocking_binding *m = get_monitor_blocking_binding();
+    assert(m != NULL);
+
+    uint32_t arch, platform;
+    err = m->rpc_tx_vtbl.get_platform(m, &arch, &platform);
+    assert(err_is_ok(err));
+
+    if (arch == PI_ARCH_ARMV7A ||
+            (arch == PI_ARCH_ARMV8A && platform == PI_PLATFORM_ZYNQMP))
+        use_acpi_flag = false;
+    else
+        use_acpi_flag = true;
+
+    DEBUG("Kernel reports use_acpi_flag = %d\n", (int)use_acpi_flag);
 
     vfs_init();
     bench_init();
 
 #if defined(__aarch64__) || (defined(__x86__) && !defined(__k1om__))
-    err = connect_to_acpi();
-    if (err_is_fail(err)) {
-        USER_PANIC_ERR(err, "connect to acpi failed.");
+    if (use_acpi_flag)
+    {
+        err = connect_to_acpi();
+        if (err_is_fail(err)) {
+            USER_PANIC_ERR(err, "connect to acpi failed.");
+        }
     }
 #endif
 
@@ -212,12 +232,14 @@ static int boot_cpu(int argc, char **argv)
 
         hwid_t target_hwid;
         enum cpu_type cpu_type;
+        DEBUG("get_apic_info!\n");
         errval_t err = get_core_info(target_id, &target_hwid, &cpu_type);
         if (err_is_fail(err)) {
             USER_PANIC_ERR(err, "get_apic_id failed.");
         }
 
         struct capref kcb;
+        DEBUG("get_KCB!\n");
         err = create_or_get_kcb_cap(target_id, &kcb);
         if (err_is_fail(err)) {
             USER_PANIC_ERR(err, "Can not get KCB.");
@@ -226,22 +248,26 @@ static int boot_cpu(int argc, char **argv)
         struct capref frame;
         size_t framesize;
         struct frame_identity urpc_frame_id;
+        DEBUG("frame_alloc_identify!\n");
         err = frame_alloc_identify(&frame, MON_URPC_SIZE, &framesize, &urpc_frame_id);
         if (err_is_fail(err)) {
             USER_PANIC_ERR(err, "frame_alloc_identify failed.");
         }
 
+        DEBUG("Mark cap remote\n");
         err = cap_mark_remote(frame);
         if (err_is_fail(err)) {
             USER_PANIC_ERR(err, "Can not mark cap remote.");
         }
 
         struct monitor_binding *mb = get_monitor_binding();
+        DEBUG("boot_core_request!\n");
         err = mb->tx_vtbl.boot_core_request(mb, NOP_CONT, target_id, frame);
         if (err_is_fail(err)) {
             USER_PANIC_ERR(err, "boot_core_request failed");
         }
 
+        DEBUG("spawn xcore monitor!\n");
         err = spawn_xcore_monitor(target_id, target_hwid,
                                   cpu_type, cmd_kernel_args,
                                   urpc_frame_id, kcb);
