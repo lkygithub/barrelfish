@@ -19,9 +19,11 @@
 
 #include <barrelfish/barrelfish.h>
 #include <barrelfish/cpu_arch.h>
+#include <barrelfish_kpi/platform.h>
 
 #include <if/monitor_defs.h>
 #include <if/octopus_defs.h>
+#include <if/monitor_blocking_defs.h>
 
 #include <octopus/octopus.h>
 #include <octopus/trigger.h>
@@ -45,6 +47,9 @@ static void cpu_change_event(octopus_mode_t mode, const char* record, void* stat
         uint64_t barrelfish_id, type, hw_id, enabled = 0;
         errval_t err = oct_read(record, "_ { " HW_PROCESSOR_GENERIC_FIELDS " }",
                                 &enabled, &barrelfish_id, &hw_id, &type);
+        KALUGA_DEBUG("\n");
+        KALUGA_DEBUG("CPU%d info: enabled=%d, barrelfish_id=%d, hw_id=%d, type=%d\n",
+                barrelfish_id, enabled, barrelfish_id, hw_id, type);
         if (err_is_fail(err)) {
             DEBUG_ERR(err, "Cannot read record.");
             printf("Malformed CPU record. Do not boot discovered CPU %"PRIu64".\n",
@@ -54,8 +59,11 @@ static void cpu_change_event(octopus_mode_t mode, const char* record, void* stat
 
         /* find the corectrl module for the given cpu type */
         struct module_info* mi = find_corectrl_for_cpu_type((enum cpu_type)type);
+        KALUGA_DEBUG("corectrl: 0x%08x, start_function: 0x%08x\n", mi, mi->start_function);
         if (mi != NULL) {
+            KALUGA_DEBUG("corectrl: start function.\n");
             err = mi->start_function(0, mi, (CONST_CAST)record, NULL);
+            KALUGA_DEBUG("corectrl: call back.\n");
             if (err_is_fail(err)) {
                 printf("Boot driver not found. Do not boot discovered CPU %"PRIu64".\n",
                        barrelfish_id);
@@ -264,10 +272,18 @@ errval_t wait_for_all_spawnds(void)
     errval_t err;
     char* record = NULL;
 #if !defined(__ARM_ARCH_7A__)
-    KALUGA_DEBUG("Waiting for acpi");
-    err = oct_wait_for(&record, "acpi { iref: _ }");
-    if (err_is_fail(err)) {
-        return err_push(err, KALUGA_ERR_WAITING_FOR_ACPI);
+    struct monitor_blocking_binding *m = get_monitor_blocking_binding();
+    uint32_t arch, platform;
+    assert(m != NULL);
+    err = m->rpc_tx_vtbl.get_platform(m, &arch, &platform);
+    assert(err_is_ok(err));
+
+    if (platform != PI_PLATFORM_ZYNQMP) {
+        KALUGA_DEBUG("Waiting for acpi");
+        err = oct_wait_for(&record, "acpi { iref: _ }");
+        if (err_is_fail(err)) {
+            return err_push(err, KALUGA_ERR_WAITING_FOR_ACPI);
+        }
     }
 #endif
 

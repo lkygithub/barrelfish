@@ -13,6 +13,7 @@
  * ETH Zurich D-INFK, Universitaetstr. 6, CH-8092 Zurich. Attn: Systems Group.
  */
 
+#include <hw_records_arch.h>
 #include <barrelfish/barrelfish.h>
 #include <skb/skb.h>
 #include <barrelfish_kpi/platform.h>
@@ -39,11 +40,57 @@ static errval_t armv8_startup_common(void)
         USER_PANIC_ERR(err, "Device DB not loaded.");
     }
 
-    // The current boot protocol needs us to have
-    // knowledge about how many CPUs are available at boot
-    // time in order to start-up properly.
-    char* record = NULL;
-    err = oct_barrier_enter("barrier.acpi", &record, 2);
+    struct monitor_blocking_binding *m = get_monitor_blocking_binding();
+    assert(m != NULL);
+
+    uint32_t arch, platform;
+    err = m->rpc_tx_vtbl.get_platform(m, &arch, &platform);
+    assert(err_is_ok(err));
+    assert(arch == PI_ARCH_ARMV8A);
+
+    if (platform != PI_PLATFORM_ZYNQMP) {
+        // The current boot protocol needs us to have
+        // knowledge about how many CPUs are available at boot
+        // time in order to start-up properly.
+        char* record = NULL;
+        err = oct_barrier_enter("barrier.acpi", &record, 2);
+    }
+    else {
+        uint8_t buffer[PI_ARCH_INFO_SIZE];
+        struct arch_info_armv8 *arch_info = (struct arch_info_armv8*) buffer;
+        size_t buflen;
+        err = m->rpc_tx_vtbl.get_platform_arch(m, buffer,  &buflen);
+        assert(buflen == sizeof(struct arch_info_armv8));
+        // Query the SKB for the available cores on ZynMP ZCU104 platform - we
+        // can't do this by ACPI on this platform.
+        err = skb_execute_query("arm_mpids(L) ,write(L).");
+        if (err_is_fail(err)) {
+            USER_PANIC_SKB_ERR(err, "Finding cores");
+        }
+
+        debug_printf("CPU driver reports %d core(s).\n", arch_info->ncores);
+        int mpidr_raw;
+        //struct list_parser_status skb_list;
+        uint32_t bf_core_id= 0;
+
+        //skb_read_list_init(&skb_list);
+
+        //while(skb_read_list(&skb_list, "mpid(%d)", &mpidr_raw)) {
+        for(mpidr_raw = 0; mpidr_raw < arch_info->ncores; mpidr_raw++){
+
+            KALUGA_DEBUG("Setup skb fact for core%d.\n", bf_core_id);
+            // setup boot_driver_entry.
+            skb_add_fact("boot_driver_entry(%"PRIu64",%s).", (uint64_t)mpidr_raw, "armBootPSCI");
+            // setup psci_use_hvc.
+            skb_add_fact("psci_use_hvc(%"PRIu8").", 1);
+            // set ARMv8 record
+            // FIXME: fix params, see usr/acpi/arch/armv8/acpi_interrupts_arch.c
+            oct_set(HW_PROCESSOR_ARMV8_RECORD_FORMAT, bf_core_id, 1, bf_core_id, (uint32_t)mpidr_raw,
+                    CPU_ARM8, bf_core_id, bf_core_id, 1, 0, 1, 1, 1, 1, 1, 1, 1, (uint64_t)mpidr_raw);
+
+            bf_core_id++;
+        }
+    }
 
     KALUGA_DEBUG("Kaluga: watch_for_cores\n");
 
@@ -52,18 +99,22 @@ static errval_t armv8_startup_common(void)
         USER_PANIC_ERR(err, "Watching cores.");
     }
 
-    KALUGA_DEBUG("Kaluga: pci_root_bridge\n");
+    if(platform != PI_PLATFORM_ZYNQMP) {
 
-    err = watch_for_pci_root_bridge();
-    if (err_is_fail(err)) {
-        USER_PANIC_ERR(err, "Watching PCI root bridges.");
-    }
+        KALUGA_DEBUG("Kaluga: pci_root_bridge\n");
 
-    KALUGA_DEBUG("Kaluga: pci_devices\n");
+        err = watch_for_pci_root_bridge();
+        if (err_is_fail(err)) {
+            USER_PANIC_ERR(err, "Watching PCI root bridges.");
+        }
 
-    err = watch_for_pci_devices();
-    if (err_is_fail(err)) {
-        USER_PANIC_ERR(err, "Watching PCI devices.");
+        KALUGA_DEBUG("Kaluga: pci_devices\n");
+
+        err = watch_for_pci_devices();
+        if (err_is_fail(err)) {
+            USER_PANIC_ERR(err, "Watching PCI devices.");
+        }
+
     }
 
     KALUGA_DEBUG("Kaluga: wait_for_all_spawnds\n");
@@ -119,11 +170,10 @@ static errval_t zynqmp_startup(void)
     if(err_is_fail(err)){
         USER_PANIC_SKB_ERR(err,"Additional device db file 'plat_zynqmp' not loaded.");
     }
-    //armv8_startup_common();
-    err = oct_set("all_spawnds_up { iref: 0 }");
-    assert(err_is_ok(err));
-    debug_printf("armv8 startup ok\n");
-    return SYS_ERR_OK;
+    //err = oct_set("all_spawnds_up { iref: 0 }");
+    //assert(err_is_ok(err));
+    //debug_printf("armv8 startup ok\n");
+    return armv8_startup_common();
 }
 
 static errval_t cn88xx_startup(void)
