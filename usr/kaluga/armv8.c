@@ -82,7 +82,8 @@ static errval_t armv8_startup_common(void)
             // setup boot_driver_entry.
             skb_add_fact("boot_driver_entry(%"PRIu64",%s).", (uint64_t)mpidr_raw, "armBootPSCI");
             // setup psci_use_hvc.
-            skb_add_fact("psci_use_hvc(%"PRIu8").", 1);
+            //skb_add_fact("psci_use_hvc(%"PRIu8").", 1);
+            skb_add_fact("psci_use_hvc(%"PRIu8").", 0);
             // set ARMv8 record
             // FIXME: fix params, see usr/acpi/arch/armv8/acpi_interrupts_arch.c
             oct_set(HW_PROCESSOR_ARMV8_RECORD_FORMAT, bf_core_id, 1, bf_core_id, (uint32_t)mpidr_raw,
