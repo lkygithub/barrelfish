@@ -218,10 +218,13 @@ errval_t platform_boot_core(hwid_t target, genpaddr_t gen_entry, genpaddr_t cont
     /*
      * An IRQ interrupt, even if the PSTATE I-bit is set.
      * An FIQ interrupt, even if the PSTATE F-bit is set.
-     *
-     *
      */
-    gicv3_raise_softirq(target, 1);
+    errval_t err = psci_cpu_on(target,gen_entry,context);
+
+    if(err!=SYS_ERR_OK)
+        printf("boot core %d failed, err flag %u!\n",target,err);
+
+    //gicv3_raise_softirq(target, 1);
 
     return SYS_ERR_OK;
 }

@@ -150,7 +150,7 @@ use_fp = True
 
 -- Default timeslice duration in milliseconds
 timeslice :: Integer
-timeslice = 80
+timeslice = 10
 
 -- Put kernel into microbenchmarks mode
 microbenchmarks :: Bool

@@ -206,8 +206,6 @@ void handle_user_fault(lvaddr_t fault_address, uintptr_t cause,
 void handle_irq(arch_registers_state_t* save_area, uintptr_t fault_pc,
                 uint64_t x0, uint64_t x1, uint64_t x2, uint64_t x3)
 {
-    uint32_t irq = 0;
-
     /* The assembly stub leaves the first 4 registers, the stack pointer,
      * the exception PC, and the SPSR for us to save, as it's run out of room for
      * the necessary instructions. */
@@ -219,7 +217,7 @@ void handle_irq(arch_registers_state_t* save_area, uintptr_t fault_pc,
     save_area->named.spsr  = armv8_SPSR_EL1_rd(NULL);
     save_area->named.pc    = fault_pc;
 
-    irq = gicv3_get_active_irq();
+    uint32_t irq = gicv3_get_active_irq();
 
     debug(SUBSYS_DISPATCH, "IRQ %"PRIu32" while %s\n", irq,
           dcb_current ? (dcb_current->disabled ? "disabled": "enabled") :
@@ -255,19 +253,18 @@ void handle_irq(arch_registers_state_t* save_area, uintptr_t fault_pc,
      * We just acknowledge it here. */
     else
 #endif
+    gicv3_ack_irq(irq);
 
     if (irq == 30 || irq==29) {
-        gicv3_ack_irq(irq);
         timer_reset(CONFIG_TIMESLICE);
         wakeup_check(systime_now());
         dispatch(schedule());
     }
     else {
-        gicv3_ack_irq(irq);
         send_user_interrupt(irq);
+        /* this shall never returnv */
         panic("Unhandled IRQ %"PRIu32"\n", irq);
     }
-
 }
 
 void handle_irq_kernel(arch_registers_state_t* save_area, uintptr_t fault_pc,
@@ -286,7 +283,7 @@ void handle_irq_kernel(arch_registers_state_t* save_area, uintptr_t fault_pc,
         //    /* Exception Syndrome Register */
         //    "mrs %[esr], esr_el1            \n\t": [spsr] "=r" (spsr), [esr] "=r" (esr)
         //);
-        assert(0);
+        panic("kernel fatal\n !!");
         //fatal_kernel_fault(fault_pc, spsr, esr, AARCH64_EVECTOR_EL0_IRQ, save_area);
     }
 
@@ -294,13 +291,13 @@ void handle_irq_kernel(arch_registers_state_t* save_area, uintptr_t fault_pc,
 
     irq = gicv3_get_active_irq();
 
+    gicv3_ack_irq(irq);
+
     if (irq == 30 || irq==29) {
-        gicv3_ack_irq(irq);
         timer_reset(CONFIG_TIMESLICE);
         dispatch(schedule());
     }
     else {
-        gicv3_ack_irq(irq);
         send_user_interrupt(irq);
         panic("Unhandled IRQ %"PRIu32"\n", irq);
     }

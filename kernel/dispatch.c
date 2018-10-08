@@ -146,6 +146,7 @@ void __attribute__ ((noreturn)) dispatch(struct dcb *dcb)
     // If we have nothing to do we should call something other than dispatch
     if (dcb == NULL) {
         dcb_current = NULL;
+        
         wait_for_interrupt();
     }
 
