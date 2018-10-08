@@ -9,6 +9,7 @@
 
 # ctags
 tags
+build_barrel.sh
 
 .settings
 /.dist-buildwrapper
