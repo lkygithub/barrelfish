@@ -128,10 +128,10 @@ device rtl8169 lsbfirst ( io base ) "RTL8169 Ethernet Controller"
         ma      17  wo "Flash Memory Address Bus";
     };
 
-    register erbcr addr(base, 0x34) "Early Receive (Rx) Byte Count Register" type(uint16);
+    register erbcr ro addr(base, 0x34) "Early Receive (Rx) Byte Count Register" type(uint16);
 
     register ersr ro addr(base, 0x36) "Early Rx Status Register" {
-        _       2;
+        _       4;
         ergood  1   "Early Rx Good packet";
         erbad   1   "Early Rx Bad packet";
         erovw   1   "Early Rx OverWrite";
@@ -178,7 +178,7 @@ device rtl8169 lsbfirst ( io base ) "RTL8169 Ethernet Controller"
         _           1;
         hwverid0    5   ro  "Hardware Version ID0";
         ifg1_0      2   rw  "InterFrameGap Time bit 1 and bit 0";
-        hwverid0    1   ro  "Hardware Version ID1";
+        hwverid1    1   ro  "Hardware Version ID1";
         _           3;
         ifg2        1   rw  "InterFrameGap2";
         lbk1_0      2   rw  "Loopback test";
@@ -300,7 +300,7 @@ device rtl8169 lsbfirst ( io base ) "RTL8169 Ethernet Controller"
 		_			3;
 		psbit		2	rw	"Asymmetric Pause";
 		_			1;
-		fulldup		1	r	"full Duplex";
+		fulldup		1	ro	"full Duplex";
 		_			5;
 	}
     
