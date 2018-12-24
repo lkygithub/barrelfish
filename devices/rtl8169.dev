@@ -13,7 +13,7 @@
  * 		with built-in SRAM
  */
 
-device rtl8169 lsbfirst ( io base ) "RTL8169 Ethernet Controller"
+device rtl8169 lsbfirst ( addr base ) "RTL8169 Ethernet Controller"
 {
 
     constants rd "Rx Status Desc" {
