@@ -1,0 +1,11 @@
+--------------------------------------------------------------------------
+-- Copyright (c) 2019, BUAA LES.
+-- All rights reserved.
+--
+-- Hakefile for lib/tt_message_passing
+--
+--------------------------------------------------------------------------
+
+[ build library { target = "tt_message_passing",
+                  cFiles = [ "tt_message_passing.c" ]
+                } ]
