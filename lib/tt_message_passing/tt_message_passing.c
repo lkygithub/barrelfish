@@ -52,13 +52,16 @@ errval_t tt_msg_send(const unsigned char *buffer, uint16_t size)
     (tt_msg_head_t *) head = disp_get_ttmsg_buffer();
     (unsigned char *) payload = (unsigned char *) head + TTMSG_HEAD_SIZE;
     /* setup tt message */
-    head->src = (my_core_id & 0xFFFF) << 16 | (my_task_id & 0xFFFF);
-    head->dst = (dst_core_id & 0xFFFF) << 16 | (dst_task_id & 0xFFFF);
+    head->src = (tt_msg_info.my_core_id & 0xFFFF) << 16 
+                | (tt_msg_info.my_task_id & 0xFFFF);
+    head->dst = (tt_msg_info.dst_core_id & 0xFFFF) << 16 
+                | (tt_msg_info.dst_task_id & 0xFFFF);
     head->valid = 1u;
     head->size = size;
-    head->id = my_task_id;
+    head->id = tt_msg_info.my_task_id;
     /* copy msg payload */
     memcpy(payload, buffer, size);
+    /* TODO: call send syscall */
 
     return err;
 }
@@ -67,6 +70,8 @@ errval_t tt_msg_receive(unsigned char *buffer, uint16_t *size_p,
                         uint16_t src_core_id, uint16_t src_task_id)
 {
     errval_t err = SYS_ERR_OK;
+
+    /* TODO: call receive syscall */
     
     /* get tt message from disp buffer */
     /* get disp tt-msg buffer */
