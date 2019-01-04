@@ -102,6 +102,8 @@ struct dispatcher_generic {
     struct capref recv_slots[MAX_RECV_SLOTS];///< Queued cap recv slots
     int8_t recv_slot_count;                 ///< number of currently queued recv slots
 
+    /// ttask id
+    uint16_t ttask_id;
     /// a single tt message buffer
     unsigned char ttmsg[32]; 
 };
