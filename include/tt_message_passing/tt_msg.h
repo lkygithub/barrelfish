@@ -24,10 +24,21 @@ typedef struct {
     uint32_t id : 16;
 } tt_msg_head_t;
 
-errval_t tt_msg_init(uint16_t dst_core_id, uint16_t dst_task_id);
+typedef struct {
+    unsigned char value[20];
+} tt_msg_payload_t;
 
-errval_t tt_msg_send(char *buffer, uint16_t size);
+typedef strcut {
+    tt_msg_head_t head;
+    tt_msg_payload_t payload;
+} tt_msg_t;
 
-errval_t tt_msg_receive(char *buffer, uint16_t *size_p);
+void tt_msg_init(void);
+
+errval_t tt_msg_send(uint16_t dst_core_id, uint16_t dst_task_id,
+                        unsigned char *buffer, uint16_t buff_size);
+
+errval_t tt_msg_receive(uint16_t src_core_id, uint16_t src_task_id, 
+                            unsigned char *buffer, uint16_t *buff_size);
 
 #endif //LIBTT_MESSAGE_PASSING_H
