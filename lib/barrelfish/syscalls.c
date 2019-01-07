@@ -43,3 +43,15 @@ errval_t sys_getchar(char *c)
     *c= ret.value;
     return ret.error;
 }
+
+errval_t sys_ttmp_send(void)
+{
+    struct sysret ret = syscall1(SYSCALL_TTMP_SEND);
+    return ret.error;
+}
+
+errval_t sys_ttmp_receive(void)
+{
+    struct sysret ret = syscall1(SYSCALL_TTMP_RECEIVE);
+    return ret.error;
+}

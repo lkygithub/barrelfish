@@ -70,7 +70,7 @@ errval_t tt_msg_send(uint16_t dst_core_id, uint16_t dst_task_id,
     /* copy msg payload */
     memcpy(payload, buffer, buff_size);
     /* TODO: call send syscall */
-    invoke_ttmp_send();
+    sys_ttmp_send();
 
 out:
 
@@ -87,7 +87,7 @@ errval_t tt_msg_receive(uint16_t src_core_id, uint16_t src_task_id,
     errval_t err = SYS_ERR_OK;
 
     /* TODO: call receive syscall */
-    invoke_ttmp_receive();
+    sys_ttmp_receive();
     /* get tt message from disp buffer */
     /* get disp tt-msg buffer */
     tt_msg_head_t *head = (tt_msg_info.tt_msg)->head;
