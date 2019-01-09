@@ -36,6 +36,7 @@
 #include <coreboot.h>
 
 static struct global global_temp;
+struct ttmp_buff *global_ttmp_buff;
 
 /*
  * Need to be initialized during kernel loading.
