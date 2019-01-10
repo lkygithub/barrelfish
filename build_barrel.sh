@@ -8,11 +8,11 @@ SKBFILE=skb_ramfs.cpio.gz
 # build barrelfish
 cd $BUILD_PATH
 make ZynqmpZCU104 -j9
-<<<<<<< HEAD
-cd armv8/sbin
-aarch64-linux-gnu-objcopy -I elf64-littleaarch64 -O elf64-littleaarch64 --change-addresses 0xffff00007737a000 cpu_zynqmp cpu_zynqmp_relocated
-echo "kernel rellocated at 0xffff00007737a000\n"
-=======
+
+#cd armv8/sbin
+#aarch64-linux-gnu-objcopy -I elf64-littleaarch64 -O elf64-littleaarch64 --change-addresses 0xffff00007737a000 cpu_zynqmp cpu_zynqmp_relocated
+#echo "kernel rellocated at 0xffff00007737a000\n"
+
 cd $SBIN_PATH
 aarch64-linux-gnu-objcopy -I elf64-littleaarch64 -O elf64-littleaarch64 --change-addresses 0xffff000077378000 cpu_zynqmp cpu_zynqmp_relocated
 cd -
@@ -40,4 +40,3 @@ sudo umount $MOUNT_PATH
 sudo eject /dev/sdb
 
 echo "All is OK!"
->>>>>>> 88955e257a9353af96432eefadcd3aa55b6adc21
