@@ -8,7 +8,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <tt_message_passing/msg.h>
+#include <tt_message_passing/tt_msg.h>
 #include <barrelfish/barrelfish.h>
 #include "ttmp_debug.h"
 
