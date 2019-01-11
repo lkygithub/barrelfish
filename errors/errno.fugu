@@ -1318,4 +1318,5 @@ errors psci PSCI_ERR_{
 errors ttmp TTMP_ERR_{
     failure INVALID_PARAMETER "Invalid parameters supplied",
     failure WRONG_HEADER      "Wrong tt message header",
+    failure TX_BUFF_FULL      "tx buffer is fulled",
 };
