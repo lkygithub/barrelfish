@@ -62,6 +62,11 @@ struct dispatcher_shared_generic {
 #ifdef __k1om__
     uint8_t     xeon_phi_id;
 #endif
+
+    /// ttask id
+    uint16_t ttask_id;
+    /// a single tt message buffer
+    unsigned char ttmsg[32];
 };
 
 static inline struct dispatcher_shared_generic*
