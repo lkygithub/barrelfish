@@ -101,11 +101,6 @@ struct dispatcher_generic {
     /// cap 接收队列缓冲，最大为 4
     struct capref recv_slots[MAX_RECV_SLOTS];///< Queued cap recv slots
     int8_t recv_slot_count;                 ///< number of currently queued recv slots
-
-    /// ttask id
-    uint16_t ttask_id;
-    /// a single tt message buffer
-    unsigned char ttmsg[32]; 
 };
 
 #endif // BARRELFISH_DISPATCHER_H

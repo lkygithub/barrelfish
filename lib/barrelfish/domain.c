@@ -1119,7 +1119,7 @@ coreid_t disp_get_core_id(void)
 coreid_t disp_get_ttask_id(void)
 {
     dispatcher_handle_t handle = curdispatcher();
-    struct dispatcher_generic* disp = get_dispatcher_generic(handle);
+    struct dispatcher_shared_generic *disp = get_dispatcher_shared_generic(handle);
     return disp->ttask_id;
 }
 
@@ -1129,7 +1129,7 @@ coreid_t disp_get_ttask_id(void)
 unsigned char *disp_get_ttmsg_buffer(void)
 {
     dispatcher_handle_t handle = curdispatcher();
-    struct dispatcher_generic* disp = get_dispatcher_generic(handle);
+    struct dispatcher_shared_generic* disp = get_dispatcher_shared_generic(handle);
     return (disp->ttmsg);
 }
 
