@@ -8,18 +8,9 @@
 #define TTMP_MAX_CORE_NUM       8
 #define TTMP_MSG_SLOT_SIZE      32 //bytes
 #define TTMP_SCH_SLOT_SIZE      8  //bytes
-/* TODO: address in aarch64 */
-#FIXME
-#define TTMP_BUFF_BASE          0xFF000000
-#define TTMP_SCHD_BUFF_SIZE     0x10000 // 64K
-#define TTMP_CORE_BUFF_SIZE     0x1000 // 4K
 
-#define TTMP_SCHD_BUFF_BASE TTMP_BUFF_BASE
-#define TTMP_BUFF_BASE_N(core_id) \
-        (TTMP_BUFF_BASE + TTMP_SCHD_BUFF_SIZE + TTMP_CORE_BUFF_SIZE * (core_id))
-#define TTMP_BUFF_BASE_N_TX(core_id) TTMP_BUFF_BASE_N(core_id)
-#define TTMP_BUFF_BASE_N_RX(core_id) \
-        (TTMP_BUFF_BASE_N(core_id) + TTMP_CORE_BUFF_SIZE / 2)
+#define TTMP_SCHD_BUFF_SIZE     0x2000 // 8K
+#define TTMP_CORE_BUFF_SIZE     0x1000 // 4K
 
 union ttmp_sch_table_slot {
     uint64_t raw;
@@ -42,9 +33,7 @@ struct ttmp_buff {
     struct ttmp_msg_buff_each_core cores[0]; // variable length
 };
 
-STATIC_ASSERT(sizeof(struct ttmp_msg_buff_slot) == TTMP_MSG_SLOT_SIZE);
-STATIC_ASSERT(sizeof(union ttmp_sch_table_slot) == TTMP_SCH_SLOT_SIZE);
-
-extren strcut ttmp_buff *global_ttmp_buff;
+STATIC_ASSERT_SIZEOF(struct ttmp_msg_buff_slot, TTMP_MSG_SLOT_SIZE);
+STATIC_ASSERT_SIZEOF(union ttmp_sch_table_slot, TTMP_SCH_SLOT_SIZE);
 
 #endif
