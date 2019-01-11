@@ -26,12 +26,16 @@ sudo mount /dev/sdb1 $MOUNT_PATH
 
 # cp sbin
 echo "####: waiting for copy.\n"
-sudo rm -r $MOUNT_PATH/$SBIN_PATH
-sudo rm $MOUNT_PATH/$ECFILE
-sudo rm $MOUNT_PATH/$SKBFILE
-sudo cp -r $BARREL_PATH/$BUILD_PATH/$SBIN_PATH $MOUNT_PATH/$SBIN_PATH
-sudo cp $BARREL_PATH/$BUILD_PATH/$ECFILE $MOUNT_PATH/$ECFILE
-sudo cp $BARREL_PATH/$BUILD_PATH/$SKBFILE $MOUNT_PATH/$SKBFILE
+if [ $# -eq 0 ]; then
+    sudo rm -r $MOUNT_PATH/$SBIN_PATH
+    sudo rm $MOUNT_PATH/$ECFILE
+    sudo rm $MOUNT_PATH/$SKBFILE
+    sudo cp -r $BARREL_PATH/$BUILD_PATH/$SBIN_PATH $MOUNT_PATH/$SBIN_PATH
+    sudo cp $BARREL_PATH/$BUILD_PATH/$ECFILE $MOUNT_PATH/$ECFILE
+else
+    sudo rm $MOUNT_PATH/$SBIN_PATH/$1
+    sudo cp $BARREL_PATH/$BUILD_PATH/$SBIN_PATH/$1 $MOUNT_PATH/$SBIN_PATH/$1
+fi
 echo "####: copy done.\n"
 
 #umount sdcard
