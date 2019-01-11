@@ -12,16 +12,36 @@
 #define TTMP_SCHD_BUFF_SIZE     0x2000 // 8K
 #define TTMP_CORE_BUFF_SIZE     0x1000 // 4K
 
+#define TTMP_TX_SLOT_NUM        64
+#define TTMP_RX_SLOT_NUM        64
+#define TTMP_SET_SLOT_NUM       4
+
+typedef struct
+{
+    uint32_t src;
+    uint32_t dst;
+    uint32_t valid : 1;
+    uint32_t size : 15;
+    uint32_t id : 16;
+} tt_msg_head_t;
+
+typedef struct
+{
+    unsigned char value[20];
+} tt_msg_payload_t;
+
+struct ttmp_msg_buff_slot
+{
+    tt_msg_head_t head;
+    tt_msg_payload_t payload;
+};
+
 union ttmp_sch_table_slot {
     uint64_t raw;
     struct {
         uint64_t msg_id : 16;
         uint64_t timestramp : 48;
     } named;
-};
-
-struct ttmp_msg_buff_slot {
-    unsigned char bytes[32];
 };
 
 struct ttmp_msg_buff_each_core {
