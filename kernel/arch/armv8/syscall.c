@@ -1260,6 +1260,14 @@ void sys_syscall(uint64_t a0, uint64_t a1, uint64_t a2, uint64_t a3,
 
             break;
 
+        case SYSCALL_TTMP_SEND:
+            r = sys_ttmp_send();
+            break;
+
+        case SYSCALL_TTMP_RECEIVE:
+            r = sys_ttmp_receive();
+            break;
+
         default:
             printf("Illegal syscall %u\n", syscall);
             r.error = SYS_ERR_ILLEGAL_SYSCALL;

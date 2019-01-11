@@ -926,7 +926,7 @@ void arm_kernel_startup(void *pointer)
         global->ttmp_ctrl_info.sync_flag = 0;
         global->ttmp_ctrl_info.sys_launch_time = 0u;
         global->ttmp_ctrl_info.cores = TTMP_TASK_CORE_NUM;
-        global->ttmp_ctrl_info.ttmp_buff = ttmp_buff_base;
+        global->ttmp_ctrl_info.ttmp_buff = (void *)ttmp_buff_base;
 
 
         /* allocate initial KCB */
