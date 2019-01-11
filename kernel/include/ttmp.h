@@ -25,7 +25,8 @@ struct ttmp_msg_buff_slot {
 };
 
 struct ttmp_msg_buff_each_core {
-    struct ttmp_msg_buff_slot slots[128];
+    struct ttmp_msg_buff_slot tx_slots[64];
+    struct ttmp_msg_buff_slot rx_slots[64];
 };
 
 struct ttmp_buff {
