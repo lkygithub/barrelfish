@@ -1130,7 +1130,7 @@ unsigned char *disp_get_ttmsg_buffer(void)
 {
     dispatcher_handle_t handle = curdispatcher();
     struct dispatcher_generic* disp = get_dispatcher_generic(handle);
-    return &(disp->ttmsg);
+    return (disp->ttmsg);
 }
 
 /**

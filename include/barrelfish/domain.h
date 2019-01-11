@@ -50,6 +50,8 @@ struct proc_mgmt_binding;
 struct waitset *get_default_waitset(void);
 void disp_set_core_id(coreid_t core_id);
 coreid_t disp_get_core_id(void);
+coreid_t disp_get_ttask_id(void);
+unsigned char *disp_get_ttmsg_buffer(void);
 coreid_t disp_get_current_core_id(void);
 void disp_get_eh_frame(lvaddr_t *eh_frame, size_t *eh_frame_size);
 void disp_get_eh_frame_hdr(lvaddr_t *eh_frame_hdr, size_t *eh_frame_hdr_size);
