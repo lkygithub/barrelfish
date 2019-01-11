@@ -28,7 +28,7 @@ typedef struct {
     unsigned char value[20];
 } tt_msg_payload_t;
 
-typedef strcut {
+typedef struct {
     tt_msg_head_t head;
     tt_msg_payload_t payload;
 } tt_msg_t;
