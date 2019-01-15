@@ -5,6 +5,7 @@
 
 bootdriver /armv8/sbin/boot_armv8_generic
 cpudriver /armv8/sbin/cpu_zynqmp loglevel=3
+#
 
 module /armv8/sbin/init
 
