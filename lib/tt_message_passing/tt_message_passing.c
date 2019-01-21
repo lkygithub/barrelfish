@@ -66,7 +66,8 @@ errval_t tt_msg_send(uint16_t dst_core_id, uint16_t dst_task_id,
                 | (dst_task_id & 0xFFFF);
     head->valid = 1u;
     head->size = buff_size;
-    head->id = tt_msg_info.my_task_id;
+    head->id = (tt_msg_info.my_core_id & 0xFFFF) << 16 
+                | (tt_msg_info.my_task_id & 0xFFFF);
     /* copy msg payload */
     memcpy(payload, buffer, buff_size);
     /* TODO: call send syscall */
