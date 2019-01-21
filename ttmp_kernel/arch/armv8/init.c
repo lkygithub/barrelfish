@@ -155,7 +155,7 @@ arch_init(uint32_t magic, void *pointer, uintptr_t stack) {
 
     switch (magic) {
         case MULTIBOOT2_BOOTLOADER_MAGIC: {
-            panic("Should be bsp core!");
+            panic("Should not be bsp core!");
             break;
         }
         case ARMV8_BOOTMAGIC_PSCI : {

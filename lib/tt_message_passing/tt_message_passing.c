@@ -15,8 +15,8 @@
 #define TTMP_DEBUG
 
 typedef struct {
-    uint16_t my_task_id;
-    uint16_t my_core_id;
+    uint8_t my_task_id;
+    uint8_t my_core_id;
     tt_msg_t *tt_msg;
 } tt_msg_info_t;
 
@@ -45,7 +45,7 @@ void tt_msg_init(void)
  * \brief send tt msg, buffer should be prepare before calling.
  */
 
-errval_t tt_msg_send(uint16_t dst_core_id, uint16_t dst_task_id,
+errval_t tt_msg_send(uint8_t dst_core_id, uint8_t dst_task_id,
                         unsigned char *buffer, uint16_t buff_size)
 {
     errval_t err = SYS_ERR_OK;
@@ -60,14 +60,14 @@ errval_t tt_msg_send(uint16_t dst_core_id, uint16_t dst_task_id,
     tt_msg_head_t *head = (tt_msg_info.tt_msg)->head;
     unsigned char *payload = (tt_msg_info.tt_msg)->payload;
     /* setup tt message */
-    head->src = (tt_msg_info.my_core_id & 0xFFFF) << 16 
-                | (tt_msg_info.my_task_id & 0xFFFF);
-    head->dst = (dst_core_id & 0xFFFF) << 16 
-                | (dst_task_id & 0xFFFF);
+    head->src = (tt_msg_info.my_core_id & 0xFF) << 8 
+                | (tt_msg_info.my_task_id & 0xFF);
+    head->dst = (dst_core_id & 0xFF) << 8 
+                | (dst_task_id & 0xFF);
     head->valid = 1u;
     head->size = buff_size;
-    head->id = (tt_msg_info.my_core_id & 0xFFFF) << 16 
-                | (tt_msg_info.my_task_id & 0xFFFF);
+    head->id = (tt_msg_info.my_core_id & 0xFF) << 8 
+                | (tt_msg_info.my_task_id & 0xFF);
     /* copy msg payload */
     memcpy(payload, buffer, buff_size);
     /* TODO: call send syscall */
@@ -94,7 +94,7 @@ errval_t tt_msg_receive(uint16_t src_core_id, uint16_t src_task_id,
     tt_msg_head_t *head = (tt_msg_info.tt_msg)->head;
     unsigned char *payload = (tt_msg_info.tt_msg)->payload;
     /* Check tt message header */
-    if (head->src != ((src_core_id & 0xFFFF) << 16 | (src_task_id & 0xFFFF))
+    if (head->src != ((src_core_id & 0xFF) << 8 | (src_task_id & 0xFF))
         || head-> valid != 1) {
             PRINT_ERR("wrong header err in func %s, line %s\n", __func__, __line__);
             err = TTMP_ERR_WRONG_HEADER;

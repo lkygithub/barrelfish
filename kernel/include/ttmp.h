@@ -18,8 +18,8 @@
 
 typedef struct
 {
-    uint32_t src;
-    uint32_t dst;
+    uint32_t src : 16;
+    uint32_t dst : 16;
     uint32_t valid : 1;
     uint32_t size : 15;
     uint32_t id : 16;
@@ -27,7 +27,7 @@ typedef struct
 
 typedef struct
 {
-    unsigned char value[20];
+    unsigned char value[24];
 } tt_msg_payload_t;
 
 struct ttmp_msg_buff_slot

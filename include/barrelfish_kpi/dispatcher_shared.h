@@ -64,7 +64,7 @@ struct dispatcher_shared_generic {
 #endif
 
     /// ttask id
-    uint16_t ttask_id;
+    uint8_t ttask_id;
     /// a single tt message buffer
     unsigned char ttmsg[32];
 };

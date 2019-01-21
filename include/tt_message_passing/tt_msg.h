@@ -12,20 +12,20 @@
 #include <barrelfish/types.h>
 #include <errors/errno.h>
 
-#define MAX_PAYLOAD_SIZE 20 // byte
-#define TTMSG_HEAD_SIZE 12 // byte
-#define TTMSG_PAYLOAD_SIZE 20 // byte
+#define MAX_PAYLOAD_SIZE 24 // byte
+#define TTMSG_HEAD_SIZE 8 // byte
+#define TTMSG_PAYLOAD_SIZE 24 // byte
 
 typedef struct {
-    uint32_t src;
-    uint32_t dst;
+    uint32_t src : 16;
+    uint32_t dst : 16;
     uint32_t valid : 1;
     uint32_t size : 15;
     uint32_t id : 16;
 } tt_msg_head_t;
 
 typedef struct {
-    unsigned char value[20];
+    unsigned char value[24];
 } tt_msg_payload_t;
 
 typedef struct {

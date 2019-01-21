@@ -884,16 +884,16 @@ struct sysret sys_ttmp_send(void)
     /* calculate the index of msg */
     int set_idx = disp->ttask_id % (TTMP_TX_SLOT_NUM / TTMP_SET_SLOT_NUM);
     int start_idx = set_idx * TTMP_SET_SLOT_NUM;
-    struct ttmp_buff *buffer = global->ttmp_ctrl_info.ttmp_buff;
-    struct ttmp_msg_buff_slot dst_slot;
+    struct ttmp_buff *buffer = (global->ttmp_ctrl_info).ttmp_buff;
+    struct ttmp_msg_buff_slot &dst_slot;
     /* copy msg into buffer*/
     for(i = start_idx; i < start_idx + TTMP_SET_SLOT_NUM; i++) {
-        dst_slot = (buffer->cores[my_core_id]).tx_slots[i];
+        dst_slot = (buffer->cores[my_core_id]).tx_slots + i;
         /* check if it's used */
-        if (dst_slot.head.valid)
+        if ((dst_slot->head).valid)
             continue;
         /* copy msg */
-        memcpy(&dst_slot, disp->ttmsg, TTMP_MSG_SLOT_SIZE);
+        memcpy(dst_slot, disp->ttmsg, TTMP_MSG_SLOT_SIZE);
     }
 
     if (i == start_idx + TTMP_SET_SLOT_NUM)
@@ -918,17 +918,17 @@ struct sysret sys_ttmp_receive(void)
     int set_idx = disp->ttask_id % (TTMP_RX_SLOT_NUM / TTMP_SET_SLOT_NUM);
     int start_idx = set_idx * TTMP_SET_SLOT_NUM;
     struct ttmp_buff *buffer = global->ttmp_ctrl_info.ttmp_buff;
-    struct ttmp_msg_buff_slot dst_slot;
+    struct ttmp_msg_buff_slot &dst_slot;
     /* copy msg into buffer*/
     for (i = start_idx; i < start_idx + TTMP_SET_SLOT_NUM; i++)
     {
-        dst_slot = (buffer->cores[my_core_id]).rx_slots[i];
-        uint32_t dst = ((my_core_id & 0xFFFF) << 16) | (disp->ttask_id & 0xFFFF);
+        dst_slot = (buffer->cores[my_core_id]).rx_slots + i;
+        uint16_t dst = ((my_core_id & 0xFF) << 8) | (disp->ttask_id & 0xFF);
         /* check if it's used */
-        if (!dst_slot.head.valid || dst_slot.head.dst != dst)
+        if (!(dst_slot->head).valid || (dst_slot->head).dst != dst)
             continue;
         /* copy msg */
-        memcpy(disp->ttmsg, &dst_slot, TTMP_MSG_SLOT_SIZE);
+        memcpy(disp->ttmsg, dst_slot, TTMP_MSG_SLOT_SIZE);
     }
 
     if (i == start_idx + TTMP_SET_SLOT_NUM)
