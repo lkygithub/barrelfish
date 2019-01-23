@@ -885,7 +885,7 @@ struct sysret sys_ttmp_send(void)
     int set_idx = disp->ttask_id % (TTMP_TX_SLOT_NUM / TTMP_SET_SLOT_NUM);
     int start_idx = set_idx * TTMP_SET_SLOT_NUM;
     struct ttmp_buff *buffer = (global->ttmp_ctrl_info).ttmp_buff;
-    struct ttmp_msg_buff_slot &dst_slot;
+    struct ttmp_msg_buff_slot *dst_slot;
     /* copy msg into buffer*/
     for(i = start_idx; i < start_idx + TTMP_SET_SLOT_NUM; i++) {
         dst_slot = (buffer->cores[my_core_id]).tx_slots + i;
@@ -918,7 +918,7 @@ struct sysret sys_ttmp_receive(void)
     int set_idx = disp->ttask_id % (TTMP_RX_SLOT_NUM / TTMP_SET_SLOT_NUM);
     int start_idx = set_idx * TTMP_SET_SLOT_NUM;
     struct ttmp_buff *buffer = global->ttmp_ctrl_info.ttmp_buff;
-    struct ttmp_msg_buff_slot &dst_slot;
+    struct ttmp_msg_buff_slot *dst_slot;
     /* copy msg into buffer*/
     for (i = start_idx; i < start_idx + TTMP_SET_SLOT_NUM; i++)
     {

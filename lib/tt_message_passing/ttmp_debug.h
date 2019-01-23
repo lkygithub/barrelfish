@@ -14,10 +14,10 @@
 
 #ifdef TTMP_DEBUG
 #define PRINT_DEBUG(format, ...) printf(XTERM_YELLOW "TT_MSG_PASSING[DEBUG]: " XTERM_END format, ## __VA_ARGS__)
-#define PRINT_ERR(format, ...) printf(XTERM_RED "TT_MSG_PASSING[DEBUG]: " XTERM_END format, ## __VA_ARGS__)
 #else
 #define PRINT_DEBUG(format, ...) do{}while(0)
-#define PRINT_ERR(format, ...) do{}while(0);
 #endif
+
+#define PRINT_ERR(format, ...) printf(XTERM_RED "TT_MSG_PASSING[ERR]: " XTERM_END format, ##__VA_ARGS__)
 
 #endif

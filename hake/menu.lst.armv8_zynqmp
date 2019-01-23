@@ -34,3 +34,6 @@ module /armv8/sbin/pci auto
 # General user domains
 module /armv8/sbin/fish nospawn
 module /armv8/sbin/angler serial0.terminal xterm
+
+#Time-Triggered application
+module /armv8/sbin/tt/producer nospawn

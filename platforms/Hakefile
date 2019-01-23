@@ -390,6 +390,11 @@ let bin_rcce_lu = [ "/sbin/" ++ f | f <- [
                        "acpi"
                        ] ]
 
+    -- ARMv8 Time-Triggered modules for ZynqZCU104
+    tt_modules = [ "/sbin/" ++ f | f <- [
+                       "tt/producer"
+                       ] ]
+
     armv7Image target bootTarget cpuTarget physBase modules =
         let bootDriver = "/sbin/boot_" ++ bootTarget
             cpuDriver  = "/sbin/cpu_"  ++ cpuTarget
@@ -497,6 +502,8 @@ let bin_rcce_lu = [ "/sbin/" ++ f | f <- [
        [ ("armv8", f) | f <- armv8_modules ]
        ++
        [ ("",      f) | f <- modules_generic ]
+       ++
+       [ ("armv8", f) | f <- tt_modules ]
     )
     "Xilinx Zynq UltraScale+ MPSoC ZCU104 boards",
 

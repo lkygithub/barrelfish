@@ -1116,11 +1116,21 @@ coreid_t disp_get_core_id(void)
 /**
  * \brief returns the ttask_id stored in disp_priv struct
  */
-coreid_t disp_get_ttask_id(void)
+uint8_t disp_get_ttask_id(void)
 {
     dispatcher_handle_t handle = curdispatcher();
     struct dispatcher_shared_generic *disp = get_dispatcher_shared_generic(handle);
     return disp->ttask_id;
+}
+
+/**
+ * \brief setup the ttask_id stored in disp_priv struct
+ */
+void disp_set_ttask_id(uint8_t id)
+{
+    dispatcher_handle_t handle = curdispatcher();
+    struct dispatcher_shared_generic *disp = get_dispatcher_shared_generic(handle);
+    disp->ttask_id = id;
 }
 
 /**

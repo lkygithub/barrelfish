@@ -35,10 +35,10 @@ typedef struct {
 
 void tt_msg_init(void);
 
-errval_t tt_msg_send(uint16_t dst_core_id, uint16_t dst_task_id,
+errval_t tt_msg_send(uint8_t dst_core_id, uint8_t dst_task_id,
                         unsigned char *buffer, uint16_t buff_size);
 
-errval_t tt_msg_receive(uint16_t src_core_id, uint16_t src_task_id, 
+errval_t tt_msg_receive(uint8_t src_core_id, uint8_t src_task_id, 
                             unsigned char *buffer, uint16_t *buff_size);
 
 #endif //LIBTT_MESSAGE_PASSING_H

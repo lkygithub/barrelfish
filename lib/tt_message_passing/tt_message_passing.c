@@ -52,13 +52,13 @@ errval_t tt_msg_send(uint8_t dst_core_id, uint8_t dst_task_id,
 
     /* Check params if it's invalid? */
     if (buffer == NULL || buff_size > MAX_PAYLOAD_SIZE) {
-        PRINT_ERR("invalid params err in func %s, line %s\n", __func__, __line__);
+        PRINT_ERR("invalid params err in func %s, line %s\n", __func__, __LINE__);
         err = TTMP_ERR_INVALID_PARAMETER;
         goto out;
     }
     /* get disp tt-msg buffer */
-    tt_msg_head_t *head = (tt_msg_info.tt_msg)->head;
-    unsigned char *payload = (tt_msg_info.tt_msg)->payload;
+    tt_msg_head_t *head = &((tt_msg_info.tt_msg)->head);
+    unsigned char *payload = ((tt_msg_info.tt_msg)->payload).value;
     /* setup tt message */
     head->src = (tt_msg_info.my_core_id & 0xFF) << 8 
                 | (tt_msg_info.my_task_id & 0xFF);
@@ -71,7 +71,7 @@ errval_t tt_msg_send(uint8_t dst_core_id, uint8_t dst_task_id,
     /* copy msg payload */
     memcpy(payload, buffer, buff_size);
     /* TODO: call send syscall */
-    sys_ttmp_send();
+    err = sys_ttmp_send();
 
 out:
 
@@ -82,21 +82,25 @@ out:
  * \brief receive a tt msg.
  */
 
-errval_t tt_msg_receive(uint16_t src_core_id, uint16_t src_task_id, 
+errval_t tt_msg_receive(uint8_t src_core_id, uint8_t src_task_id, 
                             unsigned char *buffer, uint16_t *buff_size)
 {
     errval_t err = SYS_ERR_OK;
 
     /* TODO: call receive syscall */
-    sys_ttmp_receive();
+    err = sys_ttmp_receive();
+    if (err_is_fail(err)) {
+        PRINT_ERR("err in func %s, line %s\n", __func__, __LINE__);
+        goto out;
+    }
     /* get tt message from disp buffer */
     /* get disp tt-msg buffer */
-    tt_msg_head_t *head = (tt_msg_info.tt_msg)->head;
-    unsigned char *payload = (tt_msg_info.tt_msg)->payload;
+    tt_msg_head_t *head = &((tt_msg_info.tt_msg)->head);
+    unsigned char *payload = ((tt_msg_info.tt_msg)->payload).value;
     /* Check tt message header */
     if (head->src != ((src_core_id & 0xFF) << 8 | (src_task_id & 0xFF))
         || head-> valid != 1) {
-            PRINT_ERR("wrong header err in func %s, line %s\n", __func__, __line__);
+            PRINT_ERR("wrong header err in func %s, line %s\n", __func__, __LINE__);
             err = TTMP_ERR_WRONG_HEADER;
             goto out;
     }

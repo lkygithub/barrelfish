@@ -9,105 +9,94 @@
 --------------------------------------------------------------------------
 
 let
-  common_c =   [ 
---               "logging.c",
-               "memset.c",
-               "memmove.c",
-               "printf.c",
---               "startup.c",
-               "stdlib.c",
-               "string.c",
---               "sys_debug.c",
---               "coreboot.c",
---               "systime.c" 
-               ]
---             ++ (if Config.microbenchmarks then ["microbenchmarks.c"] else [])
---             ++ (if Config.oneshot_timer then ["timer.c"] else [])
+    common_c = [
+        "memset.c",
+        "memmove.c",
+        "printf.c",
+        "stdlib.c",
+        "string.c" ]
 
-   link_cpudriver arg = linkKernel opts name objs libs "cpu"
-   where
-      opts = kernelOptions $ head $ Args.architectures arg
-      suffix = if "cpu" == Args.target arg
-               then ""
-               else "_" ++ (Args.target arg)
-      name = "cpu" ++ suffix
-      objs = [ objectFilePath opts f
-             | f <- (Args.assemblyFiles arg) ++ (Args.cFiles arg) ++ common_c ]
-      libs = (Args.addLibraries arg)
+    link_cpudriver arg = linkKernel opts name objs libs "cpu"
+        where
+        opts = kernelOptions $ head $ Args.architectures arg
+        suffix = if "cpu" == Args.target arg
+                then ""
+                else "_" ++ (Args.target arg)
+        name = "cpu" ++ suffix
+        objs = [ objectFilePath opts f
+                | f <- (Args.assemblyFiles arg) ++ (Args.cFiles arg) ++ common_c ]
+        libs = (Args.addLibraries arg)
 
-   cpudrivers arglist =
-   let
-      cafiles = Data.List.nub $ concat [ [ [ arch, cfile ]
-                                         | arch <- Args.architectures arg,
-                                           cfile <- common_c ++ (Args.cFiles arg) ]
-                                       | arg <- arglist ]
-      safiles = Data.List.nub $ concat [ [ [ arch, sfile ]
-                                         | arch <- Args.architectures arg,
-                                           sfile <- Args.assemblyFiles arg ]
-                                       | arg <- arglist ]
-      mafiles = Data.List.nub $ concat [ [ [ arch, mfile ]
-                                         | arch <- Args.architectures arg,
-                                           mfile <- Args.mackerelDevices arg ]
-                                       | arg <- arglist ]
-   in
-     ( [ compileCFile (kernelOptions a) f | [a,f] <- cafiles ]
-       ++
-       [ assembleSFile (kernelOptions a) f | [a,f] <- safiles ]
-       ++
-       [ mackerelDependencies (kernelOptions a) f [ c | [a,c] <- cafiles]
-       | [a,f] <- mafiles ]
-       ++
-       [ if Args.driverType arg == "boot"
-            then link_bootdriver arg
-            else link_cpudriver arg | arg <- arglist ]
-     )
-   in cpudrivers [
-      --
-      -- Xilinx Zynq UltraScale+ MPSoC ZCU104,
-      --
-      cpuDriver {
-         target = "ttmpZCU104",
-         architectures = [ "armv8" ],
-         assemblyFiles = [
-            "arch/armv8/sysreg.S",
-            "arch/armv8/exceptions.S",
-            "arch/armv8/smc_hvc.S"
-         ],
-         cFiles = [
-               "arch/arm/misc.c",
-               "arch/arm/zynqmp_uart.c",
-               "arch/arm/kputchar.c",
-               "arch/arm/gdb_arch.c",
-               "arch/armv8/plat_zynqmp.c",
-               "arch/armv8/plat_zynqmp_consts.c",
-               "arch/armv8/init.c",
-               "arch/armv8/gdb_arch.c",
-               "arch/armv8/kernel_multiboot2.c",
-               "arch/armv8/dispatch.c",
-               "arch/armv8/exec.c",
-               "arch/armv8/exn.c",
-               "arch/armv8/psci.c",
+    cpudrivers arglist =
+        let
+            cafiles = Data.List.nub $ concat [ [ [ arch, cfile ]
+                                                | arch <- Args.architectures arg,
+                                                cfile <- common_c ++ (Args.cFiles arg) ]
+                                            | arg <- arglist ]
+            safiles = Data.List.nub $ concat [ [ [ arch, sfile ]
+                                                | arch <- Args.architectures arg,
+                                                sfile <- Args.assemblyFiles arg ]
+                                            | arg <- arglist ]
+            mafiles = Data.List.nub $ concat [ [ [ arch, mfile ]
+                                                | arch <- Args.architectures arg,
+                                                mfile <- Args.mackerelDevices arg ]
+                                            | arg <- arglist ]
+        in
+            ( [ compileCFile (kernelOptions a) f | [a,f] <- cafiles ]
+            ++
+            [ assembleSFile (kernelOptions a) f | [a,f] <- safiles ]
+            ++
+            [ mackerelDependencies (kernelOptions a) f [ c | [a,c] <- cafiles]
+            | [a,f] <- mafiles ]
+            ++
+            [ link_cpudriver arg | arg <- arglist ] )
+in cpudrivers [
+    --
+    -- Xilinx Zynq UltraScale+ MPSoC ZCU104,
+    --
+    cpuDriver {
+        target = "ttmpZCU104",
+        architectures = [ "armv8" ],
+        assemblyFiles = [
+        "arch/armv8/sysreg.S",
+        "arch/armv8/exceptions.S",
+        "arch/armv8/smc_hvc.S"
+        ],
+        cFiles = [
+            "arch/arm/misc.c",
+            "arch/arm/zynqmp_uart.c",
+            "arch/arm/kputchar.c",
+            "arch/arm/gdb_arch.c",
+            "arch/armv8/plat_zynqmp.c",
+            "arch/armv8/plat_zynqmp_consts.c",
+            "arch/armv8/init.c",
+            "arch/armv8/gdb_arch.c",
+            "arch/armv8/kernel_multiboot2.c",
+            "arch/armv8/dispatch.c",
+            "arch/armv8/exec.c",
+            "arch/armv8/exn.c",
+            "arch/armv8/psci.c",
 --               "arch/armv8/gic_v2.c",
-               "arch/armv8/paging.c",
-               "arch/armv8/startup_arch.c",
-               "arch/armv8/syscall.c",
-               "arch/armv8/timers.c",
-               "arch/arm/debug.c",
+            "arch/armv8/paging.c",
+            "arch/armv8/startup_arch.c",
+            "arch/armv8/syscall.c",
+            "arch/armv8/timers.c",
+            "arch/arm/debug.c"
 --               "arch/armv8/irq_v2.c"
-         ],
-         mackerelDevices = [
-            "arm",
-            "armv8",
+        ],
+        mackerelDevices = [
+        "arm",
+        "armv8",
 --            "gic_v3",
 --            "gic_v2_cpu",
-            "armv8/armv8_cache_ctrl",
-            "zynqmp/zynqmp_uart",
-            "zynqmp/zynqmp_slcr",
+        "armv8/armv8_cache_ctrl",
+        "zynqmp/zynqmp_uart",
+        "zynqmp/zynqmp_slcr"
 --            "arm_icp_pit"
-         ],
-         addLibraries = [
-            "elf",
-            "cpio"
-         ]
-      }
-   ]
+        ],
+        addLibraries = [
+        "elf",
+        "cpio"
+        ]
+    }
+]
