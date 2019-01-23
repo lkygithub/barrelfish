@@ -889,7 +889,7 @@ static void print_page_tables_by_vaddr(lpaddr_t root, lvaddr_t va)
  *     higher 16 bit ---> core_id
  *     lower 16 bit ---> task_id
  */
-static errval_t ttmp_msg_transfer(uint32_t msg_id)
+static errval_t ttmp_msg_transfer(uint16_t msg_id)
 {
     struct ttmp_msg_buff_slot *src;
     struct ttmp_msg_buff_slot *dst;
@@ -932,6 +932,32 @@ static errval_t ttmp_msg_transfer(uint32_t msg_id)
     return SYS_ERR_OK;
 }
 
+static void ttmp_service_loop(void)
+{
+    unsigned int current = 0;
+    /* get msg sch table */
+    union ttmp_sch_table_slot *sch_table =
+        global->ttmp_ctrl_info.ttmp_buff.sch_table;
+    /* service loop */
+    while (1) {
+        /* check tail */
+        if (sch_table[current].raw == 0) {
+            current = 0;
+            continue;
+        }
+        uint64_t tp = sch_table[current].named.timestamp;
+        uint16_t msg_id = sch_table[current].named.msg_id;
+        /* wait for timestamp */
+        while (timer_get_timestamp() < tp) {;}
+        /* do transfer */
+        ttmp_msg_transfer(msg_id);
+        /* next one */
+        current += 1;
+    }
+
+    //do not return
+}
+
 void arm_kernel_startup(void *pointer)
 {
     /* Initialize the core_data */
@@ -967,7 +993,7 @@ void arm_kernel_startup(void *pointer)
     platform_gic_cpu_interface_enable();
 
     // goto ttmp main loop
-    ttmp_sevice_loop();
+    ttmp_service_loop();
 
     panic("Error spawning init!");
 
