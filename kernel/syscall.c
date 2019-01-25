@@ -868,19 +868,37 @@ struct sysret sys_get_absolute_time(void)
 /**
  * time triggered message passing syscalls
  */
+#if 1
+#include "include/arch/armv8/ttmp_zynqmp.h"
+static void dump_ttmp_msg_buff(void)
+{
+    printf("ttmp_buff base: 0x%p\n", global->ttmp_ctrl_info.ttmp_buff);
+    struct ttmp_buff *buff = (global->ttmp_ctrl_info.ttmp_buff);
+    uint8_t *p = (uint8_t *) buff->cores;
+    for (int i = 0; i < TTMP_BUFF_SIZE - TTMP_SCHD_BUFF_SIZE; i += 32) {
+        for (int j = i; j < i + 32; j++) {
+            printf("%02x ", *p);
+            p++;
+        }
+        printf("\n");
+    }
 
+    return;
+}
+#endif
 struct sysret sys_ttmp_send(void)
 {
     int i = 0;
 
     dispatcher_handle_t handle = dcb_current->disp;
     struct dispatcher_shared_generic *disp = get_dispatcher_shared_generic(handle);
-
+    /*
     if (dcb_current->disabled == false)
     {
         printk(LOG_ERR, "SYSCALL_TTMP_SEND while enabled\n");
         return SYSRET(SYS_ERR_CALLER_ENABLED);
     }
+    */
     /* calculate the index of msg */
     int set_idx = disp->ttask_id % (TTMP_TX_SLOT_NUM / TTMP_SET_SLOT_NUM);
     int start_idx = set_idx * TTMP_SET_SLOT_NUM;
@@ -892,9 +910,14 @@ struct sysret sys_ttmp_send(void)
         /* check if it's used */
         if ((dst_slot->head).valid)
             continue;
-        /* copy msg */
-        memcpy(dst_slot, disp->ttmsg, TTMP_MSG_SLOT_SIZE);
+        else {
+            /* copy msg */
+            memcpy(dst_slot, disp->ttmsg, TTMP_MSG_SLOT_SIZE);
+            break;
+        }
     }
+
+    dump_ttmp_msg_buff();
 
     if (i == start_idx + TTMP_SET_SLOT_NUM)
         return SYSRET(TTMP_ERR_TX_NO_SLOT);
@@ -908,12 +931,13 @@ struct sysret sys_ttmp_receive(void)
 
     dispatcher_handle_t handle = dcb_current->disp;
     struct dispatcher_shared_generic *disp = get_dispatcher_shared_generic(handle);
-
+    /*
     if (dcb_current->disabled == false)
     {
         printk(LOG_ERR, "SYSCALL_TTMP_SEND while enabled\n");
         return SYSRET(SYS_ERR_CALLER_ENABLED);
     }
+    */
     /* calculate the index of msg */
     int set_idx = disp->ttask_id % (TTMP_RX_SLOT_NUM / TTMP_SET_SLOT_NUM);
     int start_idx = set_idx * TTMP_SET_SLOT_NUM;

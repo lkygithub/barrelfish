@@ -974,7 +974,6 @@ void arm_kernel_startup(void *pointer)
 
     /* Initialize the allocator */
 
-
     app_alloc_phys_start = (core_data->memory.base);
     app_alloc_phys_end   = (core_data->memory.length + app_alloc_phys_start);
 
@@ -982,8 +981,6 @@ void arm_kernel_startup(void *pointer)
         (app_alloc_phys_end - app_alloc_phys_start + 1) >> 10);
 
     kcb_current= (struct kcb *)local_phys_to_mem(core_data->kcb);
-
-    init_dcb = spawn_app_init(core_data, APP_INIT_MODULE_NAME);
 
     // uint32_t irq = gic_get_active_irq();
     // gic_ack_irq(irq);

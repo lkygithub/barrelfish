@@ -908,6 +908,8 @@ void arm_kernel_startup(void *pointer)
         /* alloc memory for ttmp */
         lvaddr_t ttmp_buff_base = local_phys_to_mem(bsp_alloc_phys_aligned(TTMP_BUFF_SIZE, BASE_PAGE_SIZE));
         MSG("Global ttmp buffer base is 0x%llx.\n", ttmp_buff_base);
+        /* clean */
+        memset((void *)ttmp_buff_base, 0, TTMP_BUFF_SIZE);
 #if 0   //not used
         print_page_tables_by_vaddr((lpaddr_t)armv8_TTBR1_EL1_rd(NULL), (lvaddr_t)TTMP_BUFF_BASE);
         dsp_map_ttmp_buff((lvaddr_t)TTMP_BUFF_BASE, ttmp_buff_base, TTMP_BUFF_SIZE);

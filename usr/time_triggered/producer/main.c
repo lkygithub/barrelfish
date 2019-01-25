@@ -29,12 +29,12 @@ int main(int argc, char **argv)
     tt_msg_init();
     /* Write msg content */
     for (int i = 0; i < TTMSG_PAYLOAD_SIZE; i++) {
-        content.value[i] = TTMSG_PAYLOAD_SIZE - 0;
+        content.value[i] = TTMSG_PAYLOAD_SIZE - i;
     }
     /* Send msg */
     PRINT_DEBUG("Sending message\n");
     /* dst_core_id = 1, dst_task_id = 0 */
-    tt_msg_send(1, 0, content.value, TTMSG_PAYLOAD_SIZE);
+    tt_msg_send(120, 75, content.value, TTMSG_PAYLOAD_SIZE);
     PRINT_DEBUG("Sending done\n");
 
     return 0;

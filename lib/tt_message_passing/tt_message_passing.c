@@ -49,7 +49,8 @@ errval_t tt_msg_send(uint8_t dst_core_id, uint8_t dst_task_id,
                         unsigned char *buffer, uint16_t buff_size)
 {
     errval_t err = SYS_ERR_OK;
-
+    //bool was_enabled;
+    //dispatcher_handle_t disp = disp_try_disable(&was_enabled);
     /* Check params if it's invalid? */
     if (buffer == NULL || buff_size > MAX_PAYLOAD_SIZE) {
         PRINT_ERR("invalid params err in func %s, line %s\n", __func__, __LINE__);
@@ -72,9 +73,13 @@ errval_t tt_msg_send(uint8_t dst_core_id, uint8_t dst_task_id,
     memcpy(payload, buffer, buff_size);
     /* TODO: call send syscall */
     err = sys_ttmp_send();
+    if (err_is_fail(err)) {
+        PRINT_ERR("syscall sys_ttmp_send failed\n");
+    }
 
 out:
-
+    //if (!was_enabled)
+    //    disp_enable(disp);
     return err;
 }
 
@@ -86,7 +91,8 @@ errval_t tt_msg_receive(uint8_t src_core_id, uint8_t src_task_id,
                             unsigned char *buffer, uint16_t *buff_size)
 {
     errval_t err = SYS_ERR_OK;
-
+    //bool was_enabled;
+    //dispatcher_handle_t disp = disp_try_disable(&was_enabled);
     /* TODO: call receive syscall */
     err = sys_ttmp_receive();
     if (err_is_fail(err)) {
@@ -110,5 +116,7 @@ errval_t tt_msg_receive(uint8_t src_core_id, uint8_t src_task_id,
     memcpy(buffer, payload, head->size);
 
 out:
+    //if(!was_enabled)
+    //    disp_enable(disp);
     return err;
 }
