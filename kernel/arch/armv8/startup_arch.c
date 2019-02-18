@@ -957,6 +957,14 @@ void arm_kernel_startup(void *pointer)
 
         kcb_current= (struct kcb *)local_phys_to_mem(core_data->kcb);
 
+        /* Zynqmp core 3 is used to be tt-msg-passing core */
+        struct platform_info pi;
+        platform_get_info(&pi);
+        if (my_core_id == 3 && pi.platform == PI_PLATFORM_ZYNQMP) {
+            /* jump to tt-msg loop */
+            ttmp_main_loop();
+        }
+
         init_dcb = spawn_app_init(core_data, APP_INIT_MODULE_NAME);
 
        // uint32_t irq = gic_get_active_irq();
