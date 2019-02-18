@@ -883,6 +883,81 @@ static void print_page_tables_by_vaddr(lpaddr_t root, lvaddr_t va)
 }
 #endif
 
+/**
+ * transfer message from TX slot to RX slot
+ * msg_id:
+ *     higher 16 bit ---> core_id
+ *     lower 16 bit ---> task_id
+ */
+static errval_t ttmp_msg_transfer(uint16_t msg_id)
+{
+    struct ttmp_msg_buff_slot *src;
+    struct ttmp_msg_buff_slot *dst;
+    struct ttmp_buff *buffer = global->ttmp_ctrl_info.ttmp_buff;
+    /* calculate the index of Tx msg */
+    uint8_t ttask_id = msg_id & 0xFF;
+    uint8_t core_id = (msg_id >> 8) & 0xFF;
+    /* get msg in Tx buffer */
+    int set_idx = ttask_id % (TTMP_TX_SLOT_NUM / TTMP_SET_SLOT_NUM);
+    int start_idx = set_idx * TTMP_SET_SLOT_NUM;
+    
+    for(i = start_idx; i < start_idx + TTMP_SET_SLOT_NUM; i++) {
+        src = (buffer->cores[core_id]).tx_slots + i;
+        /* check */
+        if (!(src->head).valid || (src->head).id != msg_id)
+            continue;
+    }
+    if (i == start_idx + TTMP_SET_SLOT_NUM)
+        return TTMP_ERR_TX_NO_MSG;
+    /* reciever info */
+    ttask_id = (src->head).dst & 0xFF;
+    core_id = ((src->head).dst >> 8) & 0xFF;
+    /* calculate the index of Rx slot */
+    set_idx = ttask_id % (TTMP_TX_SLOT_NUM / TTMP_SET_SLOT_NUM);
+    start_idx = set_idx * TTMP_SET_SLOT_NUM;
+    
+    for(i = start_idx; i < start_idx + TTMP_SET_SLOT_NUM; i++) {
+        dst = (buffer->cores[core_id]).rx_slots + i;
+        /* check if it's used */
+        if ((dst->head).valid)
+            continue;
+    }
+    if (i == start_idx + TTMP_SET_SLOT_NUM)
+        return TTMP_ERR_RX_NO_SLOT;
+    /* copy */
+    memcpy(dst, src, TTMP_MSG_SLOT_SIZE);
+    /* Improtant!!! */
+    src->head.valid = 0;
+
+    return SYS_ERR_OK;
+}
+
+static void ttmp_service_loop(void)
+{
+    unsigned int current = 0;
+    /* get msg sch table */
+    union ttmp_sch_table_slot *sch_table =
+        global->ttmp_ctrl_info.ttmp_buff.sch_table;
+    /* service loop */
+    while (1) {
+        /* check tail */
+        if (sch_table[current].raw == 0) {
+            current = 0;
+            continue;
+        }
+        uint64_t tp = sch_table[current].named.timestamp;
+        uint16_t msg_id = sch_table[current].named.msg_id;
+        /* wait for timestamp */
+        while (timer_get_timestamp() < tp) {;}
+        /* do transfer */
+        ttmp_msg_transfer(msg_id);
+        /* next one */
+        current += 1;
+    }
+
+    //do not return
+}
+
 void arm_kernel_startup(void *pointer)
 {
     /* Initialize the core_data */
