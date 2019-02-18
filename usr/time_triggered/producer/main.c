@@ -34,7 +34,7 @@ int main(int argc, char **argv)
     /* Send msg */
     PRINT_DEBUG("Sending message\n");
     /* dst_core_id = 1, dst_task_id = 0 */
-    tt_msg_send(120, 75, content.value, TTMSG_PAYLOAD_SIZE);
+    tt_msg_send(1, 0, content.value, TTMSG_PAYLOAD_SIZE);
     PRINT_DEBUG("Sending done\n");
 
     return 0;

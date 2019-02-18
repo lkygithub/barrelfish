@@ -392,7 +392,8 @@ let bin_rcce_lu = [ "/sbin/" ++ f | f <- [
 
     -- ARMv8 Time-Triggered modules for ZynqZCU104
     tt_modules = [ "/sbin/" ++ f | f <- [
-                       "tt/producer"
+                       "tt/producer",
+                       "tt/customer"
                        ] ]
 
     armv7Image target bootTarget cpuTarget physBase modules =

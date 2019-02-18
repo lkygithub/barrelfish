@@ -870,10 +870,11 @@ struct sysret sys_get_absolute_time(void)
  */
 #if 1
 #include "include/arch/armv8/ttmp_zynqmp.h"
-static void dump_ttmp_msg_buff(void)
+static void dump_ttmp_msg_buff(uint8_t task_id, int rx_or_tx)
 {
     printf("ttmp_buff base: 0x%p\n", global->ttmp_ctrl_info.ttmp_buff);
     struct ttmp_buff *buff = (global->ttmp_ctrl_info.ttmp_buff);
+    /*
     uint8_t *p = (uint8_t *) buff->cores;
     for (int i = 0; i < TTMP_BUFF_SIZE - TTMP_SCHD_BUFF_SIZE; i += 32) {
         for (int j = i; j < i + 32; j++) {
@@ -882,10 +883,27 @@ static void dump_ttmp_msg_buff(void)
         }
         printf("\n");
     }
+    */
+    int set_idx = task_id % (TTMP_TX_SLOT_NUM / TTMP_SET_SLOT_NUM);
+    int start_idx = set_idx * TTMP_SET_SLOT_NUM;
+    struct ttmp_msg_buff_slot *dst_slot = NULL;
+    if (rx_or_tx)
+        dst_slot = (buff->cores[my_core_id]).tx_slots;
+    else
+        dst_slot = (buff->cores[my_core_id]).rx_slots;
 
-    return;
+    for(int i = start_idx; i < start_idx + TTMP_SET_SLOT_NUM; i++) {
+        uint8_t *p = (uint8_t *) dst_slot;
+        for (int j = 0; j < 32; j++) {
+            printf("%02x ", *p);
+            p++;
+        }
+        printf("\n");
+        dst_slot++;
+    }
 }
 #endif
+
 struct sysret sys_ttmp_send(void)
 {
     int i = 0;
@@ -917,7 +935,7 @@ struct sysret sys_ttmp_send(void)
         }
     }
 
-    dump_ttmp_msg_buff();
+    dump_ttmp_msg_buff(disp->ttask_id, 1); // 1 -> tx slots
 
     if (i == start_idx + TTMP_SET_SLOT_NUM)
         return SYSRET(TTMP_ERR_TX_NO_SLOT);
@@ -938,6 +956,7 @@ struct sysret sys_ttmp_receive(void)
         return SYSRET(SYS_ERR_CALLER_ENABLED);
     }
     */
+    dump_ttmp_msg_buff(disp->ttask_id, 0); // 0-> rx slots
     /* calculate the index of msg */
     int set_idx = disp->ttask_id % (TTMP_RX_SLOT_NUM / TTMP_SET_SLOT_NUM);
     int start_idx = set_idx * TTMP_SET_SLOT_NUM;
@@ -951,8 +970,11 @@ struct sysret sys_ttmp_receive(void)
         /* check if it's used */
         if (!(dst_slot->head).valid || (dst_slot->head).dst != dst)
             continue;
-        /* copy msg */
-        memcpy(disp->ttmsg, dst_slot, TTMP_MSG_SLOT_SIZE);
+        else {
+            /* copy msg */
+            memcpy(disp->ttmsg, dst_slot, TTMP_MSG_SLOT_SIZE);
+            break;
+        }
     }
 
     if (i == start_idx + TTMP_SET_SLOT_NUM)

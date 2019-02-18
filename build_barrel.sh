@@ -4,6 +4,7 @@ MOUNT_PATH=/mnt/sdcard
 SBIN_PATH=armv8/sbin
 ECFILE=eclipseclp_ramfs.cpio.gz
 SKBFILE=skb_ramfs.cpio.gz
+MEMULIST=menu.lst.armv8_zynqmp
 
 # build barrelfish
 cd $BUILD_PATH
@@ -33,6 +34,7 @@ if [ $# -eq 0 ]; then
     sudo cp -r $BARREL_PATH/$BUILD_PATH/$SBIN_PATH $MOUNT_PATH/$SBIN_PATH
     sudo cp $BARREL_PATH/$BUILD_PATH/$ECFILE $MOUNT_PATH/$ECFILE
     sudo cp $BARREL_PATH/$BUILD_PATH/$SKBFILE $MOUNT_PATH/$SKBFILE
+    sudo cp $BARREL_PATH/hake/$MEMULIST $MOUNT_PATH/menu.lst
 else
     sudo rm $MOUNT_PATH/$SBIN_PATH/$1
     sudo cp $BARREL_PATH/$BUILD_PATH/$SBIN_PATH/$1 $MOUNT_PATH/$SBIN_PATH/$1
