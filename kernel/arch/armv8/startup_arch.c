@@ -343,7 +343,7 @@ static void create_phys_caps(lpaddr_t reserved_start, lpaddr_t reserved_end)
             local_phys_to_mem(armv8_glbl_core_data->efi_mmap);
 
     lpaddr_t last_end_addr = 0;
-    
+
     for (size_t i = 0; i < (mmap->size - sizeof(struct multiboot_tag_efi_mmap)) / mmap->descr_size; i++) {
         efi_memory_descriptor *desc = (efi_memory_descriptor *)(mmap->efi_mmap) + i;
         //lpaddr_t end = desc->PhysicalStart + desc->NumberOfPages * BASE_PAGE_SIZE - 1;
@@ -728,7 +728,7 @@ struct dcb *spawn_app_init(struct armv8_core_data *core_data,
 #if 0
 static void dsp_map_ttmp_buff(lvaddr_t va, lpaddr_t pa, size_t bytes)
 {
-    /** 
+    /**
      * Check if page table is ready?
      * if it's not, create page table for ttmp.
      */
@@ -891,6 +891,8 @@ static void print_page_tables_by_vaddr(lpaddr_t root, lvaddr_t va)
  */
 static errval_t ttmp_msg_transfer(uint16_t msg_id)
 {
+    int i = 0;
+
     struct ttmp_msg_buff_slot *src;
     struct ttmp_msg_buff_slot *dst;
     struct ttmp_buff *buffer = global->ttmp_ctrl_info.ttmp_buff;
@@ -900,12 +902,14 @@ static errval_t ttmp_msg_transfer(uint16_t msg_id)
     /* get msg in Tx buffer */
     int set_idx = ttask_id % (TTMP_TX_SLOT_NUM / TTMP_SET_SLOT_NUM);
     int start_idx = set_idx * TTMP_SET_SLOT_NUM;
-    
+
     for(i = start_idx; i < start_idx + TTMP_SET_SLOT_NUM; i++) {
         src = (buffer->cores[core_id]).tx_slots + i;
         /* check */
         if (!(src->head).valid || (src->head).id != msg_id)
             continue;
+        else
+            break;
     }
     if (i == start_idx + TTMP_SET_SLOT_NUM)
         return TTMP_ERR_TX_NO_MSG;
@@ -915,12 +919,14 @@ static errval_t ttmp_msg_transfer(uint16_t msg_id)
     /* calculate the index of Rx slot */
     set_idx = ttask_id % (TTMP_TX_SLOT_NUM / TTMP_SET_SLOT_NUM);
     start_idx = set_idx * TTMP_SET_SLOT_NUM;
-    
+
     for(i = start_idx; i < start_idx + TTMP_SET_SLOT_NUM; i++) {
         dst = (buffer->cores[core_id]).rx_slots + i;
         /* check if it's used */
         if ((dst->head).valid)
             continue;
+        else
+            break;
     }
     if (i == start_idx + TTMP_SET_SLOT_NUM)
         return TTMP_ERR_RX_NO_SLOT;
@@ -934,10 +940,22 @@ static errval_t ttmp_msg_transfer(uint16_t msg_id)
 
 static void ttmp_service_loop(void)
 {
-    unsigned int current = 0;
+    //unsigned int current = 0;
     /* get msg sch table */
-    union ttmp_sch_table_slot *sch_table =
-        global->ttmp_ctrl_info.ttmp_buff.sch_table;
+    //struct ttmp_buff *ttmp_buffer = (struct ttmp_buff *)(global->ttmp_ctrl_info).ttmp_buff;
+    //union ttmp_sch_table_slot *sch_table = ttmp_buffer->sch_table;
+
+    /* Test */
+    uint16_t msg_id = 0 & 0xFFFF;
+    int count = 0;
+    errval_t err = ttmp_msg_transfer(msg_id);
+    while(err_is_fail(err)) {
+        err = ttmp_msg_transfer(msg_id);
+        count++;
+    }
+    printf("####transfer successed in %d times\n", count);
+    while(1);
+#if 0
     /* service loop */
     while (1) {
         /* check tail */
@@ -954,7 +972,7 @@ static void ttmp_service_loop(void)
         /* next one */
         current += 1;
     }
-
+#endif
     //do not return
 }
 
@@ -989,7 +1007,7 @@ void arm_kernel_startup(void *pointer)
         print_page_tables_by_vaddr((lpaddr_t)armv8_TTBR1_EL1_rd(NULL), (lvaddr_t)TTMP_BUFF_BASE);
         dsp_map_ttmp_buff((lvaddr_t)TTMP_BUFF_BASE, ttmp_buff_base, TTMP_BUFF_SIZE);
         /* Test memory mapping */
-        
+
         uint64_t *paddr = (uint64_t *) ttmp_buff_base;
         uint64_t *vaddr = (uint64_t *) TTMP_BUFF_BASE;
         int i = 0;
@@ -1037,7 +1055,7 @@ void arm_kernel_startup(void *pointer)
         platform_get_info(&pi);
         if (my_core_id == 3 && pi.platform == PI_PLATFORM_ZYNQMP) {
             /* jump to tt-msg loop */
-            ttmp_main_loop();
+            ttmp_service_loop();
         }
 
         init_dcb = spawn_app_init(core_data, APP_INIT_MODULE_NAME);
