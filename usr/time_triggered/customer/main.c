@@ -34,9 +34,11 @@ int main(int argc, char **argv)
         if ((i+1)%80 == 0)
             printf("\n");
     }
+
     /* Send msg */
     PRINT_DEBUG("buffer addr 0x%p, size addr 0x%p\n", buffer, &size);
     PRINT_DEBUG("Receiving message\n");
+
     /* src_core_id = 0, src_task_id = 0 */
     tt_msg_receive(0, 0, buffer, &size);
     PRINT_DEBUG("Receiving done\n");

@@ -935,7 +935,8 @@ struct sysret sys_ttmp_send(void)
         }
     }
 
-    dump_ttmp_msg_buff(disp->ttask_id, 1); // 1 -> tx slots
+    /* For Debug */
+    //dump_ttmp_msg_buff(disp->ttask_id, 1); // 1 -> tx slots
 
     if (i == start_idx + TTMP_SET_SLOT_NUM)
         return SYSRET(TTMP_ERR_TX_NO_SLOT);
@@ -956,7 +957,10 @@ struct sysret sys_ttmp_receive(void)
         return SYSRET(SYS_ERR_CALLER_ENABLED);
     }
     */
-    dump_ttmp_msg_buff(disp->ttask_id, 0); // 0-> rx slots
+
+    /* For Debug */
+    //dump_ttmp_msg_buff(disp->ttask_id, 0); // 0-> rx slots
+
     /* calculate the index of msg */
     int set_idx = disp->ttask_id % (TTMP_RX_SLOT_NUM / TTMP_SET_SLOT_NUM);
     int start_idx = set_idx * TTMP_SET_SLOT_NUM;
