@@ -61,6 +61,11 @@ static void add_start_function_overrides(void)
 #ifdef __ARM_ARCH_7A__
     set_start_function("driverdomain", newstyle_start_function);
 #endif
+
+#ifdef __ARM_ARCH_8A__
+    set_start_function("zynqmp_gem", default_start_function);
+#endif
+
     //set_start_function("driverdomain", default_start_function_new);
 }
 

@@ -123,7 +123,7 @@ errval_t initialize_monitor(struct spawninfo *si)
         return err_push(err, INIT_ERR_COPY_IRQ_CAP);
     }
 
-#if !defined(__ARM_ARCH_8A__)
+//#if !defined(__ARM_ARCH_8A__)
     /* Give monitor IO */
     dest.cnode = si->taskcn;
     dest.slot  = TASKCN_SLOT_IO;
@@ -133,7 +133,7 @@ errval_t initialize_monitor(struct spawninfo *si)
     if (err_is_fail(err)) {
         return err_push(err, INIT_ERR_COPY_IO_CAP);
     }
-#endif
+//#endif
 
 #ifdef __k1om__
     /* Give monitor system memory cap */

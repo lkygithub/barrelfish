@@ -25,7 +25,7 @@
 
 #include "kaluga.h"
 
-#if defined(__x86__) || defined(__ARM_ARCH_8A__)
+#if defined(__x86__)
 
 // Add an argument to argc/argv pair. argv must be mallocd!
 static void argv_push(int * argc, char *** argv, char * new_arg){

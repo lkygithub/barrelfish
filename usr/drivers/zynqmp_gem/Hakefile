@@ -1,0 +1,16 @@
+--------------------------------------------------------------------------
+--
+-- This file is distributed under the terms in the attached LICENSE file.
+-- Hakefile for drivers/zynqmp_gem
+--
+--------------------------------------------------------------------------
+
+[ build application { target = "zynqmp_gem",
+                      cFiles = ["zynqmp_gem.c"],
+                      flounderBindings = [ "net_queue_manager",
+                                            "net_soft_filters" ],
+                      mackerelDevices = [ "zynqmp_gem" ],
+                      addLibraries = libDeps [ "netQmng" ],
+                      addCFlags = [ "-D HIDUNUSED" ]
+                    }
+]

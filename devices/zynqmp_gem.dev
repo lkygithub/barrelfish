@@ -1,0 +1,303 @@
+device zynqmp_gem msbfirst ( addr base ) "Zynq GEM"
+{
+  register netctl rw addr(base, 0x0) "network_control" {
+    _		6	mbz;
+    _       1	rsvd;
+    ossm    1	"one_step_sync_mode";
+    etpe    1   "ext_tsu_port_enable";
+    suo     1   "store_udp_offset";
+    asm     1   "alt_sgmii_mode";
+    pue     1   "ptp_unicast_ena";
+    tle     1   "tx_lpi_en";
+    frpp    1   "flush_rx_pkt_pclk, self clearing";
+    tppbpf  1   wo  "transmit_pfc_priority_based_pause_frame, self clearing";
+    pe      1   "pfc_enable";
+    srt     1   "store_rx_ts";
+    _       2   mbz;
+    tpfz    1   wo  "tx_pause_frame_zero, self clearing";
+    tpfr    1   wo  "tx_pause_frame_req, self clearing";
+    thp     1   "tx_halt_pclk, self clearing";
+    tsp     1   "tx_start_pclk, self clearing";
+    bp      1   "back_pressure";
+    swe     1   "stats_write_en";
+    iasr    1   "inc_all_stats_regs, self clearing";
+    casr    1   "clear_all_stats_regs, self clearing";
+    mpe     1   "man_port_en";
+    et      1   "enable_transmit";
+    er      1   "enable_receive";
+    ll      1   "loopback_local";
+    lp      1   "loopback, reserved";
+  };
+  
+  constants dbw "data bus width" {
+    w32b    =   0b00    "32 bit data bus width (External FIFO mode)";
+    w64b    =   0b01    "64 bit AMBA AXI data bus width (AMBA AXI DMA mode)";
+  };
+  constants mcd "mdc clock division" {
+    db8     =   0b000   "divide by 8 (src up to 20 MHz)";
+    db16    =   0b001   "divide by 16 (src up to 40 MHz)";
+    db32    =   0b010   "divide by 32 (src up to 80 MHz) (default value; works with 100 MHz IOP_SWITCH_CLK)";
+    db48    =   0b011   "divide by 48 (src up to 120MHz)";
+  };
+  register netcfg rw addr(base, 0x4) "network_config" {
+    ude     1   "uni_direction_enable";
+    iire    1   "ignore_ipg_rx_er";
+    nc      1   "nsp_change";
+    ise     1   "ipg_stretch_enable";
+    sme     1   "sgmii_mode_enable";
+    irf     1   "ignore_rx_fcs";
+    ehdr    1   "en_half_duplex_rx";
+    rcoe    1   "receive_checksum_offload_enable";
+    dcopf   1   "disable_copy_of_pause_frames";
+    dbw     2   type(dbw)   "data_bus_width, reset value: 0x1";
+    mcd     3   type(mcd)   "mdc_clock_division, reset value: 0x2";
+    fr      1   "fcs_remove";
+    lfefd   1   "length_field_error_frame_discard";
+    rfo     2   "receive_buffer_offset";
+    pe      1   "pause_enable";
+    rt      1   "retry_test";
+    ps      1   "pcs_select";
+    gme     1   "gigabit_mode_enable";
+    eame    1   "external_address_match_enable";
+    r1536   1   "receive_1536_byte_frames";
+    uhe     1   "unicast_hash_enable";
+    mhe     1   "multicast_hash_enable";
+    nb      1   "no_broadcast";
+    caf     1   "copy_all_frames";
+    jf      1   "jumbo_frames";
+    dnvf    1   "discard_non_vlan_frames";
+    fd      1   "full_duplex";
+    spd     1   "speed";
+  };
+
+  register netsta ro addr(base, 0x8) "network_status" {
+    _       24  mbz;
+    lip     1   "lpi_indicate_pclk";
+    pnp     1   ro  "pfc_negotiate_pclk";
+    mpte    1   ro  "mac_pause_tx_en";
+    mpre    1   ro  "mac_pause_rx_en";
+    mfd     1   ro  "mac_full_duplex";
+    md      1   ro  "man_done, reset value: 0x1";
+    mi      1   ro  "mdio_in";
+    pls     1   ro  "pcs_link_state";
+  };
+
+  constants rps "rx_pbuf_size" {
+    size8k  =   0b11    "Use full configured addressable space (8 Kb)";
+    size4k  =   0b10    "Do not use top address bit (4 Kb)";
+    size2k  =   0b01    "Do not use top two address bits (2 Kb)";
+    size1k  =   0b00    "Do not use top three address bits (1 Kb)";
+  };
+  constants abl "amba_burst_length" {
+    burst16 =   0b10000 "Attempt to use bursts of up to 16";
+    burst8  =   0b01000 "Attempt to use bursts of up to 8";
+    burst4  =   0b00100 "Attempt to use bursts of up to 4";
+    bursts  =   0b00010 "Always use SINGLE bursts";
+    bursts1 =   0b00001 "Always use SINGLE bursts";
+  };
+  register dmacfg rw addr(base, 0x10) "dma_config" {
+    _       1   mbz;
+    dabw    1   "dma_addr_bus_width_1";
+    tbeme   1   "tx_bd_extended_mode_en";
+    rbeme   1   "rx_bd_extended_mode_en";
+    _       1   mbz;
+    fmabt   1   "force_max_amba_burst_tx";
+    fmabr   1   "force_max_amba_burst_rx";
+    fdoe    1   "force_discard_on_err";
+    rbs     8   "rx_buf_size, reset value: 0x2, equal to the gem_rx_buffer_length_def define";
+    _       4   mbz;
+    tpte    1   "tx_pbuf_tcp_en";
+    tps     1   "tx_pbuf_size, reset value: 0x1, equal to the gem_tx_pbuf_size_def define";
+    rps     2   type(rps)   "rx_pbuf_size, reset value: 0x3, equal to the gem_rx_pbuf_size_def define";
+    esp     1   "endian_swap_packet, reset value: 0x1";
+    esm     1   "endian_swap_management";
+    _       1   mbz;
+    abl     5   type(abl)   "amba_burst_length, reset value: 0x4";
+  };
+
+  register txstat rw addr(base, 0x14) "transmit_status" {
+    _       23  mbz;
+    rno     1   rw1c    "resp_not_ok";
+    lco     1   rw1c    "late_collision_occurred";
+    tur     1   rw1c    "transmit_under_run";
+    tc      1   rw1c    "transmit_complete";
+    ae      1   rw1c    "amba_error";
+    tg      1   ro      "transmit_go";
+    rle     1   rw1c    "retry_limit_exceeded";
+    co      1   rw1c    "collision_occurred";
+    ubr     1   rw1c    "used_bit_read";
+  };
+  
+  regtype queue "queue ptr register" {
+    ptr     30  "pointer to base address of queue";
+    _       2   mbz;
+  };
+  register rxqptr rw addr(base, 0x18) "receive_q_ptr" type(queue);
+  register txqptr rw addr(base, 0x1c) "transmit_q_ptr" type(queue);
+
+  register rxstat rw addr(base, 0x20) "receive_status" {
+    _       28  mbz;
+    rno     1   rw1c    "resp_not_ok";
+    ro      1   rw1c    "receive_overrun";
+    fr      1   rw1c    "frame_received";
+    bna     1   rw1c    "buffer_not_available";
+  };
+
+  register intstat rw addr(base, 0x24) "int_status" {
+    _       2;
+    ttci    1   "tsu_timer_comparison_interrupt";
+    wi      1   "wol_interrupt";
+    rlisbc  1   "receive_lpi_indication_status_bit_change";
+    tsri    1   "tsu_seconds_register_increment";
+    pprpft  1   "ptp_pdelay_resp_frame_transmitted";
+    pprqft  1   "ptp_pdelay_req_frame_transmitted";
+    pprpfr  1   "ptp_pdelay_resp_frame_received";
+    pprqfr  1   "ptp_pdelay_req_frame_received";
+    psft    1   "ptp_sync_frame_transmitted";
+    pdrft   1   "ptp_delay_req_frame_transmitted";
+    psfr    1   "ptp_sync_frame_received";
+    pdrfr   1   "ptp_delay_req_frame_received";
+    plppr   1   "pcs_link_partner_page_received";
+    panc    1   "pcs_auto_negotiation_complete";
+    ei      1   "external_interrupt";
+    pft     1   "pause_frame_transmitted";
+    pte     1   "pause_time_elapsed";
+    pfnzpqr 1   "pause_frame_with_non_zero_pause_quantum_received";
+    rno     1   "resp_not_ok";
+    ro      1   "receive_overrun";
+    lc      1   "link_change";
+    _       1;
+    tc      1   "transmit_complete";
+    ae      1   "amba_error";
+    rleolc  1   "retry_limit_exceeded_or_late_collision";
+    tur     1   "transmit_under_run";
+    tubr    1   "tx_used_bit_read";
+    rubr    1   "rx_used_bit_read";
+    rc      1   "receive_complete";
+    mfs     1   "management_frame_sent";
+  };
+
+  register inten rw addr(base, 0x28) "int_enable" {
+    _       2   mbz;
+    ettci   1   wo  "enable_tsu_timer_comparison_interrupt";
+    eweri   1   wo  "enable_wol_event_received_interrupt";
+    erlii   1   wo  "enable_rx_lpi_indication_interrupt";
+    etsri   1   wo  "enable_tsu_seconds_register_increment";
+    epprpt  1   wo  "enable_ptp_pdelay_resp_frame_transmitted";
+    epprqt  1   wo  "enable_ptp_pdelay_req_frame_transmitted";
+    epprpr  1   wo  "enable_ptp_pdelay_resp_frame_received";
+    epprqr  1   wo  "enable_ptp_pdelay_req_frame_received";
+    epsft   1   wo  "enable_ptp_sync_frame_transmitted";
+    epdrqt  1   wo  "enable_ptp_delay_req_frame_transmitted";
+    epsr    1   wo  "enable_ptp_sync_frame_received";
+    epdrqr  1   wo  "enable_ptp_delay_req_frame_received";
+    eplppr  1   wo  "enable_pcs_link_partner_page_received";
+    epqnci  1   wo  "enable_pcs_auto_negotiation_complete_interrupt";
+    eei     1   wo  "enable_external_interrupt";
+    epfti   1   wo  "enable_pause_frame_transmitted_interrupt";
+    eptzi   1   wo  "enable_pause_time_zero_interrupt";
+    epnzpqi 1   wo  "enable_pause_frame_with_non_zero_pause_quantum_interrupt";
+    erpnoi  1   wo  "enable_resp_not_ok_interrupt";
+    etxoi   1   wo  "enable_receive_overrun_interrupt";
+    elci    1   wo  "enable_link_change_interrupt";
+    _       1   rsvd;
+    etxci   1   wo  "enable_transmit_complete_interrupt";
+    etxcaei 1   wo  "enable_transmit_frame_corruption_due_to_amba_error_interrupt  ";
+    erlelci 1   wo  "enable_retry_limit_exceeded_or_late_collision_interrupt";
+    etxburi 1   wo  "enable_transmit_buffer_under_run_interrupt";
+    etxubri 1   wo  "enable_transmit_used_bit_read_interrupt";
+    erxubri 1   wo  "enable_receive_used_bit_read_interrupt";
+    erxci   1   wo  "enable_receive_complete_interrupt";
+    emdi    1   wo  "enable_management_done_interrupt";
+  };   
+
+  register intdis rw addr(base, 0x2c) "int_disable" {
+    _       2   mbz;
+    dttci   1   wo  "disable_tsu_timer_comparison_interrupt";
+    dweri   1   wo  "disable_wol_event_received_interrupt";
+    drlii   1   wo  "disable_rx_lpi_indication_interrupt";
+    dtsri   1   wo  "disable_tsu_seconds_register_increment";
+    dpprpt  1   wo  "disable_ptp_pdelay_resp_frame_transmitted";
+    dpprqt  1   wo  "disable_ptp_pdelay_req_frame_transmitted";
+    dpprpr  1   wo  "disable_ptp_pdelay_resp_frame_received";
+    dpprqr  1   wo  "disable_ptp_pdelay_req_frame_received";
+    dpsft   1   wo  "disable_ptp_sync_frame_transmitted";
+    dpdrqt  1   wo  "disable_ptp_delay_req_frame_transmitted";
+    dpsr    1   wo  "disable_ptp_sync_frame_received";
+    dpdrqr  1   wo  "disable_ptp_delay_req_frame_received";
+    dplppr  1   wo  "disable_pcs_link_partner_page_received";
+    dpqnci  1   wo  "disable_pcs_auto_negotiation_complete_interrupt";
+    dei     1   wo  "disable_external_interrupt";
+    dpfti   1   wo  "disable_pause_frame_transmitted_interrupt";
+    dptzi   1   wo  "disable_pause_time_zero_interrupt";
+    dpnzpqi 1   wo  "disable_pause_frame_with_non_zero_pause_quantum_interrupt";
+    drpnoi  1   wo  "disable_resp_not_ok_interrupt";
+    dtxoi   1   wo  "disable_receive_overrun_interrupt";
+    dlci    1   wo  "disable_link_change_interrupt";
+    _       1   rsvd;
+    dtxci   1   wo  "disable_transmit_complete_interrupt";
+    dtxcaei 1   wo  "disable_transmit_frame_corruption_due_to_amba_error_interrupt  ";
+    drlelci 1   wo  "disable_retry_limit_exceeded_or_late_collision_interrupt";
+    dtxburi 1   wo  "disable_transmit_buffer_under_run_interrupt";
+    dtxubri 1   wo  "disable_transmit_used_bit_read_interrupt";
+    drxubri 1   wo  "disable_receive_used_bit_read_interrupt";
+    drxci   1   wo  "disable_receive_complete_interrupt";
+    dmdi    1   wo  "disable_management_done_interrupt";
+  };
+
+  constants op "operation" {
+    c45addr         =   0b00    "addr for a clause 45 frame";
+    c45wt_c22wt     =   0b01    "write for a clause 45 frame/write for a clause 22 frame";
+    c45pri_c22rd    =   0b10    "post read increment for a clause 45 frame/read for a clause 22 frame";
+    c45rd           =   0b11    "read for a clause 45 frame";
+  };
+  register phymng rw addr(base, 0x34) "phy_management" {
+    w0      1   "write0, must be written with 0";
+    w1      1   "write1, must be written to 1 for a valid Clause 22 frame(0 for a valid Clause 45 frame)";
+    op      2   type(op)    "operation";
+    pa      5   "phy_address";
+    ra      5   "register_address";
+    w10     2   "write10, must be written with 10";
+    pwrd    16  "phy_write_read_data";
+  };
+
+  register hashbt rw addr(base, 0x80) "hash_bottom" type(uint32);
+  register hashtp rw addr(base, 0x84) "hash_top" type(uint32);
+
+  regtype spcaddtp "spec_add_top" {
+    _       2   mbz;
+    fbm     6   "filter_byte_mask";
+    _       7   mbz;
+    ft      1   "filter_type";
+    addr    16  "address";
+  };
+  regarray spcaddbt rw addr(base, 0x88)[4; 0x8] "spec_add_bottom" type(uint32);
+  regarray spcaddtp rw addr(base, 0x8c)[4; 0x8] "spec_add_top" type(spcaddtp);
+
+  regtype spctype "spec_type" {
+    ec      1   "enable_copy";
+    _       15  mbz;
+    mat     16  "match";
+  };
+  regarray spctype rw addr(base, 0xa8)[4] "spec_type" type(spctype);
+
+  regarray stats rw addr(base, 0x100)[44] "statistics" type(uint32);
+
+  register pcsctrl rw addr(base, 0x200) "pcs_control" {
+    _       16  mbz;
+    psr     1   rw  "pcs_software_reset";
+    lm      1   rw  "loopback_mode";
+    ssb1    1   ro  "speed_select_bit_1";
+    ean     1   rw  "enable_auto_neg, reset value: 0x1";
+    _       2   mbz;
+    ran     1   rw  "restart_auto_neg";
+    mds     1   ro  "mac_duplex_state";
+    ct      1   rw  "collision_test";
+    ssb0    1   ro  "speed_select_bit_0, reset value: 0x1";
+    _       6   mbz;
+  };
+
+  register txq1ptr rw addr(base, 0x440) "transmit_q1_ptr" type(queue);
+  register rxq1ptr rw addr(base, 0x480) "receive_q1_ptr" type(queue);
+
+};

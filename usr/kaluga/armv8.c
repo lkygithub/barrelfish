@@ -124,6 +124,19 @@ static errval_t armv8_startup_common(void)
     if (err_is_fail(err)) {
         USER_PANIC_ERR(err, "Unable to wait for spawnds failed.");
     }
+	
+	if (platform == PI_PLATFORM_ZYNQMP) {
+		err = init_device_caps_manager();
+    	assert(err_is_ok(err));
+
+    	struct module_info* mi = find_module("zynqmp_gem");
+    	if (mi != NULL) {
+        	KALUGA_DEBUG("module found.\n");
+        	err = mi->start_function(0, mi, "zynqmp_gem {}", NULL);
+        	KALUGA_DEBUG("start func done.\n");
+        	assert(err_is_ok(err));
+    	}
+	}
 
     return SYS_ERR_OK;
 }
