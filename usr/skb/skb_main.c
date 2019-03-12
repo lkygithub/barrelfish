@@ -51,56 +51,40 @@ extern alt_realloc_t alt_realloc;
 int main(int argc, char**argv)
 {
     errval_t err;
-
-    printf("skb: invoked as:");
-    for (int i = 0; i < argc; i++) {
-        printf(" %s", argv[i]);
-    }
-    printf("\n");
-
-    printf("vfs_initializing\n");
     vfs_init();
 //    init_dmalloc();
     // we'll be needing this...
-    printf("making dir /tmp\n");
     vfs_mkdir("/tmp");
     chdir(ECLIPSE_DIR);
 
     // make sure, that dlsym has the right table to the statically compiled-in
     // shared libraries...
-    printf("call dlopen_set_param\n");
     dlopen_set_params(funcs, sizeof(funcs) / sizeof(*funcs));
 
     // now set the right values for the eclipse-clp engine
     ec_set_option_int(EC_OPTION_IO, MEMORY_IO);
     ec_set_option_ptr(EC_OPTION_ECLIPSEDIR, ECLIPSE_DIR);
     ec_set_option_long(EC_OPTION_GLOBALSIZE, MEMORY_SIZE);
-    ec_set_option_long(EC_OPTION_PRIVATESIZE, MEMORY_SIZE);
+    //ec_set_option_long(EC_OPTION_PRIVATESIZE, MEMORY_SIZE);
 
-    printf("malloc skb_query_state\n");
+
     struct skb_query_state* sqs = malloc(sizeof(struct skb_query_state));
 
-    if(!sqs){
-        USER_PANIC_ERR(SKB_ERR_OVERFLOW, "skb memory malloc failed.\n");
-    }
-    printf("memory malloc success\n");
-
     // ec_.m.vm_flags |= 8;
-    printf("before ec init\n");
+    SKB_DEBUG("before ec init\n");
     int n = ec_init();
     if (n != 0) {
-        printf("skb_main: ec_init() failed. Return code = %d\n", n);
+        SKB_DEBUG("skb_main: ec_init() failed. Return code = %d\n", n);
     } else {
-        printf("skb_main: ec_init() succeeded.\n");
+        SKB_DEBUG("skb_main: ec_init() succeeded.\n");
     }
-    printf("excute_query\n");
     err = execute_query("set_flag(print_depth,100).", sqs);
     if (err_is_fail(err)) {
         USER_PANIC_ERR(err, "skb failed.");
     }
 
     if(disp_get_core_id() == 0) {
-        debug_printf("oct_server_init\n");
+        //debug_printf("oct_server_init\n");
         //execute_string("set_flag(gc, off).");
         //execute_string("set_flag(gc_policy, fixed).");
         //execute_string("set_flat(gc_interval, 536870912)."); // 512 mb

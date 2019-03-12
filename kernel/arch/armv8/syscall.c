@@ -32,7 +32,7 @@
 #include <systime.h>
 #include <timers.h>
 #include <psci.h>
-#include <serial.h>
+#include <arch/armv8/gic_v3.h>
 
 // helper macros  for invocation handler definitions
 #define INVOCATION_HANDLER(func) \
@@ -831,16 +831,6 @@ static struct sysret handle_idcap_identify(struct capability *to,
                                            int argc)
 {
     assert(to->type == ObjType_ID);
-    if(3!=argc)
-    {
-        struct registers_aarch64_syscall_args* sa = &context->syscall_args;
-
-        printf("argc:%d ",argc);
-        for(int i =0;i<argc;i++)
-        {
-            printf("arg %d is %lu\n",i,((uint64_t *)sa)[i]);
-        }
-    }
     assert(3 == argc);
 
     struct registers_aarch64_syscall_args* sa = &context->syscall_args;
@@ -1006,6 +996,7 @@ handle_invoke(uint64_t a0, uint64_t a1, uint64_t a2, uint64_t a3,
     uint8_t   invoke_bits = FIELD(16,8,a0);
     capaddr_t invoke_cptr = a1;
 
+// printf("%s: %zd %zd\n", __func__, systime_now(), armv8_CNTP_TVAL_EL0_rd(NULL));
     debug(SUBSYS_SYSCALL, "sys_invoke(0x%"PRIxCADDR"(%d))\n",
                 invoke_cptr, invoke_bits);
 

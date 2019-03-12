@@ -346,10 +346,6 @@ static inline bool e10k_queue_get_txbuf_legacy(e10k_queue_t* q, regionid_t* rid,
 
     d = q->tx_ring[head];
     if (e10k_q_tdesc_legacy_dd_extract(d)) {
-<<<<<<< HEAD
-
-=======
->>>>>>> f5ab4a56f1a18e83315cc28cae6f0b00e404f4de
         *rid = q->tx_bufs[head].rid;
         *offset = q->tx_bufs[head].offset;
         *length = q->tx_bufs[head].length;

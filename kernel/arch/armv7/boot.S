@@ -73,28 +73,8 @@ wait_for_bsp:
     // Get the address of our mailbox.  Right now there's only one.
     ldr r4, got_boot_records
     ldr r0, [PIC_REGISTER, r4]
-    // r3 - MPID
-    // request lock(POWERED BY JETSON)
-    //ldr     r5, =#0x60002000
-    //mov     r6, #1
-    //str     r6, [r5, #0x4]
-    mov     r7, #10
-Loopu:
-    ldr     r5, =#0x70006314
-    ldr     r6, [r5]
-    ands    r6, #0x20
-    beq     Loopu
-    ldr     r5, =#0x70006300
-    add     r6, r3, #48
-    str     r6, [r5]
-    sub     r7, #1
-    cmp     r7, #0
-    bgt     Loopu
-    // releases lock
-    //ldr     r5, =#0x60002000
-    //mov     r6, #1
-    //str     r6, [r5, #0x8]
 
+    // r3 - MPID
     wfe
 
     // Check whether we're the core that's being woken.  If not, go back to

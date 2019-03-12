@@ -120,7 +120,6 @@ class DevifNetTxE10k(DevifTests):
     CARD = "e10k:8086:10fb:0006:0000:0000"
 
 
-
 @tests.add_test
 class DevifNetRxSF(DevifTests):
     ''' Devif Net RX Test'''

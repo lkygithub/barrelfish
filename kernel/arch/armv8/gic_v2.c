@@ -10,7 +10,7 @@
 #include <kernel.h>
 #include <sysreg.h>
 #include <dev/armv8_dev.h>
-#include <dev/gic_v3_dev.h>
+#include <dev/gic_v3_dist_dev.h>
 #include <dev/gic_v2_cpu_dev.h>
 #include <platform.h>
 #include <paging_kernel_arch.h>
@@ -27,7 +27,8 @@ static gic_v2_cpu_t gic_v2_cpu_dev;
 /*
  * This should return 1<<my_core_id
  */
-static uint8_t gic_get_cpumask(void){
+static uint8_t gic_get_cpumask(void)
+{
     uint32_t mask = gic_v3_GICD_ITARGETSR_rd(&gic_v3_dev , 0);
     mask |= mask >> 16;
     mask |= mask >> 8;
@@ -37,13 +38,14 @@ static uint8_t gic_get_cpumask(void){
 /*
  * Reads th STATUSR register, prints error on error condition
  */
-static void check_cpu_if_statusr(void){
-    gic_v2_cpu_STATUSR_t raw =  gic_v2_cpu_STATUSR_rawrd(&gic_v2_cpu_dev);
-    if(raw) {
-        char buf[512];
-        gic_v2_cpu_STATUSR_pr(buf,sizeof(buf),&gic_v2_cpu_dev);
-        printk(LOG_NOTE, "gic_v2: Error condition! Status: %s\n", buf); 
-    }
+static void check_cpu_if_statusr(void)
+{
+    // gic_v2_cpu_STATUSR_t raw =  gic_v2_cpu_STATUSR_rawrd(&gic_v2_cpu_dev);
+    // if (raw) {
+    //     char buf[512];
+    //     gic_v2_cpu_STATUSR_pr(buf,sizeof(buf),&gic_v2_cpu_dev);
+    //     printk(LOG_NOTE, "gic_v2: Error condition! Status: %s\n", buf);
+    // }
 }
 
 /*
@@ -54,7 +56,7 @@ static void check_cpu_if_statusr(void){
  * 2) Private Peripheral Interrupts (PPI) - IDs 16-31
  * 3) Shared Peripheral Interrups (SPI) - IDs 32...
  */
-errval_t gicv3_init(void)
+errval_t gic_init(void)
 {
     lvaddr_t gic_dist = local_phys_to_mem(platform_get_distributor_address());
     gic_v3_initialize(&gic_v3_dev, (char *)gic_dist);
@@ -62,13 +64,11 @@ errval_t gicv3_init(void)
     lvaddr_t gic_cpu = local_phys_to_mem(platform_get_gic_cpu_address());
     gic_v2_cpu_initialize(&gic_v2_cpu_dev, (char *)gic_cpu);
 
-    if(gic_v3_GICD_TYPER_SecurityExtn_rdf(&gic_v3_dev)){
-        printk(LOG_NOTE, "gic_v2: In init. GIC supports secure mode\n"); 
+    if (gic_v3_GICD_TYPER_SecurityExtn_rdf(&gic_v3_dev)) {
+        printk(LOG_NOTE, "gic_v2: In init. GIC supports secure mode\n");
     } else {
-        printk(LOG_NOTE, "gic_v2: In init. GIC does not support secure mode\n"); 
+        printk(LOG_NOTE, "gic_v2: In init. GIC does not support secure mode\n");
     }
-
-    MSG("gic_init done\n");
 
     return SYS_ERR_OK;
 }
@@ -76,7 +76,7 @@ errval_t gicv3_init(void)
 /*
  * Returns active interrupt of group 1 
  */
-uint32_t gicv3_get_active_irq(void)
+uint32_t gic_get_active_irq(void)
 {
     uint32_t res = gic_v2_cpu_IAR_intid_rdf(&gic_v2_cpu_dev);
     check_cpu_if_statusr();
@@ -93,7 +93,7 @@ struct zynqmp_uart_t test_uart =
 /*
  * ACKs group 1 interrupt
  */
-void gicv3_ack_irq(uint32_t irq)
+void gic_ack_irq(uint32_t irq)
 {
     gic_v2_cpu_EOIR_t reg = 0;
     reg = gic_v2_cpu_EOIR_intid_insert(reg, irq);
@@ -109,7 +109,7 @@ void gicv3_ack_irq(uint32_t irq)
 /*
  * Raise an SGI on a core. 
  */
-void gicv3_raise_softirq(coreid_t cpuid, uint8_t irq)
+void gic_raise_softirq(coreid_t cpuid, uint8_t irq)
 {
     // assuming affinity routing DISABLED
     assert(irq <= 15);
@@ -123,7 +123,7 @@ void gicv3_raise_softirq(coreid_t cpuid, uint8_t irq)
 /*
  * Enable GIC CPU-IF and local distributor
  */
-errval_t gicv3_cpu_interface_enable(void)
+errval_t gic_cpu_interface_enable(void)
 {
     printk(LOG_NOTE, "gic_v2: GICC IIDR "
             "implementer=0x%x, revision=0x%x, variant=0x%x, prodid=0x%x, raw=0x%x\n",
@@ -208,6 +208,16 @@ errval_t gicv3_cpu_interface_enable(void)
     gic_v3_GICD_CTLR_rawwr(&gic_v3_dev, 0x1); // Enable Distributor
     check_cpu_if_statusr();
 
+    return SYS_ERR_OK;
+}
+
+errval_t platform_gic_init(void) {
+    gic_init();
+    return SYS_ERR_OK;
+}
+
+errval_t platform_gic_cpu_interface_enable(void) {
+    gic_cpu_interface_enable();
     return SYS_ERR_OK;
 }
 

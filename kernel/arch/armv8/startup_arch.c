@@ -342,12 +342,8 @@ static void create_phys_caps(lpaddr_t reserved_start, lpaddr_t reserved_end)
             local_phys_to_mem(armv8_glbl_core_data->efi_mmap);
 
     lpaddr_t last_end_addr = 0;
-    
     for (size_t i = 0; i < (mmap->size - sizeof(struct multiboot_tag_efi_mmap)) / mmap->descr_size; i++) {
-        efi_memory_descriptor *desc = (efi_memory_descriptor *)(mmap->efi_mmap) + i;
-        //lpaddr_t end = desc->PhysicalStart + desc->NumberOfPages * BASE_PAGE_SIZE - 1;
-        //printf("start:%016lx  end:%016lx pages:%-6d %016lx  rvs:%lx  rve:%lx\n",
-        //    desc->PhysicalStart,end, desc->NumberOfPages,last_end_addr,reserved_start,reserved_end);
+        efi_memory_descriptor *desc = (efi_memory_descriptor *)(mmap->efi_mmap + mmap->descr_size * i);
 
         enum region_type region_type = RegionType_Max;
         switch(desc->Type) {
@@ -735,7 +731,7 @@ void arm_kernel_startup(void *pointer)
 
     struct dcb *init_dcb;
 
-    if(cpu_is_bsp()) {
+    if (cpu_is_bsp()) {
         MSG("Doing BSP related bootup \n");
 
         /* Initialize the location to allocate phys memory from */
@@ -750,6 +746,7 @@ void arm_kernel_startup(void *pointer)
 
         init_dcb = spawn_bsp_init(BSP_INIT_MODULE_NAME);
 
+        platform_gic_init();
 //        pit_start(0);
     } else {
         MSG("Doing non-BSP related bootup \n");
@@ -773,11 +770,8 @@ void arm_kernel_startup(void *pointer)
        // uint32_t irq = gic_get_active_irq();
        // gic_ack_irq(irq);
     }
-
-
     // enable interrupt forwarding to cpu
     platform_gic_cpu_interface_enable();
-
 
     MSG("Calling dispatch from arm_kernel_startup, entry point %#"PRIxLVADDR"\n",
             get_dispatcher_shared_aarch64(init_dcb->disp)->disabled_save_area.named.pc);

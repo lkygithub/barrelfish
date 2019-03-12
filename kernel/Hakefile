@@ -153,7 +153,8 @@ let
                          "xapic",
                          "amd_vmcb",
                          "cpuid",
-                         "lpc_rtc" ],
+                         "lpc_rtc",
+                         "lpc_timer" ],
      addLibraries = [ "elf_kernel" ]
      },
   --
@@ -470,7 +471,7 @@ let
                          ],
      addLibraries = [ "elf" ]
      },
-  --
+
   --
   -- Xilinx Zynq7000-series dual-core Cortex-A9 SoC
   --
@@ -580,7 +581,8 @@ let
      mackerelDevices = [
         "arm",
         "armv8",
-        "gic_v3",
+        "gic_v3_dist",
+        "gic_v3_redist",
         "gic_v2_cpu",
         "armv8/armv8_cache_ctrl",
         "pl130_gic",

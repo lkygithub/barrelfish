@@ -58,6 +58,7 @@ static struct cmdarg cmdargs[] = {
     {"serial", ArgType_ULong, { .ulonginteger = &uart_base[0] }},
     {"gic", ArgType_ULong, { .ulonginteger = &platform_gic_cpu_base }},
     {"gicdist", ArgType_ULong, { .ulonginteger = &platform_gic_dist_base }},
+    {"gicredist", ArgType_ULong, { .ulonginteger = &platform_gic_redist_base }},
     {NULL, 0, {NULL}}
 };
 
@@ -145,14 +146,6 @@ arch_init(uint32_t magic, void *pointer, uintptr_t stack) {
     // is that nessacery here ??
     memset(&global->locks, 0, sizeof(global->locks));
 
-    // initialize the serial console.
-    serial_init(serial_console_port, true);
-    
-    MSG("comes into zynqmp cpu_driver now\n");
-    MSG("multiboot addr is %016lx\n",pointer);
-    MSG("multiboot magic is %u\n",magic);
-    MSG("multiboot stack addr is %016lx\n",stack);
-
     switch (magic) {
     case MULTIBOOT2_BOOTLOADER_MAGIC:
         {
@@ -181,12 +174,16 @@ arch_init(uint32_t magic, void *pointer, uintptr_t stack) {
         // parse the cmdline
         parse_commandline(kernel_cmd->string, cmdargs);
 
+        // initialize the serial console.
+        serial_init(serial_console_port, false);
+//        serial_console_init(false);
+
         struct multiboot_tag_efi_mmap *mmap = (struct multiboot_tag_efi_mmap *)
                 multiboot2_find_header(mb, size, MULTIBOOT_TAG_TYPE_EFI_MMAP);
         if (!mmap) {
             panic("Multiboot image does not have EFI mmap!");
         } else {
-            MSG("Found EFI mmap: %p\n", mmap);
+            printf("Found EFI mmap: %p\n", mmap);
         }
 
         mmap_find_memory(mmap);
@@ -202,7 +199,10 @@ arch_init(uint32_t magic, void *pointer, uintptr_t stack) {
         break;
     }
     case ARMV8_BOOTMAGIC_PSCI :
-        {
+        //serial_init(serial_console_port, false);
+
+        serial_init(serial_console_port, false);
+
         struct armv8_core_data *core_data = (struct armv8_core_data*)pointer;
         armv8_glbl_core_data = core_data;
         global = (struct global *)core_data->cpu_driver_globals_pointer;
@@ -215,8 +215,8 @@ arch_init(uint32_t magic, void *pointer, uintptr_t stack) {
         MSG("ARMv8 Core magic...\n");
 
         break;
-        }
     default: {
+        serial_init(serial_console_port, false);
 
         serial_console_putchar('x');
         serial_console_putchar('x');
@@ -228,7 +228,7 @@ arch_init(uint32_t magic, void *pointer, uintptr_t stack) {
     }
     }
 
-    MSG("Current EL level \n");
+
     MSG("Barrelfish CPU driver starting on ARMv8\n");
     MSG("Global data at %p\n", global);
     MSG("Multiboot record at %p\n", pointer);
@@ -238,9 +238,6 @@ arch_init(uint32_t magic, void *pointer, uintptr_t stack) {
 
     MSG("Exception vectors (VBAR_EL1): %p\n", &vectors);
     sysreg_write_vbar_el1((uint64_t)&vectors);
-
-    MSG("Initilizing GIC400v2\n");
-    platform_gic_init();
 
     MSG("Setting coreboot spawn handler\n");
     coreboot_set_spawn_handler(CPU_ARM8, platform_boot_core);

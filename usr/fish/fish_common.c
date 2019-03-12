@@ -1384,6 +1384,7 @@ int main(int argc, const char *argv[])
         int cmd_argc;
         char *cmd_argv[64]; // Support a max of 64 cmd args
         struct cmd *cmd;
+
         input = linenoise("> ");
         if (input == NULL || input[0] == '\0') {
             continue;

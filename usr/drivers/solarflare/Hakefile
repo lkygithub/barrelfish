@@ -14,6 +14,7 @@
     build library { target = "sfn5122f_module",
                       cFiles = [ "sfn5122f_cdriver.c", "mcdi_rpc.c", "helper.c", 
                                  "buffer_tbl.c" ],
+
                       flounderBindings = [ "sfn5122f_devif", "net_filter"],
                       flounderExtraBindings = [ ("sfn5122f_devif", ["rpcclient"]),  
                                                 ("net_filter", ["rpcclient"])],

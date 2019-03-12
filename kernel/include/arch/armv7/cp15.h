@@ -268,4 +268,3 @@ static inline void sev(void) { __asm volatile ("sev"); }
 static inline void wfe(void) { __asm volatile ("wfe"); }
 
 #endif // __CP15_H__
-
