@@ -4,7 +4,7 @@
 /*****************************************************************
  * Debug printer:
  *****************************************************************/
-#if defined(KALUGA_DEBUG_ON) || defined(GLOBAL_DEBUG)
+#if defined(ZYNQMP_GEM_DEBUG_ON) || defined(GLOBAL_DEBUG)
 #define ZYNQMP_GEM_DEBUG(x...) printf("ZYNQMP_GEM: " x)
 #else
 #define ZYNQMP_GEM_DEBUG(x...) ((void)0)

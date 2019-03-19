@@ -231,79 +231,6 @@ default_start_function_new(coreid_t where, struct module_info* mi, char* record,
     return SYS_ERR_OK;
 }
 
-/**
- * \brief Startup function for new-style ARMv7 drivers.
- *
- * Launches the driver instance in a driver domain instead.
- */
-
-errval_t start_networking_new(coreid_t where,
-                              struct module_info* driver,
-                              char* record, struct driver_argument * int_arg)
-{
-    assert(driver != NULL);
-    errval_t err = SYS_ERR_OK;
-
-    if (is_started(driver)) {
-        printf("Already started %s\n", driver->binary);
-        return KALUGA_ERR_DRIVER_ALREADY_STARTED;
-    }
-
-    if (!is_auto_driver(driver)) {
-        printf("Not auto %s\n", driver->binary);
-        return KALUGA_ERR_DRIVER_NOT_AUTO;
-    }
-
-    err = default_start_function_new(where, driver, record, int_arg);
-    if (err_is_fail(err)) {
-        DEBUG_ERR(err, "Spawning %s failed.", driver->path);
-        return err;
-    }
-
-
-    // cards with driver in seperate process TODO might put into same process
-    struct module_info* net_sockets = find_module("net_sockets_server");
-    if (net_sockets == NULL) {
-        printf("Net sockets server not found\n");
-        return KALUGA_ERR_DRIVER_NOT_AUTO;
-    }
-
-    // TODO: Determine cls here as well
-    struct pci_id id;
-    struct pci_addr addr;
-    struct pci_class cls = {0,0,0};
-    int64_t vendor_id, device_id, bus, dev, fun;
-    err = oct_read(record, "_ { bus: %d, device: %d, function: %d, vendor: %d, device_id: %d }",
-                    &bus, &dev, &fun,
-                    &vendor_id, &device_id);
-
-    if(err_is_fail(err)){
-        DEBUG_ERR(err, "oct_read");
-        return err;
-    }
-    addr.bus = bus;
-    addr.device = dev;
-    addr.function = fun;
-    id.device = device_id;
-    id.vendor = vendor_id;
-
-    char * pci_arg_str = malloc(PCI_OCTET_LEN);
-    assert(pci_arg_str);
-    pci_serialize_octet(addr, id, cls, pci_arg_str);
-    // TODO PCI octet
-    // Spawn net_sockets_server
-    net_sockets->argv[0] = "net_sockets_server";
-    net_sockets->argv[1] = "auto";
-    net_sockets->argv[2] = driver->binary;
-    net_sockets->argv[3] = pci_arg_str;
-
-    err = spawn_program(where, net_sockets->path, net_sockets->argv, environ, 0,
-                        get_did_ptr(net_sockets));
-
-    return err;
-}
-#endif
-
 errval_t start_networking(coreid_t core,
                           struct module_info* driver,
                           char* record, struct driver_argument * arg)
@@ -392,6 +319,79 @@ errval_t start_networking(coreid_t core,
 
     return err;
 }
+
+/**
+ * \brief Startup function for new-style ARMv7 drivers.
+ *
+ * Launches the driver instance in a driver domain instead.
+ */
+
+errval_t start_networking_new(coreid_t where,
+                              struct module_info* driver,
+                              char* record, struct driver_argument * int_arg)
+{
+    assert(driver != NULL);
+    errval_t err = SYS_ERR_OK;
+
+    if (is_started(driver)) {
+        printf("Already started %s\n", driver->binary);
+        return KALUGA_ERR_DRIVER_ALREADY_STARTED;
+    }
+
+    if (!is_auto_driver(driver)) {
+        printf("Not auto %s\n", driver->binary);
+        return KALUGA_ERR_DRIVER_NOT_AUTO;
+    }
+
+    err = default_start_function_new(where, driver, record, int_arg);
+    if (err_is_fail(err)) {
+        DEBUG_ERR(err, "Spawning %s failed.", driver->path);
+        return err;
+    }
+
+
+    // cards with driver in seperate process TODO might put into same process
+    struct module_info* net_sockets = find_module("net_sockets_server");
+    if (net_sockets == NULL) {
+        printf("Net sockets server not found\n");
+        return KALUGA_ERR_DRIVER_NOT_AUTO;
+    }
+
+    // TODO: Determine cls here as well
+    struct pci_id id;
+    struct pci_addr addr;
+    struct pci_class cls = {0,0,0};
+    int64_t vendor_id, device_id, bus, dev, fun;
+    err = oct_read(record, "_ { bus: %d, device: %d, function: %d, vendor: %d, device_id: %d }",
+                    &bus, &dev, &fun,
+                    &vendor_id, &device_id);
+
+    if(err_is_fail(err)){
+        DEBUG_ERR(err, "oct_read");
+        return err;
+    }
+    addr.bus = bus;
+    addr.device = dev;
+    addr.function = fun;
+    id.device = device_id;
+    id.vendor = vendor_id;
+
+    char * pci_arg_str = malloc(PCI_OCTET_LEN);
+    assert(pci_arg_str);
+    pci_serialize_octet(addr, id, cls, pci_arg_str);
+    // TODO PCI octet
+    // Spawn net_sockets_server
+    net_sockets->argv[0] = "net_sockets_server";
+    net_sockets->argv[1] = "auto";
+    net_sockets->argv[2] = driver->binary;
+    net_sockets->argv[3] = pci_arg_str;
+
+    err = spawn_program(where, net_sockets->path, net_sockets->argv, environ, 0,
+                        get_did_ptr(net_sockets));
+
+    return err;
+}
+#endif
 
 /* errval_t start_usb_manager(void) */
 /* { */

@@ -8,68 +8,23 @@
 #include <stdlib.h>
 #include <string.h>
 #include <inttypes.h>
-#include <net_queue_manager/net_queue_manager.h>
+#include <barrelfish/barrelfish.h>
 #include <barrelfish/inthandler.h>
-#include "zynqmp_gem.h"
+#include <barrelfish/nameservice_client.h>
+
+#include <if/zynqmp_gem_devif_defs.h>
+
 #include <dev/zynqmp_gem_dev.h>
 
+#include "zynqmp_gem_debug.h"
+#include "zynqmp_gem_desc.h"
+#include "zynqmp_gem.h"
+
 static zynqmp_gem_t device;
-static uint64_t assumed_queue_id = 0; // queue_id that will be initialized
-
-/** Capability for TX ring */
-static struct capref txring_frame;
-static struct capref dummy_txring_frame;
-
-/** Capability for RX ring */
-static struct capref rxring_frame;
-static struct capref dummy_rxring_frame;
-
-volatile static txbd *txring;
-volatile static rxbd *rxring;
-volatile static txbd *dummy_txring;
-volatile static rxbd *dummy_rxring;
-volatile static void **tx_opaque;
-volatile static void **rx_opaque;
-static uint8_t txhead, txtail;
-static uint8_t rxhead, rxtail;
-
 
 static uint8_t zynqmp_gem_mac[6];
 
-//this functions polls all the client's channels as well as the transmit and
-//receive descriptor rings
-static void polling_loop(void)
-{
-    errval_t err;
-    struct waitset *ws = get_default_waitset();
-    while (1) {
-        err = event_dispatch(ws);
-        if (err_is_fail(err)) {
-            DEBUG_ERR(err, "in event_dispatch\n");
-            break;
-        }
-#if ZYNQMP_GEM_DEBUG
-        //ZYNQMP_GEM_DEBUG("inside event dispatch\n");
-#endif
-/*        notify_client_next_free_tx();
-*/
-    }
-}
-
-
-static errval_t alloc_map_frame(vregion_flags_t attr, size_t size, lvaddr_t *va, struct capref *frame) {
-    errval_t err;
-    err = frame_alloc(frame, size, NULL);
-    if (err_is_fail(err)) {
-        return err;
-    }
-    err = vspace_map_one_frame_attr((void**)&va, size, *frame, attr, NULL, NULL);
-    if (err_is_fail(err)) {
-        return err;
-    }
-    return SYS_ERR_OK;
-}
-
+/* 
 static void add_txslot(uint32_t paddr, uint32_t len, void *opaque, bool islast) {
     memset((void*)&txring[txtail], 0, sizeof(txbd));
     tx_opaque[txtail] = opaque;
@@ -113,29 +68,8 @@ static void get_mac_address_fn(uint8_t *mac)
 {
     memcpy(mac, zynqmp_gem_mac, 6);
 }
+ */
 
-/** Tell card driver to stop this queue. */
-static void terminate_queue(void)
-{
-    errval_t err;
-    err = vspace_unmap((void*)txring);
-    assert(err_is_ok(err));
-    err = vspace_unmap((void*)dummy_txring);
-    assert(err_is_ok(err));
-    err = vspace_unmap((void*)rxring);
-    assert(err_is_ok(err));
-    err = vspace_unmap((void*)dummy_rxring);
-    assert(err_is_ok(err));
-    err = cap_delete(txring_frame);
-    assert(err_is_ok(err));
-    err = cap_delete(dummy_txring_frame);
-    assert(err_is_ok(err));
-    err = cap_delete(rxring_frame);
-    assert(err_is_ok(err));
-    err = cap_delete(dummy_rxring_frame);
-    assert(err_is_ok(err));
-    exit(0);
-}
 /**
  * \brief Send Ethernet packet.
  *
@@ -143,6 +77,7 @@ static void terminate_queue(void)
  * by the card or the driver.
  *
  */
+/*
 static errval_t transmit_pbuf_list_fn(struct driver_buffer *buffers, size_t count)
 {
     size_t i;
@@ -179,17 +114,19 @@ static bool handle_free_tx_slot_fn(void)
     handle_tx_done(opaque);
     return true;
 }
-
+ */
 /** Callback for net_queue_mgr library. */
+/*
 static errval_t rx_register_buffer_fn(uintptr_t paddr, void *vaddr, void *opaque) {
     add_rxslot(paddr, opaque);
     return SYS_ERR_OK;
 }
-
+ */
 /**
  * Callback for net_queue_mgr library. Since we do PIO anyways, we only ever use
  * one buffer.
  */
+/*
 static uint64_t rx_get_free_slots_fn(void) {
     if (rxtail >= rxhead) {
         return ZYNQMP_GEM_RX_RING_LEN - (rxtail - rxhead) - 1; // TODO: could this be off by 1?
@@ -197,7 +134,7 @@ static uint64_t rx_get_free_slots_fn(void) {
         return ZYNQMP_GEM_RX_RING_LEN - (rxtail + ZYNQMP_GEM_RX_RING_LEN - rxhead) - 1; // TODO: off by 1?
     }
 }
-
+ */
 /**
  * \brief Zynqmp gem IRQ handler
  *
@@ -209,7 +146,7 @@ static uint64_t rx_get_free_slots_fn(void) {
  * received packets arises and packet reception can be delayed
  * arbitrarily.
  */
-
+/*
 static void zynqmp_gem_interrupt_handler(void* placeholder)
 {
     size_t len, pkt_cnt = 0;
@@ -227,54 +164,19 @@ static void zynqmp_gem_interrupt_handler(void* placeholder)
     }
     process_received_packet(buf, pkt_cnt, 0);
 }
+ */
 
-static errval_t zynqmp_gem_queue_init(void) {
-    size_t tx_size, rx_size;
+static void polling_loop(void)
+{
     errval_t err;
-    struct frame_identity fid;
-
-    tx_size = sizeof(txbd) * ZYNQMP_GEM_TX_RING_LEN;
-    alloc_map_frame(VREGION_FLAGS_READ_WRITE_NOCACHE, tx_size, (lvaddr_t*)txring, &txring_frame);
-    memset((void*)txring, 0, tx_size);
-    txhead = txtail = 0;
-    err = invoke_frame_identify(txring_frame, &fid);
-    if (err_is_fail(err)) {
-        return err;
+    struct waitset *ws = get_default_waitset();
+    while (1) {
+        err = event_dispatch(ws);
+        if (err_is_fail(err)) {
+            DEBUG_ERR(err, "in event_dispatch");
+            break;
+        }
     }
-    zynqmp_gem_txqptr_wr(&device, fid.base);
-
-    alloc_map_frame(VREGION_FLAGS_READ_WRITE_NOCACHE, sizeof(txbd), (lvaddr_t*)dummy_txring, &dummy_txring_frame);
-    memset((void*)dummy_txring, 0, sizeof(txbd));
-    dummy_txring[0].info = ZYNQMP_GEM_TXBUF_WRAP_MASK |
-        ZYNQMP_GEM_TXBUF_LAST_MASK |
-        ZYNQMP_GEM_TXBUF_USED_MASK;
-    err = invoke_frame_identify(txring_frame, &fid);
-    if (err_is_fail(err)) {
-        return err;
-    }
-    zynqmp_gem_txq1ptr_wr(&device, fid.base);
-
-
-    rx_size = sizeof(rxbd) * ZYNQMP_GEM_RX_RING_LEN;
-    alloc_map_frame(VREGION_FLAGS_READ_WRITE, rx_size, (lvaddr_t*)rxring, &rxring_frame);
-    memset((void*)rxring, 0, rx_size);
-    rxhead = rxtail = 0;
-    err = invoke_frame_identify(rxring_frame, &fid);
-    if (err_is_fail(err)) {
-        return err;
-    }
-    zynqmp_gem_rxqptr_wr(&device, fid.base);
-
-    alloc_map_frame(VREGION_FLAGS_READ_WRITE, sizeof(rxbd), (lvaddr_t*)dummy_rxring, &dummy_rxring_frame);
-    memset((void*)dummy_rxring, 0, sizeof(rxbd));
-    dummy_rxring[0].addr = ZYNQMP_GEM_RXBUF_WRAP_MASK |
-        ZYNQMP_GEM_RXBUF_OWN_MASK;
-    err = invoke_frame_identify(rxring_frame, &fid);
-    if (err_is_fail(err)) {
-        return err;
-    }
-    zynqmp_gem_rxq1ptr_wr(&device, fid.base);
-    return SYS_ERR_OK;
 }
 
 static void zynqmp_gem_hardware_init(void) {
@@ -335,23 +237,74 @@ static void zynqmp_gem_hardware_init(void) {
     //FIXME: PHY configuration to be implemented if needed.
 }
 
-static void zynqmp_gem_init(void) {
-    char *service_name = "zynqmp_gem";
+static errval_t on_create_queue(struct zynqmp_gem_devif_binding *b, struct capref rx, struct capref dummy_rx, struct capref tx, struct capref dummy_tx, uint64_t *mac) {
+    errval_t err;
+    struct frame_identity frameid = { .base = 0, .bytes = 0 };
+
+    err = invoke_frame_identify(rx, &frameid);
+    assert(err_is_ok(err));
+    zynqmp_gem_rxqptr_wr(&device, frameid.base);
+
+    err = invoke_frame_identify(dummy_rx, &frameid);
+    assert(err_is_ok(err));
+    zynqmp_gem_rxq1ptr_wr(&device, frameid.base);
+
+    err = invoke_frame_identify(tx, &frameid);
+    assert(err_is_ok(err));
+    zynqmp_gem_txqptr_wr(&device, frameid.base);
+
+    err = invoke_frame_identify(dummy_tx, &frameid);
+    assert(err_is_ok(err));
+    zynqmp_gem_txq1ptr_wr(&device, frameid.base);
+
+    memcpy(mac, zynqmp_gem_mac, sizeof(zynqmp_gem_mac));
+
+    return SYS_ERR_OK;
+}
+
+static void export_devif_cb(void *st, errval_t err, iref_t iref)
+{
+    struct zynqmp_gem_state* s = (struct zynqmp_gem_state*) st;
+    const char *suffix = "devif";
+    char name[256];
+
+    assert(err_is_ok(err));
+
+    // Build label for interal management service
+    sprintf(name, "%s_%s", s->service_name, suffix);
+
+    err = nameservice_register(name, iref);
+    assert(err_is_ok(err));
+    s->initialized = true;
+}
+
+static errval_t connect_devif_cb(void *st, struct zynqmp_gem_devif_binding *b)
+{
+
+    b->rpc_rx_vtbl.create_queue_call = on_create_queue;
+    b->st = st;
+    return SYS_ERR_OK;
+}
+
+static void zynqmp_gem_init_mngif(struct zynqmp_gem_state *st)
+{
     errval_t err;
 
-    zynqmp_gem_queue_init();
+    err = zynqmp_gem_devif_export(st, export_devif_cb, connect_devif_cb,
+                           get_default_waitset(), 1);
+    assert(err_is_ok(err));
+}
+
+static void zynqmp_gem_init(void) {
+    //errval_t err;
+
     zynqmp_gem_hardware_init();
-    err = inthandler_setup_arm(zynqmp_gem_interrupt_handler, NULL, ZYNQMP_GEM_IRQ);
+    /*err = inthandler_setup_arm(zynqmp_gem_interrupt_handler, NULL, ZYNQMP_GEM_IRQ);
     if (err_is_fail(err)) {
         USER_PANIC_ERR(err, "interrupt setup failed.");
-    }
-	ethersrv_init(service_name, assumed_queue_id, get_mac_address_fn, terminate_queue,
-            transmit_pbuf_list_fn, tx_get_free_slots_fn, handle_free_tx_slot_fn,
-            ZYNQMP_GEM_PKTSZ_ALIGN, rx_register_buffer_fn, rx_get_free_slots_fn);
+    }*/
 
-#if ZYNQMP_GEM_DEBUG
     ZYNQMP_GEM_DEBUG("after ethersrv init\n");
-#endif  
 
     //Enable interrupt
     zynqmp_gem_inten_wr(&device, 0xFFFFFFFF);
@@ -365,26 +318,21 @@ static void zynqmp_gem_init(void) {
 
 int main(int argc, char *argv[])
 {
-    int i;
+    struct zynqmp_gem_state *st;
   
-#if ZYNQMP_GEM_DEBUG
     ZYNQMP_GEM_DEBUG("Starting xilinx gem driver.....\n");
-#endif
-
-    // Process commandline arguments
-    for (i = 1; i < argc; i++) {
-        ethersrv_argument(argv[i]);
-    }
     
-    printf("Starting GEM for hardware\n");
-    
-    while(1);
     // Initialize driver
     zynqmp_gem_init();
+    st = (struct zynqmp_gem_state*)malloc(sizeof(struct zynqmp_gem_state));
+    st->initialized = false;
+    st->queue_init_done = false;
+    st->service_name = "zynqmp_gem";
+    /* For use with the net_queue_manager */
 
-#if ZYNQMP_GEM_DEBUG
-    ZYNQMP_GEM_DEBUG("registered driver\n");
-#endif
+    zynqmp_gem_init_mngif(st);
 
-    polling_loop(); //loop myself
+    ZYNQMP_GEM_DEBUG("Driver started.\n");
+
+    polling_loop();
 }

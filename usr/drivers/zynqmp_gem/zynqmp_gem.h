@@ -1,36 +1,20 @@
-#ifndef ZYNQMP_GEM_H
-#define ZYNQMP_GEM_H
-
-#include <barrelfish/barrelfish.h>
-#include "zynqmp_gem_debug.h"
-
-#define ZYNQMP_GEM_PHY_ID 0x80028
+#ifndef __ZYNQMP_GEM_H__
+#define __ZYNQMP_GEM_H__
 
 #define ZYNQMP_GEM_IOBASE 0xFF0E0000
 #define ZYNQMP_GEM_MAC_PREFIX 0x000A35
 #define ZYNQMP_GEM_RX_BUFSIZE 1536
 #define ZYNQMP_GEM_PKTSZ_ALIGN ZYNQMP_GEM_RX_BUFSIZE
-#define ZYNQMP_GEM_RX_RING_LEN 64
-#define ZYNQMP_GEM_TX_RING_LEN 64
+#define ZYNQMP_GEM_N_RX_BUFS 256
+#define ZYNQMP_GEM_N_TX_BUFS 256
 #define ZYNQMP_GEM_IRQ  95
 
-#define ZYNQMP_GEM_RXBUF_EOF_MASK	0x00008000 /* End of frame. */
-#define ZYNQMP_GEM_RXBUF_LEN_MASK	0x00001FFF /* Mask for length field */
-#define ZYNQMP_GEM_RXBUF_OWN_MASK   0x00000001
-#define ZYNQMP_GEM_RXBUF_WRAP_MASK	0x00000002 
-#define ZYNQMP_GEM_RXBUF_ADDR_MASK	0xFFFFFFFC 
+struct zynqmp_gem_state {
+    bool initialized;
+    bool queue_init_done;
 
-#define ZYNQMP_GEM_TXBUF_WRAP_MASK  0x40000000
-#define ZYNQMP_GEM_TXBUF_LAST_MASK  0x00008000 /* Last buffer */
-#define ZYNQMP_GEM_TXBUF_USED_MASK  0x80000000 
-#define ZYNQMP_GEM_TXBUF_LEN_MASK	0x00003FFF
-#define ZYNQMP_GEM_TXBUF_EXHAUSTED  0x08000000
-
-typedef struct txbd {
-    uint32_t addr;
-    uint32_t info;
-} txbd;
-
-typedef txbd rxbd;
+    /* For use with the net_queue_manager */
+    char *service_name;
+};
 
 #endif //ZYNQ_GEM_H

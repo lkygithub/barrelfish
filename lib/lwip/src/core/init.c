@@ -469,7 +469,8 @@ bool lwip_init_auto_ex(struct waitset * opt_waitset,
 #else
     // FIXME: also check for e10k
     // FIXME: get this from kaluga
-    card_name = "e1000";
+    //card_name = "e1000";
+    card_name = "zynqmp_gem";
     //card_name = "e10k";
     //card_name = "vmkitmon_eth";
 #endif // CONFIG_QEMU_NETWORK

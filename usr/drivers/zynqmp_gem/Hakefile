@@ -5,12 +5,20 @@
 --
 --------------------------------------------------------------------------
 
-[ build application { target = "zynqmp_gem",
-                      cFiles = ["zynqmp_gem.c"],
-                      flounderBindings = [ "net_queue_manager",
-                                            "net_soft_filters" ],
-                      mackerelDevices = [ "zynqmp_gem" ],
-                      addLibraries = libDeps [ "netQmng" ],
-                      addCFlags = [ "-D HIDUNUSED" ]
-                    }
+[ 
+
+  build library { target = "devif_backend_zynqmp_gem",
+    cFiles = [ "devif_backend_zynqmp_gem.c"],
+    flounderBindings = [ "zynqmp_gem_devif"],
+    flounderDefs = [ "zynqmp_gem_devif" ],
+    mackerelDevices = [ "zynqmp_gem"]
+  },
+  build application { target = "zynqmp_gem",
+    cFiles = ["zynqmp_gem.c"],
+    flounderBindings = [ "zynqmp_gem_devif"],
+    flounderDefs = [ "zynqmp_gem_devif" ],
+    mackerelDevices = [ "zynqmp_gem" ],
+    addLibraries = libDeps [ "netQmng", "lwip" ],
+    addCFlags = [ "-D ZYNQMP_GEM_DEBUG_ON" ]
+  }
 ]
