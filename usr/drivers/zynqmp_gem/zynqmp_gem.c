@@ -12,9 +12,13 @@
 #include <barrelfish/inthandler.h>
 #include <barrelfish/nameservice_client.h>
 
+#include <maps/zynqmp_map.h>
+
 #include <if/zynqmp_gem_devif_defs.h>
 
 #include <dev/zynqmp_gem_dev.h>
+
+#include <driverkit/driverkit.h>
 
 #include "zynqmp_gem_debug.h"
 #include "zynqmp_gem_desc.h"
@@ -166,24 +170,30 @@ static void zynqmp_gem_interrupt_handler(void* placeholder)
 }
  */
 
-static void polling_loop(void)
+/*static void polling_loop(void)
 {
     errval_t err;
     struct waitset *ws = get_default_waitset();
     while (1) {
+        ZYNQMP_GEM_DEBUG("in polling loop.\n");
         err = event_dispatch(ws);
         if (err_is_fail(err)) {
             DEBUG_ERR(err, "in event_dispatch");
             break;
         }
     }
-}
+}*/
 
 static void zynqmp_gem_hardware_init(void) {
     int i;
     uint64_t mac_addr;
 
-    zynqmp_gem_initialize(&device, (void *)ZYNQMP_GEM_IOBASE);
+    errval_t err;
+    lvaddr_t vbase;
+    err = map_device_register(ZYNQMP_GEM4_BASEADDR, 0x1000, &vbase);
+    assert(err_is_ok(err) && vbase);
+
+    zynqmp_gem_initialize(&device, (mackerel_addr_t)vbase);
 
     //Disable all interrupts(This reg is reset as disabled, so no need to do this I guess)
     //zynqmp_gem_intdis_wr(&device, 0x7FFFEFF);
@@ -241,6 +251,8 @@ static errval_t on_create_queue(struct zynqmp_gem_devif_binding *b, struct capre
     errval_t err;
     struct frame_identity frameid = { .base = 0, .bytes = 0 };
 
+    ZYNQMP_GEM_DEBUG("on create queue called.\n");
+
     err = invoke_frame_identify(rx, &frameid);
     assert(err_is_ok(err));
     zynqmp_gem_rxqptr_wr(&device, frameid.base);
@@ -258,6 +270,7 @@ static errval_t on_create_queue(struct zynqmp_gem_devif_binding *b, struct capre
     zynqmp_gem_txq1ptr_wr(&device, frameid.base);
 
     memcpy(mac, zynqmp_gem_mac, sizeof(zynqmp_gem_mac));
+    ZYNQMP_GEM_DEBUG("on create queue return.\n");
 
     return SYS_ERR_OK;
 }
@@ -289,7 +302,7 @@ static errval_t connect_devif_cb(void *st, struct zynqmp_gem_devif_binding *b)
 static void zynqmp_gem_init_mngif(struct zynqmp_gem_state *st)
 {
     errval_t err;
-
+    return ;
     err = zynqmp_gem_devif_export(st, export_devif_cb, connect_devif_cb,
                            get_default_waitset(), 1);
     assert(err_is_ok(err));
@@ -298,13 +311,15 @@ static void zynqmp_gem_init_mngif(struct zynqmp_gem_state *st)
 static void zynqmp_gem_init(void) {
     //errval_t err;
 
+    ZYNQMP_GEM_DEBUG("Init hardware.\n");
+    return ;
     zynqmp_gem_hardware_init();
     /*err = inthandler_setup_arm(zynqmp_gem_interrupt_handler, NULL, ZYNQMP_GEM_IRQ);
     if (err_is_fail(err)) {
         USER_PANIC_ERR(err, "interrupt setup failed.");
     }*/
 
-    ZYNQMP_GEM_DEBUG("after ethersrv init\n");
+    ZYNQMP_GEM_DEBUG("Hardware initialized.\n");
 
     //Enable interrupt
     zynqmp_gem_inten_wr(&device, 0xFFFFFFFF);
@@ -324,6 +339,7 @@ int main(int argc, char *argv[])
     
     // Initialize driver
     zynqmp_gem_init();
+    ZYNQMP_GEM_DEBUG("Driver initialized\n");
     st = (struct zynqmp_gem_state*)malloc(sizeof(struct zynqmp_gem_state));
     st->initialized = false;
     st->queue_init_done = false;
@@ -332,7 +348,7 @@ int main(int argc, char *argv[])
 
     zynqmp_gem_init_mngif(st);
 
-    ZYNQMP_GEM_DEBUG("Driver started.\n");
+    ZYNQMP_GEM_DEBUG("Manager interface started.\n");
 
-    polling_loop();
+    //polling_loop();
 }

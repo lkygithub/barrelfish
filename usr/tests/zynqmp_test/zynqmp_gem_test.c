@@ -24,7 +24,6 @@
 #include <barrelfish/waitset.h>
 #include <arpa/inet.h>
 
-#define NET_DRIVER "zynqmp_test"
 #define SERVER_ADDR "192.168.1.1"
 #define SERVER_PORT 8080
 #define BUFSIZE 1024
@@ -52,7 +51,7 @@ static void network_setup_helper(void)
 int main(int argc, char *argv[])
 {
     coreid_t mycore = disp_get_core_id();
-    char buf[BUF_SIZE] = "hello world";
+    char buf[BUFSIZE] = "hello world";
     struct sockaddr_in server_addr;
     int s, ret;
 
@@ -64,10 +63,10 @@ int main(int argc, char *argv[])
     debug_printf("[%"PRIuDOMAINID"]main(): connecting\n",
             disp_get_domain_id());
     s = lwip_socket(AF_INET, SOCK_STREAM, 0);
-    memset(&server_addr, 0, sizeof(servaddr));
-    servaddr.sin_family      = AF_INET;
-    servaddr.sin_addr.s_addr = inet_addr(SERVER_ADDR);
-    servaddr.sin_port        = htons(SERVER_PORT);
+    memset(&server_addr, 0, sizeof(server_addr));
+    server_addr.sin_family      = AF_INET;
+    server_addr.sin_addr.s_addr = inet_addr(SERVER_ADDR);
+    server_addr.sin_port        = htons(SERVER_PORT);
     lwip_connect(s, (struct sockaddr *) &server_addr, sizeof(server_addr));
 
     debug_printf("[%"PRIuDOMAINID"]main(): connected\n",

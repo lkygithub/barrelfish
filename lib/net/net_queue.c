@@ -131,6 +131,16 @@ static errval_t create_sfn5122f_queue(const char* cardname, inthandler_t interru
     return err;
 }
 
+static errval_t create_zynqmp_gem_queue(const char* cardname, inthandler_t interrupt, uint64_t *queueid,
+                                      bool default_q, bool poll, struct devq **retqueue)
+{
+    errval_t err;
+    struct net_state* st = get_default_net_state();
+    // enable HW filter since they are enabled by default by the driver
+    st->hw_filter = true;
+    err = zynqmp_gem_queue_create((struct zynqmp_gem_queue**)retqueue);
+    return err;
+}
 
 typedef errval_t (*queue_create_fn)(const char*, inthandler_t, uint64_t*, bool, bool, struct devq **);
 struct networking_card
@@ -144,6 +154,7 @@ struct networking_card
     { "mlx4", create_mlx4_queue},
     { "e10k", create_e10k_queue},
     { "sfn5122f", create_sfn5122f_queue},
+    { "zynqmp_gem", create_zynqmp_gem_queue},
     { NULL, NULL}
 };
 
@@ -164,6 +175,7 @@ errval_t net_queue_internal_create(inthandler_t interrupt, const char *cardname,
                                    uint64_t* queueid, bool default_q, bool poll,
                                    struct devq **retqueue)
 {
+    debug_printf("net_queue_internal_create called.\n");
     struct networking_card *nc = networking_cards;
     while(nc->cardname != NULL) {
         if (strncmp(cardname, nc->cardname, strlen(nc->cardname)) == 0) {
@@ -194,5 +206,6 @@ errval_t net_queue_internal_create(inthandler_t interrupt, const char *cardname,
 errval_t net_queue_create(inthandler_t interrupt, const char *cardname,
                           uint64_t* queueid, bool poll, struct devq **retqueue)
 {
+    debug_printf("net_queue_create called.\n");
     return net_queue_internal_create(interrupt, cardname, queueid, false, poll, retqueue);
 }

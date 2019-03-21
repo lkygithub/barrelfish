@@ -19,7 +19,7 @@
 
  build library { target = "net_if_raw",
                   cFiles = [ "interface_raw.c" ],
-                  addLibraries = libDeps [ "devif", "devif_backend_idc"],
+                  addLibraries = libDeps [ "devif", "devif_backend_idc", "devif_backend_zynqmp_gem"],
                   architectures = ["armv7", "armv8", "k1om"]}
 ]
 

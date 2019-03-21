@@ -25,6 +25,8 @@
     #include <devif/backends/net/e10k_devif.h>
 #endif
 
+#include <devif/backends/net/zynqmp_gem_devif.h>
+
 #define MAX_SERVICE_NAME_LEN  256   // Max len that a name of service can have
 #define BUFFER_SIZE 2048
 #define BUFFER_COUNT ((128*1024*1024) / BUFFER_SIZE)
@@ -260,8 +262,15 @@ void net_if_init(const char* cardname, uint64_t qid)
         USER_PANIC("Unknown card name \n");
     }
 
-#else 
-    connect_to_driver(cardname, queue_id, ws);
+#else
+    if ((strcmp(cardname, "zynqmp_gem")) == 0 && qid != 0) {
+        struct zynqmp_gem_queue * zynqmp_gem_q;
+        err = zynqmp_gem_queue_create(&zynqmp_gem_q);
+        assert(err_is_ok(err));
+        devq = (struct devq*)zynqmp_gem_q;
+    } else {
+        connect_to_driver(cardname, queue_id, ws);
+    }
 #endif
     buffers_init(BUFFER_COUNT);
 

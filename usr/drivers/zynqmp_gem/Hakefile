@@ -15,10 +15,11 @@
   },
   build application { target = "zynqmp_gem",
     cFiles = ["zynqmp_gem.c"],
+    addLinkFlags = ["-T" ++ Config.source_dir ++ "/lib/driverkit/bfdrivers.ld" ],
     flounderBindings = [ "zynqmp_gem_devif"],
     flounderDefs = [ "zynqmp_gem_devif" ],
     mackerelDevices = [ "zynqmp_gem" ],
-    addLibraries = libDeps [ "netQmng", "lwip" ],
+    addLibraries = libDeps [ "netQmng", "lwip", "netd", "driverkit"],
     addCFlags = [ "-D ZYNQMP_GEM_DEBUG_ON" ]
   }
 ]

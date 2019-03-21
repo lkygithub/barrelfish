@@ -14,8 +14,8 @@
 -- This application is not very portable across different libc
 --
 
-[ build application { target = "zynqmp_test",
-                      cFiles = [ "zynqmp_test.c" ],
+[ build application { target = "zynqmp_gem_test",
+                      cFiles = [ "zynqmp_gem_test.c" ],
                       addLibraries = libDeps [ "lwip" ],
                       architectures = [ "armv8" ]
                     }

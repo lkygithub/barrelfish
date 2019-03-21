@@ -128,12 +128,12 @@ device zynqmp_gem msbfirst ( addr base ) "Zynq GEM"
     ubr     1   rw1c    "used_bit_read";
   };
   
-  regtype queue "queue ptr register" {
+  regtype qptr "queue ptr register" {
     ptr     30  "pointer to base address of queue";
     _       2   mbz;
   };
-  register rxqptr rw addr(base, 0x18) "receive_q_ptr" type(queue);
-  register txqptr rw addr(base, 0x1c) "transmit_q_ptr" type(queue);
+  register rxqptr rw addr(base, 0x18) "receive_q_ptr" type(qptr);
+  register txqptr rw addr(base, 0x1c) "transmit_q_ptr" type(qptr);
 
   register rxstat rw addr(base, 0x20) "receive_status" {
     _       28  mbz;
@@ -297,7 +297,7 @@ device zynqmp_gem msbfirst ( addr base ) "Zynq GEM"
     _       6   mbz;
   };
 
-  register txq1ptr rw addr(base, 0x440) "transmit_q1_ptr" type(queue);
-  register rxq1ptr rw addr(base, 0x480) "receive_q1_ptr" type(queue);
+  register txq1ptr rw addr(base, 0x440) "transmit_q1_ptr" type(qptr);
+  register rxq1ptr rw addr(base, 0x480) "receive_q1_ptr" type(qptr);
 
 };

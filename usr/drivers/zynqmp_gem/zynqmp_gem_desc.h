@@ -13,11 +13,11 @@
 #define ZYNQMP_GEM_TXBUF_LEN_MASK	0x00003FFF
 #define ZYNQMP_GEM_TXBUF_EXHAUSTED  0x08000000
 
-typedef struct tx_desc {
+typedef struct rx_desc {
     uint32_t addr;
     uint32_t info;
-} tx_desc_t;
+} rx_desc_t;
 
-typedef tx_desc_t rx_desc_t;
+typedef rx_desc_t tx_desc_t;
 
 #endif

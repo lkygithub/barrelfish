@@ -459,7 +459,8 @@ bool lwip_init_auto_ex(struct waitset * opt_waitset,
                        struct thread_mutex * opt_mutex)
 {
     char *card_name = NULL;
-    uint64_t default_queueid = 0;
+    //uint64_t default_queueid = 0;
+    uint64_t default_queueid = 1;
     /* Figure out the best NIC card that can be used */
     /* FIXME: hardcoding the NIC card right now, will do smarter detection
        in future. */

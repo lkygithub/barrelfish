@@ -12,6 +12,7 @@
 #include <barrelfish/nameservice_client.h>
 #include <barrelfish/inthandler.h>
 #include <devif/queue_interface_backend.h>
+#include <devif/backends/net/zynqmp_gem_devif.h>
 #include <net_interfaces/flags.h>
 #include <debug_log/debug_log.h>
 #include <if/zynqmp_gem_devif_defs.h>
@@ -21,7 +22,7 @@
 #include "zynqmp_gem.h"
 #include "zynqmp_gem_desc.h"
 #include "zynqmp_gem_devq.h"
-
+#include "zynqmp_gem_debug.h"
 
 
 /*****************************************************************
@@ -313,11 +314,13 @@ static void bind_cb(void *st, errval_t err, struct zynqmp_gem_devif_binding *b)
     q->bound = true;
 }
 
-errval_t zynqmp_gem_queue_create(zynqmp_gem_queue_t ** pq, void (*int_handler)(void *))
+errval_t zynqmp_gem_queue_create(zynqmp_gem_queue_t ** pq)
 {
     errval_t err;
     zynqmp_gem_queue_t *q;
-    struct frame_identity id;
+
+
+    ZYNQMP_GEM_DEBUG("zynqmp gem queue create called.\n");
 
     q = malloc(sizeof(zynqmp_gem_queue_t));
     assert(q);
@@ -355,17 +358,25 @@ errval_t zynqmp_gem_queue_create(zynqmp_gem_queue_t ** pq, void (*int_handler)(v
     if (q->rx_ring == NULL) {
         return DEVQ_ERR_INIT_QUEUE;
     }
+    q->dummy_rx_ring = alloc_map_frame(VREGION_FLAGS_READ_WRITE_NOCACHE, 
+            sizeof(rx_desc_t), &q->dummy_rx);
+    if (q->dummy_rx_ring == NULL) {
+        return DEVQ_ERR_INIT_QUEUE;
+    }
 
     q->tx_ring = alloc_map_frame(VREGION_FLAGS_READ_WRITE_NOCACHE, 
             ZYNQMP_GEM_N_TX_BUFS * sizeof(tx_desc_t), &q->tx);
     if (q->tx_ring == NULL) {
         return DEVQ_ERR_INIT_QUEUE;
     }
+    q->dummy_tx_ring = alloc_map_frame(VREGION_FLAGS_READ_WRITE_NOCACHE, 
+            sizeof(tx_desc_t), &q->dummy_tx);
+    if (q->dummy_tx_ring == NULL) {
+        return DEVQ_ERR_INIT_QUEUE;
+    }
 
-    errval_t err2;
-    err = q->b->rpc_tx_vtbl.create_queue(q->b, q->rx, q->tx, &q->mac_address);
-    if (err_is_fail(err) || err_is_fail(err2)) {
-        err = err_is_fail(err) ? err: err2;
+    err = q->b->rpc_tx_vtbl.create_queue(q->b, q->rx, q->dummy_rx, q->tx, q->dummy_tx, &q->mac_address);
+    if (err_is_fail(err)) {
         return err;
     }
 

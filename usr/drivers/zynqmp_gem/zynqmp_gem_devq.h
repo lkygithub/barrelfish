@@ -9,16 +9,18 @@
 #ifndef __ZYNQMP_GEM_DEVQ_H__
 #define __ZYNQMP_GEM_DEVQ_H__
 
+#include <dev/zynqmp_gem_dev.h>
+
 typedef struct zynqmp_gem_queue {
     struct devq q;
 
     zynqmp_gem_t device;
     uint64_t mac_address;
 
-    volatile struct rx_desc *rx_ring;
-    volatile struct rx_desc *dummy_rx_ring;
-    volatile struct tx_desc *tx_ring;
-    volatile struct tx_desc *dummy_tx_ring;
+    volatile rx_desc_t *rx_ring;
+    volatile rx_desc_t *dummy_rx_ring;
+    volatile tx_desc_t *tx_ring;
+    volatile tx_desc_t *dummy_tx_ring;
     struct capref rx;
     struct capref dummy_rx;
     struct capref tx;
