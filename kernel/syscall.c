@@ -868,7 +868,7 @@ struct sysret sys_get_absolute_time(void)
 /**
  * time triggered message passing syscalls
  */
-#if 1
+#if 0
 #include "include/arch/armv8/ttmp_zynqmp.h"
 static void dump_ttmp_msg_buff(uint8_t task_id, int rx_or_tx)
 {
