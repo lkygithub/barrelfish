@@ -138,7 +138,7 @@ static errval_t create_zynqmp_gem_queue(const char* cardname, inthandler_t inter
     struct net_state* st = get_default_net_state();
     // enable HW filter since they are enabled by default by the driver
     st->hw_filter = true;
-    err = zynqmp_gem_queue_create((struct zynqmp_gem_queue**)retqueue);
+    err = zynqmp_gem_queue_create((struct zynqmp_gem_queue**)retqueue, interrupt);
     return err;
 }
 

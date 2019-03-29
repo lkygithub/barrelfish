@@ -15,5 +15,6 @@
  */
 interface zynqmp_gem_devif "zynqmp_gem devif communication interface" {
     
-    rpc create_queue(in cap rx, in cap dummy_rx, in cap tx, in cap dummy_tx, out uint64 mac);
+    rpc create_queue(in cap rx, in cap dummy_rx, in cap tx, in cap dummy_tx, in uint64 p_int_handler, out uint64 mac);
+    message transmit_start();
 };

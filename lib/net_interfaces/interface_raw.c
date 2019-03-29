@@ -54,8 +54,11 @@ errval_t buffer_tx_add(size_t idx, size_t offset, size_t length,
                        size_t more_chunks, uint64_t flags)
 {
     errval_t err;
-    uint64_t flags_new = flags | NETIF_TXFLAG | NETIF_TXFLAG_LAST;
+    uint64_t flags_new = flags | NETIF_TXFLAG;
 
+    if (!more_chunks) {
+        flags |= NETIF_TXFLAG_LAST;
+    }
     offset += idx * BUFFER_SIZE;
     err = devq_enqueue(devq, regid, offset, 
                        length, 0, length, flags_new);
@@ -80,16 +83,17 @@ errval_t buffer_rx_add(size_t idx)
     offset = idx * BUFFER_SIZE;
     err = devq_enqueue(devq, regid, offset, BUFFER_SIZE, 
                         0, BUFFER_SIZE, flags);
+    
     if (err_is_fail(err)) {
         return err;
     }
 
     batch_rx++;
     if (batch_rx > BATCH_SIZE) {
-        err = devq_notify(devq);
+        //Do not notify the queue, as in zynqmp_gem devq_notify is designed to trigger transmission.
+        //err = devq_notify(devq);
         batch_rx = 0;
     }
-
     return err;
 }
 
@@ -185,7 +189,7 @@ static void connect_to_driver(const char *cname, uint64_t qid, struct waitset *w
 }
 
 
-#if defined(__x86_64__) && !defined(__k1om__)
+#if defined(__x86_64__) && !defined(__k1om__) || defined(__ARM_ARCH_8A__)
 static void int_handler(void* args)
 {
     regionid_t rid;
@@ -262,15 +266,22 @@ void net_if_init(const char* cardname, uint64_t qid)
         USER_PANIC("Unknown card name \n");
     }
 
-#else
+#elif defined(__ARM_ARCH_8A__)
     if ((strcmp(cardname, "zynqmp_gem")) == 0 && qid != 0) {
         struct zynqmp_gem_queue * zynqmp_gem_q;
-        err = zynqmp_gem_queue_create(&zynqmp_gem_q);
+        //Notice that notify handler uses "queue" as its parameter, which requires additional idc to obtain.
+        //Int handler uses the "devq" stored here in global scope, so its parameter is actually a placeholder.
+        err = zynqmp_gem_queue_create(&zynqmp_gem_q, int_handler);
         assert(err_is_ok(err));
         devq = (struct devq*)zynqmp_gem_q;
     } else {
+        //This branch is not expected.
+        //connect_to_driver called(and with ws)here just to avoid compile warnings.
         connect_to_driver(cardname, queue_id, ws);
+        USER_PANIC("Unknown card name \n");
     }
+#else 
+    connect_to_driver(cardname, queue_id, ws);
 #endif
     buffers_init(BUFFER_COUNT);
 

@@ -3,5 +3,5 @@
 
 struct zynqmp_gem_queue;
 
-errval_t zynqmp_gem_queue_create(struct zynqmp_gem_queue ** pq);
+errval_t zynqmp_gem_queue_create(struct zynqmp_gem_queue ** pq, void (*int_handler)(void *));
 #endif

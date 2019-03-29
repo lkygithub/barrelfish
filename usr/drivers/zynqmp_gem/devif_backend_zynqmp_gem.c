@@ -93,25 +93,17 @@ static errval_t zynqmp_gem_enqueue_rx(zynqmp_gem_queue_t *q, regionid_t rid,
 {
 
     if (zynqmp_gem_queue_free_rxslots(q) == 0) {
-        ZYNQMP_GEM_DEBUG("Not enough space in RX ring, not transmitting buffer \n" );
+        ZYNQMP_GEM_DEBUG("Not enough space in RX ring. \n" );
         return DEVQ_ERR_QUEUE_FULL;
     }
 
     rx_desc_t rxdesc;
+    rxdesc.addr &= ZYNQMP_GEM_RX_WRAP_MASK;
+    rxdesc.addr |= (q->region_base + offset) & ZYNQMP_GEM_RX_ADDR_MASK;
+    rxdesc.info = 0;
 
-/*
-    rxdesc.raw[0] = rxdesc.raw[1] = 0;
-    rxdesc.rx_read_format.buffer_address = q->region_base + offset;
- */
     q->rx_ring[q->rx_tail] = rxdesc;
-    q->rx_tail = (q->rx_tail + 1) % ZYNQMP_GEM_N_RX_BUFS;
-    
-
-/*
-    zynqmp_gem_dqval_t dqval = 0;
-    dqval = zynqmp_gem_dqval_val_insert(dqval, q->rx_tail);
-    zynqmp_gem_rdt_wr(&q->hw_device, 0, dqval);
- */
+    q->rx_tail = (q->rx_tail + 1) % q->n_rx_buffers;
 
     return SYS_ERR_OK;
 }
@@ -127,22 +119,26 @@ static errval_t zynqmp_gem_dequeue_rx(zynqmp_gem_queue_t *q, regionid_t* rid,
 
     volatile rx_desc_t *rxdesc;
     rxdesc = &q->rx_ring[q->rx_head];
-    /*
-    if (!rxdesc->rx_read_format.info.status.dd ||
-            !rxdesc->rx_read_format.info.status.eop) {
+    
+    if (!(rxdesc->addr & ZYNQMP_GEM_RX_USED_MASK)) {
+        //Used bit not set means that the descriptor is to be filled by NIC controller.
+        //And not prepared to be processed by software.
         return DEVQ_ERR_QUEUE_EMPTY;
     }
-     */
+
+    if (!(rxdesc->info & ZYNQMP_GEM_RX_SOF_MASK) ||
+            !(rxdesc->info & ZYNQMP_GEM_RX_EOF_MASK)) {
+        //As the reference manual said, a valid rx should have both bits set.
+        return NIC_ERR_RX_PKT;
+    }
     
-    q->rx_head = (q->rx_head + 1) % ZYNQMP_GEM_N_RX_BUFS;
-    /*
+    q->rx_head = (q->rx_head + 1) % q->n_rx_buffers;
     *rid = q->region_id;
-    *offset = rxdesc->rx_read_format.buffer_address - q->region_base;
-    *length = 2048;
+    *offset = (rxdesc->addr & ZYNQMP_GEM_RX_ADDR_MASK) - q->region_base;
+    *length = ZYNQMP_GEM_RX_BUFSIZE;
     *valid_data = 0;
-    *valid_length = rxdesc->rx_read_format.info.length;
+    *valid_length = rxdesc->info & ZYNQMP_GEM_RX_LEN_MASK;
     *flags = NETIF_RXFLAG;
-     */
     return SYS_ERR_OK;
 }
 
@@ -158,43 +154,13 @@ static errval_t zynqmp_gem_enqueue_tx(zynqmp_gem_queue_t *q, regionid_t rid,
         return DEVQ_ERR_QUEUE_FULL;
     }
     
+    txdesc.addr = q->region_base + offset + valid_data;
+    txdesc.info &= ZYNQMP_GEM_RX_WRAP_MASK;
+    txdesc.info |= valid_length & ZYNQMP_GEM_TX_LEN_MASK;
+    txdesc.info |= (flags & NETIF_TXFLAG_LAST) ? ZYNQMP_GEM_TX_LAST_MASK : 0;
 
-/*
-    if (q->advanced_descriptors == 3) {
-        txdesc.buffer_address = q->region_base + offset + valid_data;
-        txdesc.ctrl.raw = 0;
-        txdesc.ctrl.advanced_data.dtalen = valid_length;
-        txdesc.ctrl.advanced_data.dtyp.d.dtyp = 3; // advanced data descriptor
-        txdesc.ctrl.advanced_data.dcmd.d.eop = 1;
-        txdesc.ctrl.advanced_data.dcmd.d.ifcs = 1;
-        txdesc.ctrl.advanced_data.dcmd.d.rs = 1;
-        txdesc.ctrl.advanced_data.dcmd.d.dext = 1;
-        txdesc.ctrl.advanced_data.popts_paylen.d.paylen = valid_length;
-    } else if (q->advanced_descriptors == 1) {
-        txdesc.buffer_address = q->region_base + offset + valid_data;
-        txdesc.ctrl.raw = 0;
-        txdesc.ctrl.extended_data.data_len = valid_length;
-        txdesc.ctrl.extended_data.dtyp = 1; // extended data descriptor
-        txdesc.ctrl.extended_data.dcmd.d.rs = 1;
-        txdesc.ctrl.extended_data.dcmd.d.ifcs = 1;
-        txdesc.ctrl.extended_data.dcmd.d.eop = 1;
-        txdesc.ctrl.extended_data.dcmd.d.dext = 1;
-    } else {
-        txdesc.buffer_address = q->region_base + offset + valid_data;
-        txdesc.ctrl.raw = 0;
-        txdesc.ctrl.legacy.data_len = valid_length;
-        txdesc.ctrl.legacy.cmd.d.eop = 1;
-        txdesc.ctrl.legacy.cmd.d.ifcs = 1;
-        txdesc.ctrl.legacy.cmd.d.rs = 1;
-    }
- */
     q->tx_ring[q->tx_tail] = txdesc;
-    q->tx_tail = (q->tx_tail + 1) % ZYNQMP_GEM_N_TX_BUFS;
-/*
-    zynqmp_gem_dqval_t dqval = 0;
-    dqval = zynqmp_gem_dqval_val_insert(dqval, q->tx_tail);
-    zynqmp_gem_tdt_wr(&q->hw_device, 0, dqval);
- */
+    q->tx_tail = (q->tx_tail + 1) % q->n_tx_buffers;
     return SYS_ERR_OK;
 }
 
@@ -208,21 +174,15 @@ static errval_t zynqmp_gem_dequeue_tx(zynqmp_gem_queue_t *q, regionid_t* rid, ge
 
     volatile tx_desc_t *txdesc;
     txdesc = &q->tx_ring[q->tx_head];
-    /*
-    if (txdesc->ctrl.legacy.stat_rsv.d.dd != 1) {
-        return DEVQ_ERR_QUEUE_EMPTY;
-    }
-     */
-    q->tx_head = (q->tx_head + 1) % ZYNQMP_GEM_N_TX_BUFS;
-    /*
+    q->tx_head = (q->tx_head + 1) % q->n_tx_buffers;
     *rid = q->region_id;
-    *offset = txdesc->buffer_address - q->region_base;
-    *length = 2048;
-    *valid_data = *offset & 2047;
-    *offset &= ~2047;
-    *valid_length = txdesc->ctrl.legacy.data_len;
-    *flags = NETIF_TXFLAG | NETIF_TXFLAG_LAST;
-     */
+    *offset = txdesc->addr - q->region_base;
+    *length = ZYNQMP_GEM_TX_BUFSIZE;
+    *valid_data = *offset & (ZYNQMP_GEM_TX_BUFSIZE - 1); //valid_data is actually a shift value
+    *offset &= ~(ZYNQMP_GEM_TX_BUFSIZE - 1); //clear the shift value of valid_data from offset
+    *valid_length = txdesc->info | ZYNQMP_GEM_TX_LEN_MASK;
+    *flags = NETIF_TXFLAG;
+    if (txdesc->info & ZYNQMP_GEM_TX_LAST_MASK) *flags |= NETIF_TXFLAG_LAST;
     return SYS_ERR_OK;
 }
 
@@ -237,7 +197,7 @@ static errval_t zynqmp_gem_enqueue(struct devq* q, regionid_t rid,
 
     if (flags & NETIF_RXFLAG) {
         /* can not enqueue receive buffer larger than 2048 bytes */
-        assert(length <= 2048);
+        assert(length <= ZYNQMP_GEM_RX_BUFSIZE);
 
         err = zynqmp_gem_enqueue_rx(q_ext, rid, offset, length, valid_data, valid_length,
                              flags);
@@ -276,7 +236,12 @@ static errval_t zynqmp_gem_dequeue(struct devq* q, regionid_t* rid, genoffset_t*
 
 static errval_t zynqmp_gem_notify(struct devq* q)
 {
-    assert(0);
+    errval_t err;
+    zynqmp_gem_queue_t *q_ext = (zynqmp_gem_queue_t *)q;
+    err = q_ext->b->tx_vtbl.transmit_start(q_ext->b, NOP_CONT);
+    if (err_is_fail(err)) {
+        return err;
+    }
     return SYS_ERR_OK;
 }
 
@@ -314,11 +279,11 @@ static void bind_cb(void *st, errval_t err, struct zynqmp_gem_devif_binding *b)
     q->bound = true;
 }
 
-errval_t zynqmp_gem_queue_create(zynqmp_gem_queue_t ** pq)
+errval_t zynqmp_gem_queue_create(zynqmp_gem_queue_t ** pq, void (*int_handler)(void *))
 {
     errval_t err;
     zynqmp_gem_queue_t *q;
-
+    int i;
 
     ZYNQMP_GEM_DEBUG("zynqmp gem queue create called.\n");
 
@@ -375,7 +340,17 @@ errval_t zynqmp_gem_queue_create(zynqmp_gem_queue_t ** pq)
         return DEVQ_ERR_INIT_QUEUE;
     }
 
-    err = q->b->rpc_tx_vtbl.create_queue(q->b, q->rx, q->dummy_rx, q->tx, q->dummy_tx, &q->mac_address);
+    for (i = 0; i < q->n_rx_buffers; i++) {
+        zynqmp_gem_enqueue_rx(q, 0, i * ZYNQMP_GEM_RX_BUFSIZE, ZYNQMP_GEM_RX_BUFSIZE,
+                0, ZYNQMP_GEM_RX_BUFSIZE, NETIF_RXFLAG);
+    }
+    q->rx_ring[q->n_rx_buffers - 1].addr = ZYNQMP_GEM_RX_WRAP_MASK;
+    q->tx_ring[q->n_tx_buffers - 1].info = ZYNQMP_GEM_TX_WRAP_MASK;
+    q->dummy_rx_ring[0].addr = ZYNQMP_GEM_RX_WRAP_MASK | ZYNQMP_GEM_RX_USED_MASK;
+    q->dummy_tx_ring[0].info = ZYNQMP_GEM_TX_WRAP_MASK | ZYNQMP_GEM_TX_USED_MASK | ZYNQMP_GEM_TX_LAST_MASK;
+
+
+    err = q->b->rpc_tx_vtbl.create_queue(q->b, q->rx, q->dummy_rx, q->tx, q->dummy_tx, (uint64_t)int_handler, &q->mac_address);
     if (err_is_fail(err)) {
         return err;
     }

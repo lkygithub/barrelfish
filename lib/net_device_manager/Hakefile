@@ -18,4 +18,5 @@
                                        "e10k", "sfn5122f" ],
                   addLibraries = [ "bfdmuxtools", "trace", "lwip" ]
                  }
+  
 ]

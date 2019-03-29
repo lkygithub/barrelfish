@@ -27,6 +27,7 @@ modulenounzip /skb_ramfs.cpio.gz nospawn
 
 # Drivers
 module /armv8/sbin/corectrl auto
+module /armv8/sbin/serial_kernel irq=53
 # module /armv8/sbin/pci auto
 
 # For networking
@@ -35,4 +36,5 @@ module /armv8/sbin/zynqmp_gem auto
 
 # General user domains
 module /armv8/sbin/fish nospawn
+module /armv8/sbin/zynqmp_gem_test nospawn
 module /armv8/sbin/angler serial0.terminal xterm

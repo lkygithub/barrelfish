@@ -28,6 +28,8 @@ static zynqmp_gem_t device;
 
 static uint8_t zynqmp_gem_mac[6];
 
+static void (*int_handler)(void*);
+
 /* 
 static void add_txslot(uint32_t paddr, uint32_t len, void *opaque, bool islast) {
     memset((void*)&txring[txtail], 0, sizeof(txbd));
@@ -38,7 +40,6 @@ static void add_txslot(uint32_t paddr, uint32_t len, void *opaque, bool islast) 
         ((txtail + 1) % ZYNQMP_GEM_TX_RING_LEN ? 0 :ZYNQMP_GEM_TXBUF_WRAP_MASK);
     txtail = (txtail + 1) % ZYNQMP_GEM_TX_RING_LEN;
 }
-
 static void get_txslot(void **opaque) {
     *opaque = &tx_opaque[txhead];
     // FIXME: Do something with info if needed
@@ -150,27 +151,29 @@ static uint64_t rx_get_free_slots_fn(void) {
  * received packets arises and packet reception can be delayed
  * arbitrarily.
  */
-/*
 static void zynqmp_gem_interrupt_handler(void* placeholder)
 {
-    size_t len, pkt_cnt = 0;
-    void *opaque;
-    bool last;
-    struct driver_rx_buffer buf[ZYNQMP_GEM_RX_RING_LEN];
-
-    //FIXME: Read int_status register to see the interrupt type(transmit completed or receive completed)
-    get_rxslot(&opaque, &len, &last);
-    for (; last;) {
-        buf[pkt_cnt].opaque = opaque;
-        buf[pkt_cnt].len = len;
-        pkt_cnt++;
-        get_rxslot(&opaque, &len, &last);
+    uint32_t intstat = zynqmp_gem_intstat_rd(&device), txstat, rxstat;
+    if (intstat & ZYNQMP_GEM_INT_TC_MASK) {
+        ZYNQMP_GEM_DEBUG("Tx completed.\n");
+        txstat = zynqmp_gem_txstat_rd(&device);
+        //FIXME:do something with txstat.
+        int_handler(placeholder);
+        zynqmp_gem_intstat_tc_wrf(&device, 0x1);
+        zynqmp_gem_txstat_tc_wrf(&device, 0x1);
+    } else if (intstat & ZYNQMP_GEM_INT_RC_MASK) {
+        ZYNQMP_GEM_DEBUG("Rx completed.\n");
+        rxstat = zynqmp_gem_rxstat_rd(&device);
+        //FIXME:do something with rxstat.
+        int_handler(placeholder);
+        zynqmp_gem_intstat_rc_wrf(&device, 0x1);
+        zynqmp_gem_rxstat_fr_wrf(&device, 0x1);
+    } else {
+        ZYNQMP_GEM_DEBUG("Unhandled interrupt.\n");
     }
-    process_received_packet(buf, pkt_cnt, 0);
 }
- */
 
-/*static void polling_loop(void)
+static void polling_loop(void)
 {
     errval_t err;
     struct waitset *ws = get_default_waitset();
@@ -182,7 +185,7 @@ static void zynqmp_gem_interrupt_handler(void* placeholder)
             break;
         }
     }
-}*/
+}
 
 static void zynqmp_gem_hardware_init(void) {
     int i;
@@ -247,7 +250,7 @@ static void zynqmp_gem_hardware_init(void) {
     //FIXME: PHY configuration to be implemented if needed.
 }
 
-static errval_t on_create_queue(struct zynqmp_gem_devif_binding *b, struct capref rx, struct capref dummy_rx, struct capref tx, struct capref dummy_tx, uint64_t *mac) {
+static errval_t on_create_queue(struct zynqmp_gem_devif_binding *b, struct capref rx, struct capref dummy_rx, struct capref tx, struct capref dummy_tx, uint64_t p_int_handler, uint64_t *mac) {
     errval_t err;
     struct frame_identity frameid = { .base = 0, .bytes = 0 };
 
@@ -269,10 +272,17 @@ static errval_t on_create_queue(struct zynqmp_gem_devif_binding *b, struct capre
     assert(err_is_ok(err));
     zynqmp_gem_txq1ptr_wr(&device, frameid.base);
 
+    int_handler = (void (*)(void *))p_int_handler;
+
     memcpy(mac, zynqmp_gem_mac, sizeof(zynqmp_gem_mac));
+
     ZYNQMP_GEM_DEBUG("on create queue return.\n");
 
     return SYS_ERR_OK;
+}
+
+static void on_transmit_start(struct zynqmp_gem_devif_binding *b) {
+    zynqmp_gem_netctl_tsp_wrf(&device, 0x1);
 }
 
 static void export_devif_cb(void *st, errval_t err, iref_t iref)
@@ -293,8 +303,8 @@ static void export_devif_cb(void *st, errval_t err, iref_t iref)
 
 static errval_t connect_devif_cb(void *st, struct zynqmp_gem_devif_binding *b)
 {
-
     b->rpc_rx_vtbl.create_queue_call = on_create_queue;
+    b->rx_vtbl.transmit_start = on_transmit_start;
     b->st = st;
     return SYS_ERR_OK;
 }
@@ -309,15 +319,15 @@ static void zynqmp_gem_init_mngif(struct zynqmp_gem_state *st)
 }
 
 static void zynqmp_gem_init(void) {
-    //errval_t err;
+    errval_t err;
 
     ZYNQMP_GEM_DEBUG("Init hardware.\n");
     return ;
     zynqmp_gem_hardware_init();
-    /*err = inthandler_setup_arm(zynqmp_gem_interrupt_handler, NULL, ZYNQMP_GEM_IRQ);
+    err = inthandler_setup_arm(zynqmp_gem_interrupt_handler, NULL, ZYNQMP_GEM_IRQ);
     if (err_is_fail(err)) {
         USER_PANIC_ERR(err, "interrupt setup failed.");
-    }*/
+    }
 
     ZYNQMP_GEM_DEBUG("Hardware initialized.\n");
 
@@ -350,5 +360,5 @@ int main(int argc, char *argv[])
 
     ZYNQMP_GEM_DEBUG("Manager interface started.\n");
 
-    //polling_loop();
+    polling_loop();
 }

@@ -19,7 +19,9 @@
     flounderBindings = [ "zynqmp_gem_devif"],
     flounderDefs = [ "zynqmp_gem_devif" ],
     mackerelDevices = [ "zynqmp_gem" ],
-    addLibraries = libDeps [ "netQmng", "lwip", "netd", "driverkit"],
+    addLibraries = libDeps [ "driverkit", "thc", "netQmng", 
+                             "contmng", "net_device_manager", "skb",
+                             "spawndomain", "netd" , "net", "lwip"],
     addCFlags = [ "-D ZYNQMP_GEM_DEBUG_ON" ]
   }
 ]
