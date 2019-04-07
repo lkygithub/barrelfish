@@ -32,8 +32,8 @@ module /armv8/sbin/serial_kernel irq=53
 
 # For networking
 module /armv8/sbin/zynqmp_gem auto
-module /armv8/sbin/NGD_mng cardname=zynqmp_gem
-module /armv8/sbin/netd cardname=zynqmp_gem
+module /armv8/sbin/NGD_mng cardname=zynqmp_gem filtertype=3 totalqueues=2
+module /armv8/sbin/netd cardname=zynqmp_gem queueid=1
 
 # General user domains
 module /armv8/sbin/fish nospawn

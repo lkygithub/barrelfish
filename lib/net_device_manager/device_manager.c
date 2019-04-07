@@ -43,6 +43,10 @@ static struct filters_tx_vtbl *lookup_filt_mng(uint8_t filt_mng_type)
                 return get_sfn5122f_filt_mng_sign();
                 break;
 
+        case 3: // Zynqmp gem filter manager
+                return get_zynqmp_gem_filt_mng_sign();
+                break;
+                
         default: // Unknown filter manager
                 USER_PANIC("Filter Manager type %"PRIu8" not supported\n",
                             filt_mng_type);
@@ -93,7 +97,7 @@ errval_t init_device_manager(char *dev_name, uint64_t valid_queues,
     } // for each queue
 
     // Also, for shared queue (qid = 0), use soft_filt_mng
-    qlist[0].filt_mng = lookup_filt_mng(0);
+    //qlist[0].filt_mng = lookup_filt_mng(0);
 
     return init_ports_service(dev_name);
 //    return SYS_ERR_OK;

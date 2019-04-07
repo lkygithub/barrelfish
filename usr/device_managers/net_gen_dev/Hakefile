@@ -11,8 +11,9 @@
 --------------------------------------------------------------------------
 
 [ build application { target = "NGD_mng",
-                        cFiles = [ "NGD_mng.c" ],
-		        addLibraries = [ "net_device_manager", "contmng", "netbench", "trace" ]
+                      cFiles = [ "NGD_mng.c" ],
+                      addCFlags = ["-D NET_GEN_DEV_MNG_SERVICE_DEBUG"],
+		              addLibraries = [ "net_device_manager", "contmng", "netbench", "trace" ]
                     }
 ]
 
