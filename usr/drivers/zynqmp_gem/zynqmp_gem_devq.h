@@ -48,9 +48,9 @@ static inline size_t zynqmp_gem_queue_free_rxslots(zynqmp_gem_queue_t* q)
     size_t size = q->n_rx_buffers;
 
     if (tail >= head) {
-        return size - (tail - head) -1; 
+        return size - (tail - head); 
     } else {
-        return size - (tail + size - head) -1; 
+        return size - (tail + size - head); 
     }
 }
 
@@ -62,9 +62,9 @@ static inline size_t zynqmp_gem_queue_free_txslots(zynqmp_gem_queue_t* q)
     size_t size = q->n_tx_buffers;
 
     if (tail >= head) {
-        return size - (tail - head) - 1; 
+        return size - (tail - head); 
     } else {
-        return size - (tail + size - head) - 1; 
+        return size - (tail + size - head); 
     }
 
 }

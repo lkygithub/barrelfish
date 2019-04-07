@@ -13,9 +13,11 @@
 [ build library { target = "net_device_manager",
                   cFiles = [ "port_service_impl.c", "device_manager.c",
                   "soft_filt_cl_impl.c", "e10k_filt_cl_impl.c",
-                  "sfn5122f_filt_cl_impl.c", "portalloc.c" ],
+                  "sfn5122f_filt_cl_impl.c", "zynqmp_gem_filt_cl_impl.c",
+                  "portalloc.c" ],
                   flounderBindings = [ "net_soft_filters", "net_ports",
-                                       "e10k", "sfn5122f" ],
+                                       "e10k", "sfn5122f", "zynqmp_gem_devif"],
+                  addCFlags = [ "-D DEVICE_MNG_SERVICE_DEBUG" ],
                   addLibraries = [ "bfdmuxtools", "trace", "lwip" ]
                  }
   

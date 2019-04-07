@@ -40,7 +40,9 @@ static void network_setup_helper(void)
     waitset_init(&lwip_waitset);
     thread_mutex_lock(&my_mutex);
     tcpip_init(NULL, NULL); 
+    debug_printf("my check zynqmp gem test 1\n");
     lwip_socket_init();
+    debug_printf("my check zynqmp gem test 2\n");
     thread_mutex_unlock(&my_mutex);
 
     debug_printf("[%"PRIuDOMAINID"]network_setup_helper():######### lwip initialized\n",
@@ -54,7 +56,7 @@ int main(int argc, char *argv[])
     char buf[BUFSIZE] = "hello world";
     struct sockaddr_in server_addr;
     int s, ret;
-
+    
     debug_printf("[%"PRIuDOMAINID"]main(): This is %s on core %d with %d args\n",
             disp_get_domain_id(), argv[0], mycore, argc);
 

@@ -274,6 +274,9 @@ void net_if_init(const char* cardname, uint64_t qid)
         err = zynqmp_gem_queue_create(&zynqmp_gem_q, int_handler);
         assert(err_is_ok(err));
         devq = (struct devq*)zynqmp_gem_q;
+        //Not sure if it is ok to use qid as bufid. It seems that it is only used
+        //in handle_filter_response in port_service_impl.c, where it is used as a matcher.
+        bufid = qid;
     } else {
         //This branch is not expected.
         //connect_to_driver called(and with ws)here just to avoid compile warnings.

@@ -147,18 +147,7 @@ errval_t start_networking(coreid_t core,
         return KALUGA_ERR_DRIVER_NOT_AUTO;
     }
 
-
-    if (!(strcmp(driver->binary, "net_sockets_server") == 0)) {
-        
         driver->allow_multi = 1;
-        /*uint64_t vendor_id, device_id, bus, dev, fun;
-        err = oct_read(record, "_ { bus: %d, device: %d, function: %d, vendor: %d, device_id: %d }",
-                       &bus, &dev, &fun, &vendor_id, &device_id);
-
-        char* pci_arg_str = malloc(26);
-        snprintf(pci_arg_str, 26, "%04"PRIx64":%04"PRIx64":%04"PRIx64":%04"
-                        PRIx64":%04"PRIx64, vendor_id, device_id, bus, dev, fun);*/
-
         err = default_start_function(core, driver, record, placeholder);
         if (err_is_fail(err)) {
             DEBUG_ERR(err, "Spawning %s failed.", driver->path);
@@ -166,34 +155,14 @@ errval_t start_networking(coreid_t core,
         }
 
         // cards with driver in seperate process
-        struct module_info* net_sockets = find_module("net_sockets_server");
-        if (net_sockets == NULL) {
-            printf("Net sockets server not found\n");
+        struct module_info* test = find_module("zynqmp_gem_test");
+        if (test == NULL) {
+            printf("Test not found\n");
             return KALUGA_ERR_DRIVER_NOT_AUTO;
         }
 
-        // Spawn net_sockets_server
-        net_sockets->argv[0] = "net_sockets_server";
-        net_sockets->argv[1] = "auto";
-        net_sockets->argv[2] = driver->binary;
-        net_sockets->argv[3] = NULL;
-
-        err = spawn_program(core, net_sockets->path, net_sockets->argv, environ, 0,
-                            get_did_ptr(net_sockets));
-        //free (pci_arg_str);
-    } else {
-        //driver->allow_multi = 1;
-        // TODO currently only for mxl4, might be other cards that 
-        // start the driver by creating a queue
-        /*if (!(driver->argc > 2)) {
-            driver->argv[driver->argc] = "mlx4";        
-            driver->argc++;
-            driver->argv[driver->argc] = NULL;
-        }*/
-
-        // All cards that start the driver by creating a device queue
-        err = default_start_function(core, driver, record, placeholder);
-    }
+        err = spawn_program(core, test->path, test->argv, environ, 0,
+                            get_did_ptr(test));
 
     return err;
 }

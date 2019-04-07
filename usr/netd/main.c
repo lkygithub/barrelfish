@@ -103,6 +103,9 @@ int main(int argc, char **argv)
                     argv[i]);
         }
 
+        if (strncmp(argv[i], "queueid=", strlen("queueid=") - 1) == 0) {
+            allocated_queue = atol(argv[i] + strlen("queueid="));
+        }
     } // end for: for each argument
 
     if (card_name == NULL) {

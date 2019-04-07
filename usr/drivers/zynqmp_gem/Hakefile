@@ -11,7 +11,8 @@
     cFiles = [ "devif_backend_zynqmp_gem.c"],
     flounderBindings = [ "zynqmp_gem_devif"],
     flounderDefs = [ "zynqmp_gem_devif" ],
-    mackerelDevices = [ "zynqmp_gem"]
+    mackerelDevices = [ "zynqmp_gem"],
+    addCFlags = [ "-D ZYNQMP_GEM_DEBUG_ON" ]
   },
   build application { target = "zynqmp_gem",
     cFiles = ["zynqmp_gem.c"],

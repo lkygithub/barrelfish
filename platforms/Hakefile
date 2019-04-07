@@ -394,7 +394,8 @@ let bin_rcce_lu = [ "/sbin/" ++ f | f <- [
                       --"net_sockets_server",
                       "NGD_mng",
                       "netd",
-                      "zynqmp_gem"
+                      "zynqmp_gem",
+                      "zynqmp_gem_test"
                       ] ]
 
     armv7Image target bootTarget cpuTarget physBase modules =
