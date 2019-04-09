@@ -26,6 +26,7 @@ struct dcb;
 enum sched_state {
     SCHED_RR,
     SCHED_RBED,
+    SCHED_HYBRID,
 };
 
 /**
@@ -92,6 +93,7 @@ static inline void print_kcb(void)
 }
 
 // XXX: this is from RBED, don't know how to properly have this here -SG
+#ifdef CONFIG_SCHEDULER_RBED
 extern struct dcb *queue_tail;
 static inline void switch_kcb(struct kcb *next)
 {
@@ -101,7 +103,14 @@ static inline void switch_kcb(struct kcb *next)
     // update queue tail to make associated assembly not choke
     queue_tail = kcb_current->queue_tail;
 }
-
+#else
+static inline void switch_kcb(struct kcb *next)
+{
+    assert (next != NULL);
+    kcb_current = next;
+    mdb_init(kcb_current);
+}
+#endif
 void kcb_add(struct kcb* new_kcb);
 errval_t kcb_remove(struct kcb *to_remove);
 void kcb_update_core_id(struct kcb *kcb);

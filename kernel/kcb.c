@@ -92,6 +92,19 @@ void kcb_update_core_id(struct kcb *kcb)
         disp->curr_core_id = my_core_id;
     }
 #elif CONFIG_SCHEDULER_RR
+    struct dcb *tmp = kcb->ring_current;
+    while (1) {
+        if (!tmp) break;
+        printk(LOG_NOTE, "[sched] updating current core id to %d for %s\n",
+                my_core_id, get_disp_name(tmp));
+        struct dispatcher_shared_generic *disp =
+            get_dispatcher_shared_generic(tmp->disp);
+        disp->curr_core_id = my_core_id;
+        tmp = tmp->next;
+        if (tmp == kcb->ring_current) break;
+    }
+//#error NYI!
+#elif CONFIG_SCHEDULER_HYBRID
 #error NYI!
 #else
 #error must define scheduler policy in Config.hs

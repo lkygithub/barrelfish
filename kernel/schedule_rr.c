@@ -40,6 +40,11 @@ struct dcb *schedule(void)
     return kcb_current->ring_current;
 }
 
+void schedule_now(struct dcb *dcb)
+{
+    // No-Op in RR scheduler
+}
+
 void make_runnable(struct dcb *dcb)
 {
     // Insert into schedule ring if not in there already
