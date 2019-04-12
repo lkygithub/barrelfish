@@ -59,6 +59,11 @@ struct dcb {
     unsigned short      weight;
     enum task_type      type;
 #endif
+#if defined(CONFIG_SCHEDULER_HYBRID)
+    systime_t   stime;//schedule time
+    systime_t   interval;//the timer interval after this dcb is dispatched
+    int64_t  task_id;//rr task => 0, rr interval => neg, rt task => pos
+#endif
 };
 
 static inline const char *get_disp_name(struct dcb *dcb)

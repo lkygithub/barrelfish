@@ -58,6 +58,10 @@ struct kcb {
     /// RBED scheduler state
     struct dcb *queue_head, *queue_tail;
     unsigned int u_hrt, u_srt, w_be, n_be;
+    /// HYBRID scheduler state
+    struct dcb *ringfifo_head_rt, *ringfifo_current_rt;
+    unsigned int rr_counter;
+    systime_t t_last_timeslice;
     /// current time since kernel start in timeslices. This is necessary to
     /// make the scheduler work correctly
     /// wakeup queue head
