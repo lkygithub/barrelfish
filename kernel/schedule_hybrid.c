@@ -17,6 +17,7 @@
 #include <kcb.h>
 
 #include <timer.h> // update_sched_timer
+#include <systime.h>
 
 /**
  * \brief Scheduler policy.

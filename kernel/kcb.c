@@ -83,6 +83,7 @@ errval_t kcb_remove(struct kcb *to_remove)
 
 void kcb_update_core_id(struct kcb *kcb)
 {
+    printf("my checkp update core id.\n");
 #ifdef CONFIG_SCHEDULER_RBED
     for (struct dcb *d = kcb->queue_head; d; d = d->next) {
         printk(LOG_NOTE, "[sched] updating current core id to %d for %s\n",
@@ -91,8 +92,22 @@ void kcb_update_core_id(struct kcb *kcb)
             get_dispatcher_shared_generic(d->disp);
         disp->curr_core_id = my_core_id;
     }
-#elif CONFIG_SCHEDULER_RR
-    struct dcb *tmp = kcb->ring_current;
+#elif defined(CONFIG_SCHEDULER_RR) || defined(CONFIG_SCHEDULER_HYBRID)
+    struct dcb *tmp;
+#ifdef CONFIG_SCHEDULER_HYBRID
+    tmp = kcb->ringfifo_current_rt;
+        while (1) {
+        if (!tmp) break;
+        printk(LOG_NOTE, "[sched] updating current core id to %d for %s\n",
+                my_core_id, get_disp_name(tmp));
+        struct dispatcher_shared_generic *disp =
+            get_dispatcher_shared_generic(tmp->disp);
+        disp->curr_core_id = my_core_id;
+        tmp = tmp->next;
+        if (tmp == kcb->ring_current) break;
+    }
+#endif
+    tmp = kcb->ring_current;
     while (1) {
         if (!tmp) break;
         printk(LOG_NOTE, "[sched] updating current core id to %d for %s\n",
@@ -103,9 +118,6 @@ void kcb_update_core_id(struct kcb *kcb)
         tmp = tmp->next;
         if (tmp == kcb->ring_current) break;
     }
-//#error NYI!
-#elif CONFIG_SCHEDULER_HYBRID
-#error NYI!
 #else
 #error must define scheduler policy in Config.hs
 #endif

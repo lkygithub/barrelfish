@@ -184,6 +184,7 @@ sys_dispatcher_setup(struct capability *to, capaddr_t cptr, uint8_t level,
     return SYSRET(SYS_ERR_OK);
 }
 
+#ifdef CONFIG_SCHEDULER_RBED
 struct sysret
 sys_dispatcher_properties(struct capability *to,
                           enum task_type type, unsigned long deadline,
@@ -192,7 +193,6 @@ sys_dispatcher_properties(struct capability *to,
 {
     assert(to->type == ObjType_Dispatcher);
 
-#ifdef CONFIG_SCHEDULER_RBED
     struct dcb *dcb = to->u.dispatcher.dcb;
 
     assert(type >= TASK_TYPE_BEST_EFFORT && type <= TASK_TYPE_HARD_REALTIME);
@@ -213,10 +213,25 @@ sys_dispatcher_properties(struct capability *to,
     dcb->weight = weight;
 
     make_runnable(dcb);
-#endif
 
     return SYSRET(SYS_ERR_OK);
 }
+#elif CONFIG_SCHEDULER_HYBRID
+// Assuming that this syscall is not used otherwhere.
+struct sysret
+sys_dispatcher_properties(struct capability *to,
+                          int64_t task_id, systime_t stime)
+{
+    assert(to->type == ObjType_Dispatcher);
+    struct dcb *dcb = to->u.dispatcher.dcb;
+    scheduler_remove(dcb);
+    assert(to->type == ObjType_Dispatcher);
+    dcb->task_id = task_id;
+    dcb->stime = stime;
+    make_runnable(dcb);
+    return SYSRET(SYS_ERR_OK);
+}
+#endif
 
 /**
  * \param root                  Source CSpace root cnode to invoke

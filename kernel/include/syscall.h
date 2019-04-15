@@ -27,11 +27,17 @@ struct sysret sys_suspend(bool halt);
 struct sysret
 sys_dispatcher_setup(struct capability *to, capaddr_t cptr, uint8_t level,
                      capaddr_t vptr, capaddr_t dptr, bool run, capaddr_t odptr);
+#if defined(CONFIG_SCHEDULER_RBED) || defined(CONFIG_SCHEDULER_RR)
 struct sysret
 sys_dispatcher_properties(struct capability *to,
                           enum task_type type, unsigned long deadline,
                           unsigned long wcet, unsigned long period,
                           unsigned long release, unsigned short weight);
+#elif CONFIG_SCHEDULER_HYBRID
+struct sysret
+sys_dispatcher_properties(struct capability *to,
+                          int64_t task_id, systime_t stime);
+#endif
 struct sysret
 sys_retype(struct capability *root, capaddr_t source_croot, capaddr_t source_cptr,
            gensize_t offset, enum objtype type, gensize_t objsize, size_t count,

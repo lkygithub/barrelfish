@@ -781,7 +781,6 @@ void arm_kernel_startup(void *pointer)
 
     MSG("Calling dispatch from arm_kernel_startup, entry point %#"PRIxLVADDR"\n",
             get_dispatcher_shared_aarch64(init_dcb->disp)->disabled_save_area.named.pc);
-
     // Should not return
     dispatch(init_dcb);
 
