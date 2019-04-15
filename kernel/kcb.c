@@ -83,7 +83,6 @@ errval_t kcb_remove(struct kcb *to_remove)
 
 void kcb_update_core_id(struct kcb *kcb)
 {
-    printf("my checkp update core id.\n");
 #ifdef CONFIG_SCHEDULER_RBED
     for (struct dcb *d = kcb->queue_head; d; d = d->next) {
         printk(LOG_NOTE, "[sched] updating current core id to %d for %s\n",

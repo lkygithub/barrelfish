@@ -27,9 +27,19 @@
 
 struct dcb *schedule(void)
 {
-
     systime_t now = systime_now();
-
+    if (kcb_current->ringfifo_head_rt == NULL)
+    {
+        //hybrid not up, fall back to rr.    
+        if(kcb_current->ring_current == NULL) return NULL;
+        struct dcb *dcb = kcb_current->ring_current;
+#ifdef CONFIG_ONESHOT_TIMER
+        update_sched_timer(kernel_now + kernel_timeslice);
+#endif
+        kcb_current->ring_current = kcb_current->ring_current->next;
+        dcb->interval = CONFIG_TIMESLICE;
+        return dcb;
+    }
     if (kcb_current->rr_counter == 0)
     {
         //rt mode
@@ -52,14 +62,13 @@ struct dcb *schedule(void)
         else
         {
             // rt task
-            dcb->interval = t_delta; 
+            dcb->interval = t_delta;
 #ifdef CONFIG_ONESHOT_TIMER
-            update_sched_timer(kernel_now + 
-                    ns_to_systime(t_delta * 1000000));
+            update_sched_timer(kernel_now +
+                               ns_to_systime(t_delta * 1000000));
 #endif
             kcb_current->ringfifo_current_rt = kcb_current->ringfifo_current_rt->next;
             return dcb;
-
         }
     }
     else
@@ -70,18 +79,24 @@ struct dcb *schedule(void)
         if (dcb == NULL)
             return NULL;
 
-        if (kcb_current->rr_counter == 0) {
-            if (kcb_current->t_last_timeslice != 0) {
+        if (kcb_current->rr_counter == 0)
+        {
+            if (kcb_current->t_last_timeslice != 0)
+            {
                 dcb->interval = kcb_current->t_last_timeslice;
 #ifdef CONFIG_ONESHOT_TIMER
                 update_sched_timer(kernel_now +
-                        ns_to_systime(kcb_current->t_last_timeslice * 1000000));
+                                   ns_to_systime(kcb_current->t_last_timeslice * 1000000));
 #endif
-            } else {
+            }
+            else
+            {
                 // the last timeslice is 0, should reschedule at once.
                 return schedule();
             }
-        } else {
+        }
+        else
+        {
             dcb->interval = CONFIG_TIMESLICE;
 #ifdef CONFIG_ONESHOT_TIMER
             update_sched_timer(kernel_now + kernel_timeslice);
