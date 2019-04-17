@@ -42,7 +42,7 @@ struct dcb *schedule(void)
     assert(kcb_current->n_tasks > 1);
     if (kcb_current->rr_counter == 0)
     {
-        //rt mode
+        //tt mode
         if (kcb_current->current_task == kcb_current->n_tasks - 1) {
             //The last task in the sched queue is not a valid task.
             //It serves calc of interval of the last - 1 task.
