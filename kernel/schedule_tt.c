@@ -65,7 +65,7 @@ struct dcb *schedule(void)
         }
         else
         {
-            // rt task
+            // tt task
             dcb->interval = t_delta;
 #ifdef CONFIG_ONESHOT_TIMER
             update_sched_timer(kernel_now +
