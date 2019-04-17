@@ -14,6 +14,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include <barrelfish/barrelfish.h>
 #include <spawndomain/spawndomain.h>
 #include <barrelfish/monitor_client.h>
@@ -156,6 +157,15 @@ static errval_t spawn(struct capref domain_cap, const char *path,
             return err_push(err, SPAWN_ERR_COPY_DOMAIN_CAP);
         }
     }
+
+#ifdef CONFIG_SCHEDULER_TT
+    if (strcmp(argv[0], "rt_task") == 0) {
+        int64_t task_id = strtoll(argv[1], NULL, 10);
+        systime_t tstart = strtoll(argv[2], NULL, 10);
+        invoke_dispatcher_enq_tt(si->dcb, task_id, tstart);
+    }
+#endif
+
 
     /* run the domain */
     err = spawn_run(&si);

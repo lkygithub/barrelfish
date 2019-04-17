@@ -307,6 +307,12 @@ invoke_dispatcher_properties(struct capref dispatcher,
                        wcet, period, release, weight).error;
 }
 
+static inline errval_t
+invoke_dispatcher_enq_tt(struct capref dispatcher, int64_t task_id, systime_t tstart)
+{
+    return cap_invoke3(dispatcher, DispatcherCmd_Enq_TT, task_id, tstart).error;
+}
+
 
 static inline errval_t invoke_dispatcher_dump_ptables(struct capref dispcap)
 {

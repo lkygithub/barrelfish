@@ -184,13 +184,13 @@ sys_dispatcher_setup(struct capability *to, capaddr_t cptr, uint8_t level,
     return SYSRET(SYS_ERR_OK);
 }
 
-#ifdef CONFIG_SCHEDULER_RBED
 struct sysret
 sys_dispatcher_properties(struct capability *to,
                           enum task_type type, unsigned long deadline,
                           unsigned long wcet, unsigned long period,
                           unsigned long release, unsigned short weight)
 {
+#ifdef CONFIG_SCHEDULER_RBED
     assert(to->type == ObjType_Dispatcher);
 
     struct dcb *dcb = to->u.dispatcher.dcb;
@@ -213,25 +213,27 @@ sys_dispatcher_properties(struct capability *to,
     dcb->weight = weight;
 
     make_runnable(dcb);
+#endif
 
     return SYSRET(SYS_ERR_OK);
 }
-#elif CONFIG_SCHEDULER_HYBRID
-// Assuming that this syscall is not used otherwhere.
+
 struct sysret
-sys_dispatcher_properties(struct capability *to,
-                          int64_t task_id, systime_t stime)
+sys_dispatcher_enq_tt(struct capability *to,
+                          int64_t task_id, systime_t tstart)
 {
+#ifdef CONFIG_SCHEDULER_TT
     assert(to->type == ObjType_Dispatcher);
+
     struct dcb *dcb = to->u.dispatcher.dcb;
-    scheduler_remove(dcb);
-    assert(to->type == ObjType_Dispatcher);
     dcb->task_id = task_id;
-    dcb->stime = stime;
-    make_runnable(dcb);
+    // The left dcb can be null or an already existed one according to the 
+    // right dcb's task_id
+    dcb = insert_into_hash_tbl(dcb); 
+    insert_into_sched_tbl(dcb, tstart);
+#endif
     return SYSRET(SYS_ERR_OK);
 }
-#endif
 
 /**
  * \param root                  Source CSpace root cnode to invoke

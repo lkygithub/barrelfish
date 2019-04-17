@@ -1,6 +1,6 @@
 /**
  * \file
- * \brief Kernel realtime round-robin hybrid scheduling policy
+ * \brief Kernel round-robin tt mixed scheduling policy
  */
 
 /*
@@ -27,36 +27,40 @@
 
 struct dcb *schedule(void)
 {
-    systime_t now = systime_now();
-    if (kcb_current->ringfifo_head_rt == NULL)
+    if (!kcb_current->tt_started)
     {
-        //hybrid not up, fall back to rr.    
+        //tt not up, fall back to rr.    
         if(kcb_current->ring_current == NULL) return NULL;
         struct dcb *dcb = kcb_current->ring_current;
 #ifdef CONFIG_ONESHOT_TIMER
         update_sched_timer(kernel_now + kernel_timeslice);
 #endif
         kcb_current->ring_current = kcb_current->ring_current->next;
-        dcb->interval = CONFIG_TIMESLICE;
+        dcb->interval = CONFIG_TIMESLICE * 1000;
         return dcb;
     }
+    assert(kcb_current->n_tasks > 1);
     if (kcb_current->rr_counter == 0)
     {
         //rt mode
-        struct dcb *dcb = kcb_current->ringfifo_current_rt;
+        if (kcb_current->current_task == kcb_current->n_tasks - 1) {
+            //The last task in the sched queue is not a valid task.
+            //It serves calc of interval of the last - 1 task.
+            //Thus current_task should be reset to 0.
+            kcb_current->current_task = 0;
+        }
+        systime_t t_delta = kcb_current->sched_tbl[kcb_current->current_task + 1].tstart -
+                kcb_current->sched_tbl[kcb_current->current_task].tstart;
+        struct dcb *dcb = kcb_current->sched_tbl[kcb_current->current_task].dcb;
+
         if (dcb == NULL)
-            return NULL;
-        // assume that there are at least 2 elements in the rt queue.
-        assert(dcb->next != dcb);
-        systime_t t_delta = dcb->next->stime - now;
-        if (dcb->task_id < 0)
         {
             // rr task interval
-            // whats the dimension of t_delta? ms?
+            // the dimension of t_delta is supposed to be us
             // the dimension of CONFIG_TIMESLICE is supposed to be ms, and is currently set to 1ms.
-            kcb_current->rr_counter = t_delta / CONFIG_TIMESLICE + 1;
-            kcb_current->t_last_timeslice = t_delta % CONFIG_TIMESLICE;
-            kcb_current->ringfifo_current_rt = kcb_current->ringfifo_current_rt->next;
+            kcb_current->rr_counter = t_delta / (CONFIG_TIMESLICE * 1000) + 1;
+            kcb_current->last_timeslice = t_delta % (CONFIG_TIMESLICE * 1000);
+            kcb_current->current_task++;
             return schedule();
         }
         else
@@ -65,9 +69,9 @@ struct dcb *schedule(void)
             dcb->interval = t_delta;
 #ifdef CONFIG_ONESHOT_TIMER
             update_sched_timer(kernel_now +
-                               ns_to_systime(t_delta * 1000000));
+                               ns_to_systime(t_delta * 1000));
 #endif
-            kcb_current->ringfifo_current_rt = kcb_current->ringfifo_current_rt->next;
+            kcb_current->current_task++;
             return dcb;
         }
     }
@@ -81,12 +85,12 @@ struct dcb *schedule(void)
 
         if (kcb_current->rr_counter == 0)
         {
-            if (kcb_current->t_last_timeslice != 0)
+            if (kcb_current->last_timeslice != 0)
             {
-                dcb->interval = kcb_current->t_last_timeslice;
+                dcb->interval = kcb_current->last_timeslice;
 #ifdef CONFIG_ONESHOT_TIMER
                 update_sched_timer(kernel_now +
-                                   ns_to_systime(kcb_current->t_last_timeslice * 1000000));
+                                   ns_to_systime(kcb_current->t_last_timeslice * 1000));
 #endif
             }
             else
@@ -97,7 +101,7 @@ struct dcb *schedule(void)
         }
         else
         {
-            dcb->interval = CONFIG_TIMESLICE;
+            dcb->interval = CONFIG_TIMESLICE * 1000;
 #ifdef CONFIG_ONESHOT_TIMER
             update_sched_timer(kernel_now + kernel_timeslice);
 #endif
@@ -105,36 +109,45 @@ struct dcb *schedule(void)
         kcb_current->ring_current = kcb_current->ring_current->next;
         return dcb;
     }
-
-    return kcb_current->ring_current;
 }
 
 void schedule_now(struct dcb *dcb)
 {
-    // No-Op in Hybrid scheduler
+    // No-Op in tt scheduler
+}
+
+struct dcb* insert_into_hash_tbl(struct dcb *dcb) {
+    // No-op for rr interval;
+    if (dcb->task_id < 0) return NULL;
+    if (dcb->task_id > 0) {
+        int index = dcb->task_id % N_BUCKETS;
+        if (kcb_current->hash_tbl[index] == NULL) {
+            kcb_current->hash_tbl[index] = dcb;
+        } else {
+            struct dcb *tmp = kcb_current->hash_tbl[index];
+            do {
+                if (tmp->task_id == dcb->task_id) return tmp;
+            } while(tmp->next != NULL);
+            tmp->next = dcb;
+            dcb->prev = tmp;
+        }
+    }
+    return dcb;
+}
+
+void insert_into_sched_tbl(struct dcb *dcb, systime_t tstart) {
+    if (tstart < 0) {
+        kcb_current->tt_started = true;
+        tstart = -tstart;
+    }
+    kcb_current->sched_tbl[kcb_current->n_tasks].dcb = dcb;
+    kcb_current->sched_tbl[kcb_current->n_tasks].tstart = tstart;
+    kcb_current->n_tasks++;
 }
 
 void make_runnable(struct dcb *dcb)
 {
-    if (dcb->task_id != 0)
-    {
-        // rr interval or rt task
-        if (kcb_current->ringfifo_head_rt == NULL)
-        {
-            dcb->prev = dcb;
-            dcb->next = dcb;
-            kcb_current->ringfifo_head_rt = dcb;
-            kcb_current->ringfifo_current_rt = dcb;
-        }
-        else
-        {
-            dcb->prev = kcb_current->ringfifo_head_rt->prev;
-            dcb->next = kcb_current->ringfifo_head_rt;
-            kcb_current->ringfifo_head_rt->prev->next = dcb;
-            kcb_current->ringfifo_head_rt->prev = dcb;
-        }
-    }
-    else
+    if (dcb->task_id == 0)
     {
         // rr task
         // Insert into schedule ring if not in there already
@@ -155,6 +168,7 @@ void make_runnable(struct dcb *dcb)
             kcb_current->ring_current->next = dcb;
         }
     }
+    // No-op for tt task and rr interval.
 }
 
 /**
@@ -168,41 +182,7 @@ void make_runnable(struct dcb *dcb)
  */
 void scheduler_remove(struct dcb *dcb)
 {
-    if (dcb->task_id != 0)
-    {
-        // rr interval or rt task
-        assert(kcb_current->ringfifo_head_rt != NULL);
-        struct dcb *tmp = kcb_current->ringfifo_head_rt;
-        do
-        {
-            if (tmp == dcb)
-            {
-                //remove it
-                if (tmp->next == tmp)
-                {
-                    // last in queue
-                    tmp->next = NULL;
-                    tmp->prev = NULL;
-                    kcb_current->ringfifo_head_rt = NULL;
-                    kcb_current->ringfifo_current_rt = NULL;
-                }
-                else
-                {
-                    if (tmp == kcb_current->ringfifo_head_rt)
-                        kcb_current->ringfifo_head_rt = tmp->next;
-                    if (tmp == kcb_current->ringfifo_current_rt)
-                        kcb_current->ringfifo_current_rt = tmp->next;
-                    tmp->next->prev = tmp->prev;
-                    tmp->prev->next = tmp->next;
-                    tmp->next = NULL;
-                    tmp->prev = NULL;
-                }
-            }
-            tmp = tmp->next;
-        } while (tmp != kcb_current->ringfifo_head_rt);
-        // not in queue, no-op.
-    }
-    else
+    if (dcb->task_id == 0)
     {
         // rr task
         // No-op if not in scheduler ring

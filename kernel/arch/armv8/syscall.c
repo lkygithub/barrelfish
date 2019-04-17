@@ -89,8 +89,6 @@ handle_dispatcher_properties(
     int argc
     )
 {
-    printf("my checkp dispatcher property.\n");
-#ifdef CONFIG_SCHEDULER_RBED
     struct registers_aarch64_syscall_args* sa = &context->syscall_args;
     assert(8 == argc);
 
@@ -98,13 +96,20 @@ handle_dispatcher_properties(
     uint16_t weight = sa->arg3 & 0xffff;
     return sys_dispatcher_properties(to, type, sa->arg4,
                                      sa->arg5, sa->arg6, sa->arg7, weight);
-#elif CONFIG_SCHEDULER_HYBRID
-    //FIXME: why RBED uses arg3 as its first available argument?
-    //It seems only arg0 and arg1 are reserved for special use.
-    struct registers_aarch64_syscall_args* sa = &context->syscall_args;
-    return sys_dispatcher_properties(to, (int64_t)sa->arg2, sa->arg3);
-#endif
 }
+
+static struct sysret
+handle_dispatcher_enq_tt(
+    struct capability* to,
+    arch_registers_state_t* context,
+    int argc
+)
+{
+    struct registers_aarch64_syscall_args* sa = &context->syscall_args;
+    int64_t task_id = sa->arg2;
+    systime_t tstart = sa->arg3;
+    return sys_dispatcher_enq_tt(to, task_id, tstart);
+} 
 
 static struct sysret
 handle_dispatcher_perfmon(
@@ -879,6 +884,7 @@ static invocation_t invocations[ObjType_Num][CAP_MAX_CMD] = {
     [ObjType_Dispatcher] = {
         [DispatcherCmd_Setup]       = handle_dispatcher_setup,
         [DispatcherCmd_Properties]  = handle_dispatcher_properties,
+        [DispatcherCmd_Enq_TT]  = handle_dispatcher_enq_tt,
         [DispatcherCmd_PerfMon]     = handle_dispatcher_perfmon,
         [DispatcherCmd_DumpPTables]  = dispatcher_dump_ptables,
         [DispatcherCmd_DumpCapabilities] = dispatcher_dump_capabilities

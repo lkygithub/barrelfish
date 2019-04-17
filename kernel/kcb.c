@@ -83,6 +83,7 @@ errval_t kcb_remove(struct kcb *to_remove)
 
 void kcb_update_core_id(struct kcb *kcb)
 {
+
 #ifdef CONFIG_SCHEDULER_RBED
     for (struct dcb *d = kcb->queue_head; d; d = d->next) {
         printk(LOG_NOTE, "[sched] updating current core id to %d for %s\n",
@@ -91,19 +92,17 @@ void kcb_update_core_id(struct kcb *kcb)
             get_dispatcher_shared_generic(d->disp);
         disp->curr_core_id = my_core_id;
     }
-#elif defined(CONFIG_SCHEDULER_RR) || defined(CONFIG_SCHEDULER_HYBRID)
+#elif defined(CONFIG_SCHEDULER_RR) || defined(CONFIG_SCHEDULER_TT)
     struct dcb *tmp;
-#ifdef CONFIG_SCHEDULER_HYBRID
-    tmp = kcb->ringfifo_current_rt;
-        while (1) {
-        if (!tmp) break;
-        printk(LOG_NOTE, "[sched] updating current core id to %d for %s\n",
-                my_core_id, get_disp_name(tmp));
-        struct dispatcher_shared_generic *disp =
-            get_dispatcher_shared_generic(tmp->disp);
-        disp->curr_core_id = my_core_id;
-        tmp = tmp->next;
-        if (tmp == kcb->ring_current) break;
+#ifdef CONFIG_SCHEDULER_TT
+    for (int i = 0; i < kcb_current->n_tasks; i++) {
+        for (tmp = kcb_current->hash_tbl[i]; tmp; tmp = tmp->next) {
+            printk(LOG_NOTE, "[sched] updating current core id to %d for %s\n",
+                    my_core_id, get_disp_name(tmp));
+            struct dispatcher_shared_generic *disp =
+                get_dispatcher_shared_generic(tmp->disp);
+            disp->curr_core_id = my_core_id;
+        }
     }
 #endif
     tmp = kcb->ring_current;

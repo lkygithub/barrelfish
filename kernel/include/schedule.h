@@ -26,6 +26,11 @@ void make_runnable(struct dcb *dcb);
 /* schedule(r) */
 void schedule_now(struct dcb *dcb);
 
+#ifdef CONFIG_SCHEDULER_TT
+struct dcb* insert_into_hash_tbl(struct dcb *dcb);
+void insert_into_sched_tbl(struct dcb *dcb, systime_t tstart);
+#endif
+
 /**
  * \brief Remove 'dcb' from scheduler ring.
  *

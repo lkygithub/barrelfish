@@ -884,7 +884,6 @@ errval_t spawn_load_with_bootinfo(struct spawninfo *si, struct bootinfo *bi,
         return err_push(err, SPAWN_ERR_ELF_MAP);
     }
 
-
     /* Determine cpu type */
     err = spawn_determine_cputype(si, binary);
     if (err_is_fail(err)) {
@@ -917,6 +916,7 @@ errval_t spawn_load_with_bootinfo(struct spawninfo *si, struct bootinfo *bi,
     if (err_is_fail(err)) {
         return err_push(err, SPAWN_ERR_SETUP_DISPATCHER);
     }
+
 
     /* Map bootinfo */
     // XXX: Confusion address translation about l/gen/addr in entry

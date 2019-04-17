@@ -20,13 +20,21 @@
 #include <irq.h>
 #include <mdb/mdb_tree.h>
 
+#define MAX_N_TTTASKS 1024
+#define N_BUCKETS 64
+
 struct cte;
 struct dcb;
 
 enum sched_state {
     SCHED_RR,
     SCHED_RBED,
-    SCHED_HYBRID,
+    SCHED_TT,
+};
+
+struct tt_task_entry {
+    systime_t tstart; //tt task start time(us). the last tt task has a neg tstart.
+    struct dcb *dcb; //pointer for fast access.
 };
 
 /**
@@ -58,10 +66,15 @@ struct kcb {
     /// RBED scheduler state
     struct dcb *queue_head, *queue_tail;
     unsigned int u_hrt, u_srt, w_be, n_be;
-    /// HYBRID scheduler state
-    struct dcb *ringfifo_head_rt, *ringfifo_current_rt;
-    unsigned int rr_counter;
-    systime_t t_last_timeslice;
+    /// TT scheduler state
+    struct tt_task_entry sched_tbl[MAX_N_TTTASKS]; // schedule table
+    struct dcb * hash_tbl[N_BUCKETS]; // hash storage for dcbs.
+    bool tt_started; //the last tt task enqueued will set this value to true
+    unsigned int n_tasks; //number of tasks in sched_tbl
+    unsigned int current_task; // index of currently scheduled task in sched_tbl
+    unsigned int rr_counter; // for tt state machine
+    systime_t last_timeslice; // the length of the last timeslice of an rr interval.
+
     /// current time since kernel start in timeslices. This is necessary to
     /// make the scheduler work correctly
     /// wakeup queue head

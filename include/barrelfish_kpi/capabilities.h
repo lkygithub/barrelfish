@@ -429,6 +429,7 @@ enum kernel_cmd {
 enum dispatcher_cmd {
     DispatcherCmd_Setup,            ///< Set dispatcher parameters
     DispatcherCmd_Properties,       ///< Set dispatcher properties
+    DispatcherCmd_Enq_TT,           ///< Enqueue dispatcher for tt scheduler
     DispatcherCmd_PerfMon,          ///< Performance monitoring
     DispatcherCmd_SetupGuest,       ///< Set up the DCB of a guest domain
     DispatcherCmd_DumpPTables,      ///< Dump hw page tables of dispatcher

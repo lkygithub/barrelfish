@@ -256,7 +256,7 @@ void handle_irq(arch_registers_state_t* save_area, uintptr_t fault_pc,
     gicv3_ack_irq(irq);
 
     if (irq == 30 || irq==29) {
-#ifdef CONFIG_SCHEDULER_HYBRID
+#ifdef CONFIG_SCHEDULER_TT
         struct dcb *dcb = schedule();
         timer_reset(dcb->interval);
         //wakeup queue is no concerned by this scheduler
@@ -302,7 +302,7 @@ void handle_irq_kernel(arch_registers_state_t* save_area, uintptr_t fault_pc,
     gicv3_ack_irq(irq);
 
     if (irq == 30 || irq==29) {
-#ifdef CONFIG_SCHEDULER_HYBRID
+#ifdef CONFIG_SCHEDULER_TT
         struct dcb *dcb = schedule();
         timer_reset(dcb->interval);
         dispatch(dcb);

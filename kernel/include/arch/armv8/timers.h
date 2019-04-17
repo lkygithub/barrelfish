@@ -43,7 +43,11 @@ void timers_init(int timeslice);
  *
  * @param ms millisecons
  */
+#ifdef CONFIG_SCHEDULER_TT
+void timer_reset(uint64_t us);
+#else
 void timer_reset(uint64_t ms);
+#endif
 
 /**
  * @brief obtains the current frequency

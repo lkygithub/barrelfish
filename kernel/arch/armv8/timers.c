@@ -69,8 +69,11 @@ void timers_init(int timeslice)
 
     while(timer_is_set())
         ;
-
+#ifdef CONFIG_SCHEDULER_TT
+    timer_reset(timeslice * 1000);
+#else
     timer_reset(timeslice);
+#endif
 
     armv8_PMCR_EL0_t pmcr = 0;
     pmcr = armv8_PMCR_EL0_E_insert(pmcr, 1); /* All counters are enabled.*/
@@ -100,11 +103,17 @@ void timers_init(int timeslice)
  *
  * @param ms
  */
+#ifdef CONFIG_SCHEDULER_TT
+void timer_reset(uint64_t us)
+{
+    armv8_CNTP_TVAL_EL0_wr(NULL, us * (systime_frequency / 1000));
+}
+#else
 void timer_reset(uint64_t ms)
 {
     armv8_CNTP_TVAL_EL0_wr(NULL, ms * systime_frequency);
 }
-
+#endif
 
 systime_t systime_now(void)
 {
