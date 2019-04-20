@@ -70,7 +70,7 @@ void timers_init(int timeslice)
     while(timer_is_set())
         ;
 #ifdef CONFIG_SCHEDULER_TT
-    timer_reset(timeslice * 1000);
+    timer_reset(timeslice * 1000000);
 #else
     timer_reset(timeslice);
 #endif
@@ -104,9 +104,9 @@ void timers_init(int timeslice)
  * @param ms
  */
 #ifdef CONFIG_SCHEDULER_TT
-void timer_reset(uint64_t us)
+void timer_reset(uint64_t ns)
 {
-    armv8_CNTP_TVAL_EL0_wr(NULL, us * (systime_frequency / 1000));
+    armv8_CNTP_TVAL_EL0_wr(NULL, ns * systime_frequency / 1000000);
 }
 #else
 void timer_reset(uint64_t ms)

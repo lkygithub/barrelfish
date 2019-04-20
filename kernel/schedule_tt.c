@@ -19,14 +19,23 @@
 #include <timer.h> // update_sched_timer
 #include <systime.h>
 
+#define TT_THRESHOLD (50 * 1000) //ns. decides whether the task should be scheduled.
+#define ABS_SUB(a, b) ((a > b) ? (a - b) : (b - a))
 /**
  * \brief Scheduler policy.
  *
  * \return Next DCB to schedule or NULL if wait for interrupts.
  */
 
+unsigned int prev_sched_index(void) {
+
+    if (kcb_current->current_task == 0) return kcb_current->n_sched - 2;
+    else return kcb_current->current_task - 1;
+}
+
 struct dcb *schedule(void)
 {
+    systime_t now = systime_now();
     if (!kcb_current->tt_started)
     {
         //tt not up, fall back to rr.    
@@ -36,18 +45,29 @@ struct dcb *schedule(void)
         update_sched_timer(kernel_now + kernel_timeslice);
 #endif
         kcb_current->ring_current = kcb_current->ring_current->next;
-        dcb->interval = CONFIG_TIMESLICE * 1000;
+        dcb->interval = ns_to_systime(CONFIG_TIMESLICE * 1000000);
         return dcb;
     }
-    assert(kcb_current->n_tasks > 1);
+    assert(kcb_current->n_sched > 1);
+    if (!kcb_current->t_base) kcb_current->t_base = now;
     if (kcb_current->rr_counter == 0)
     {
         //tt mode
-        if (kcb_current->current_task == kcb_current->n_tasks - 1) {
+        if (kcb_current->current_task == kcb_current->n_sched - 1) {
             //The last task in the sched queue is not a valid task.
             //It serves calc of interval of the last - 1 task.
             //Thus current_task should be reset to 0.
             kcb_current->current_task = 0;
+        }
+        if (ABS_SUB(kcb_current->sched_tbl[kcb_current->current_task].tstart + kcb_current->t_base, now) 
+                > ns_to_systime(TT_THRESHOLD)) {
+            //Schedule called from dispatcher exit.
+            unsigned int i = prev_sched_index();
+            assert(kcb_current->sched_tbl[kcb_current->current_task].tstart + kcb_current->t_base > now);
+            assert(kcb_current->sched_tbl[i].tstart + kcb_current->t_base < now);
+            kcb_current->sched_tbl[i].dcb->etime += now - kcb_current->t_base - 
+                    kcb_current->sched_tbl[i].tstart;
+            return NULL;
         }
         systime_t t_delta = kcb_current->sched_tbl[kcb_current->current_task + 1].tstart -
                 kcb_current->sched_tbl[kcb_current->current_task].tstart;
@@ -58,18 +78,19 @@ struct dcb *schedule(void)
             // rr task interval
             // the dimension of t_delta is supposed to be us
             // the dimension of CONFIG_TIMESLICE is supposed to be ms, and is currently set to 1ms.
-            kcb_current->rr_counter = t_delta / (CONFIG_TIMESLICE * 1000) + 1;
-            kcb_current->last_timeslice = t_delta % (CONFIG_TIMESLICE * 1000);
+            kcb_current->rr_counter = t_delta / ns_to_systime(CONFIG_TIMESLICE * 1000000) + 1;
+            kcb_current->last_timeslice = t_delta % ns_to_systime(CONFIG_TIMESLICE * 1000000);
             kcb_current->current_task++;
             return schedule();
         }
         else
         {
             // tt task
+            unsigned int i = prev_sched_index();
             dcb->interval = t_delta;
+            kcb_current->sched_tbl[i].dcb->etime += kcb_current->sched_tbl[i].dcb->interval;
 #ifdef CONFIG_ONESHOT_TIMER
-            update_sched_timer(kernel_now +
-                               ns_to_systime(t_delta * 1000));
+            update_sched_timer(kernel_now + t_delta);
 #endif
             kcb_current->current_task++;
             return dcb;
@@ -89,8 +110,7 @@ struct dcb *schedule(void)
             {
                 dcb->interval = kcb_current->last_timeslice;
 #ifdef CONFIG_ONESHOT_TIMER
-                update_sched_timer(kernel_now +
-                                   ns_to_systime(kcb_current->t_last_timeslice * 1000));
+                update_sched_timer(kernel_now + kcb_current->t_last_timeslice);
 #endif
             }
             else
@@ -101,7 +121,7 @@ struct dcb *schedule(void)
         }
         else
         {
-            dcb->interval = CONFIG_TIMESLICE * 1000;
+            dcb->interval = ns_to_systime(CONFIG_TIMESLICE * 1000000);
 #ifdef CONFIG_ONESHOT_TIMER
             update_sched_timer(kernel_now + kernel_timeslice);
 #endif
@@ -140,9 +160,9 @@ void insert_into_sched_tbl(struct dcb *dcb, systime_t tstart) {
         kcb_current->tt_started = true;
         tstart = -tstart;
     }
-    kcb_current->sched_tbl[kcb_current->n_tasks].dcb = dcb;
-    kcb_current->sched_tbl[kcb_current->n_tasks].tstart = tstart;
-    kcb_current->n_tasks++;
+    kcb_current->sched_tbl[kcb_current->n_sched].dcb = dcb;
+    kcb_current->sched_tbl[kcb_current->n_sched].tstart = tstart;
+    kcb_current->n_sched++;
 }
 
 void make_runnable(struct dcb *dcb)

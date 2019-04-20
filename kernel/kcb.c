@@ -95,7 +95,7 @@ void kcb_update_core_id(struct kcb *kcb)
 #elif defined(CONFIG_SCHEDULER_RR) || defined(CONFIG_SCHEDULER_TT)
     struct dcb *tmp;
 #ifdef CONFIG_SCHEDULER_TT
-    for (int i = 0; i < kcb_current->n_tasks; i++) {
+    for (int i = 0; i < kcb_current->n_sched; i++) {
         for (tmp = kcb_current->hash_tbl[i]; tmp; tmp = tmp->next) {
             printk(LOG_NOTE, "[sched] updating current core id to %d for %s\n",
                     my_core_id, get_disp_name(tmp));

@@ -258,7 +258,8 @@ void handle_irq(arch_registers_state_t* save_area, uintptr_t fault_pc,
     if (irq == 30 || irq==29) {
 #ifdef CONFIG_SCHEDULER_TT
         struct dcb *dcb = schedule();
-        timer_reset(dcb->interval);
+        if (dcb) timer_reset(systime_to_ns(dcb->interval));
+        else timer_reset(CONFIG_TIMESLICE * 1000000);
         //wakeup queue is no concerned by this scheduler
         //wakeup_check(systime_now());
         dispatch(dcb);
@@ -304,7 +305,8 @@ void handle_irq_kernel(arch_registers_state_t* save_area, uintptr_t fault_pc,
     if (irq == 30 || irq==29) {
 #ifdef CONFIG_SCHEDULER_TT
         struct dcb *dcb = schedule();
-        timer_reset(dcb->interval);
+        if (dcb) timer_reset(systime_to_ns(dcb->interval));
+        else timer_reset(CONFIG_TIMESLICE * 1000000);
         dispatch(dcb);
 #else
         timer_reset(CONFIG_TIMESLICE);
