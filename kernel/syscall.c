@@ -55,7 +55,6 @@ sys_dispatcher_setup(struct capability *to, capaddr_t cptr, uint8_t level,
     assert(dcb != dcb_current);
 
     lpaddr_t lpaddr;
-
     /* 0. Handle sys_dispatcher_setup for guest domains */
     if (cptr == 0x0) {
         assert(dcb->is_vm_guest);
@@ -220,7 +219,7 @@ sys_dispatcher_properties(struct capability *to,
 
 struct sysret
 sys_dispatcher_enq_tt(struct capability *to,
-                          int64_t task_id, systime_t tstart)
+                          int64_t task_id, int64_t tstart)
 {
 #ifdef CONFIG_SCHEDULER_TT
     assert(to->type == ObjType_Dispatcher);

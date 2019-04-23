@@ -18,7 +18,7 @@ int main(int argc, char *argv[])
 {
 	if (argc < 2) printf("missing argument.\n");
 	while (1) {
-		printf("test_sched: %s\n", argv[1]);
+		printf("test_rr_sched: %s\n", argv[1]);
 	}
 	return EXIT_SUCCESS;
 }

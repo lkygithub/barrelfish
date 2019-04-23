@@ -34,7 +34,7 @@ sys_dispatcher_properties(struct capability *to,
                           unsigned long release, unsigned short weight);
 struct sysret
 sys_dispatcher_enq_tt(struct capability *to,
-                          int64_t task_id, systime_t tstart);
+                          int64_t task_id, int64_t tstart);
 struct sysret
 sys_retype(struct capability *root, capaddr_t source_croot, capaddr_t source_cptr,
            gensize_t offset, enum objtype type, gensize_t objsize, size_t count,

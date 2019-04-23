@@ -10,7 +10,10 @@
 --
 --------------------------------------------------------------------------
 
-[ build application { target = "test_sched",
-                      cFiles = [ "test_sched.c" ]
+[ build application { target = "test_rr_sched",
+                      cFiles = [ "test_rr_sched.c" ]
+                    },
+  build application { target = "test_tt_sched",
+                      cFiles = [ "test_tt_sched.c" ]
                     }
 ]

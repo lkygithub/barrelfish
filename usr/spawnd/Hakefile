@@ -35,6 +35,7 @@
                       flounderDefs = [ "monitor", "monitor_blocking" ],
                       flounderExtraDefs = [ ("monitor_blocking",["rpcclient"]) ],
                       flounderBindings = [ "spawn" ],
+                      addCFlags = ["-DUSE_TT_SCHEDULER"],
                       architectures = [ "armv7", "armv8" ]
                     }
 ]

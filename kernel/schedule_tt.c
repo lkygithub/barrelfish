@@ -20,7 +20,7 @@
 #include <systime.h>
 
 #define TT_THRESHOLD (50 * 1000) //ns. decides whether the task should be scheduled.
-#define ABS_SUB(a, b) ((a > b) ? (a - b) : (b - a))
+#define ABS_SUB(a, b) (((a) > (b)) ? ((a) - (b)) : ((b) - (a)))
 /**
  * \brief Scheduler policy.
  *
@@ -35,7 +35,6 @@ unsigned int prev_sched_index(void) {
 
 struct dcb *schedule(void)
 {
-    systime_t now = systime_now();
     if (!kcb_current->tt_started)
     {
         //tt not up, fall back to rr.    
@@ -49,6 +48,7 @@ struct dcb *schedule(void)
         return dcb;
     }
     assert(kcb_current->n_sched > 1);
+    systime_t now = systime_now();
     if (!kcb_current->t_base) kcb_current->t_base = now;
     if (kcb_current->rr_counter == 0)
     {
@@ -59,22 +59,36 @@ struct dcb *schedule(void)
             //Thus current_task should be reset to 0.
             kcb_current->current_task = 0;
         }
+        //printf("my checkp 0.\n");
         if (ABS_SUB(kcb_current->sched_tbl[kcb_current->current_task].tstart + kcb_current->t_base, now) 
                 > ns_to_systime(TT_THRESHOLD)) {
+            //printf("my checkp tstart:%d.\n", kcb_current->sched_tbl[kcb_current->current_task].tstart);
+            //printk(LOG_ERR, "my checkp tbase:%d.\n", kcb_current->t_base);
+            //printk(LOG_ERR, "my checkp now:%d.\n", now);
+            //printf("my checkp abs:%d.\n", ABS_SUB(kcb_current->sched_tbl[kcb_current->current_task].tstart + kcb_current->t_base, now));
             //Schedule called from dispatcher exit.
             unsigned int i = prev_sched_index();
             assert(kcb_current->sched_tbl[kcb_current->current_task].tstart + kcb_current->t_base > now);
             assert(kcb_current->sched_tbl[i].tstart + kcb_current->t_base < now);
-            kcb_current->sched_tbl[i].dcb->etime += now - kcb_current->t_base - 
-                    kcb_current->sched_tbl[i].tstart;
+            if (kcb_current->sched_tbl[i].dcb) {
+                kcb_current->sched_tbl[i].dcb->etime += now - kcb_current->t_base - 
+                        kcb_current->sched_tbl[i].tstart;
+            }
             return NULL;
         }
+        //printf("my checkp 1.\n");
         systime_t t_delta = kcb_current->sched_tbl[kcb_current->current_task + 1].tstart -
                 kcb_current->sched_tbl[kcb_current->current_task].tstart;
         struct dcb *dcb = kcb_current->sched_tbl[kcb_current->current_task].dcb;
 
+        unsigned int i = prev_sched_index();
+        if (kcb_current->sched_tbl[i].dcb) {
+            kcb_current->sched_tbl[i].dcb->etime += kcb_current->sched_tbl[i].dcb->interval;
+        }
+
         if (dcb == NULL)
         {
+            //printf("my checkp 11.\n");
             // rr task interval
             // the dimension of t_delta is supposed to be us
             // the dimension of CONFIG_TIMESLICE is supposed to be ms, and is currently set to 1ms.
@@ -85,19 +99,21 @@ struct dcb *schedule(void)
         }
         else
         {
+            //printf("my checkp 12.\n");
             // tt task
-            unsigned int i = prev_sched_index();
             dcb->interval = t_delta;
-            kcb_current->sched_tbl[i].dcb->etime += kcb_current->sched_tbl[i].dcb->interval;
+
 #ifdef CONFIG_ONESHOT_TIMER
             update_sched_timer(kernel_now + t_delta);
 #endif
             kcb_current->current_task++;
+            //printf("my checkp 13.\n");
             return dcb;
         }
     }
     else
     {
+        //printf("my checkp rr start.\n");
         // rr mode
         kcb_current->rr_counter--;
         struct dcb *dcb = kcb_current->ring_current;
@@ -127,6 +143,7 @@ struct dcb *schedule(void)
 #endif
         }
         kcb_current->ring_current = kcb_current->ring_current->next;
+        //printf("my checkp rr end.\n");
         return dcb;
     }
 }
@@ -155,13 +172,13 @@ struct dcb* insert_into_hash_tbl(struct dcb *dcb) {
     return dcb;
 }
 
-void insert_into_sched_tbl(struct dcb *dcb, systime_t tstart) {
+void insert_into_sched_tbl(struct dcb *dcb, int64_t tstart) {
     if (tstart < 0) {
         kcb_current->tt_started = true;
         tstart = -tstart;
     }
     kcb_current->sched_tbl[kcb_current->n_sched].dcb = dcb;
-    kcb_current->sched_tbl[kcb_current->n_sched].tstart = tstart;
+    kcb_current->sched_tbl[kcb_current->n_sched].tstart = ns_to_systime(tstart * 1000);
     kcb_current->n_sched++;
 }
 

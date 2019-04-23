@@ -69,7 +69,6 @@ handle_dispatcher_setup(
     )
 {
     assert(8 == argc);
-
     struct registers_aarch64_syscall_args* sa = &context->syscall_args;
 
     capaddr_t root  = sa->arg2;
@@ -107,7 +106,7 @@ handle_dispatcher_enq_tt(
 {
     struct registers_aarch64_syscall_args* sa = &context->syscall_args;
     int64_t task_id = sa->arg2;
-    systime_t tstart = ns_to_systime(sa->arg3 * 1000);
+    int64_t tstart = sa->arg3;
     return sys_dispatcher_enq_tt(to, task_id, tstart);
 } 
 

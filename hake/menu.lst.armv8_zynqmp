@@ -32,7 +32,8 @@ module /armv8/sbin/serial_kernel irq=53
 
 
 # General user domains
-module /armv8/sbin/test_sched a
-module /armv8/sbin/test_sched b
+#module /armv8/sbin/test_rr_sched a
+#module /armv8/sbin/test_rr_sched b
+module /armv8/sbin/test_tt_sched
 module /armv8/sbin/fish nospawn
 module /armv8/sbin/angler serial0.terminal xterm
