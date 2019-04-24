@@ -7,7 +7,7 @@
  */
 #include <kernel.h>
 
-#define TT_TRACING_SLOT_NUM           2048
+#define TT_TRACING_SLOT_NUM           1024
 #define TT_TRACING_ENTRY_SIZE         16 // bytes
 #define TT_TRACING_CORE_BUFF_SIZE (TT_TRACING_ENTRY_SIZE * TT_TRACING_SLOT_NUM)
 
@@ -19,16 +19,15 @@ typedef union {
         uint64_t event : 8;
         uint64_t subsys : 8;
     } named;
-    
 } tt_tracing_slot_t;
 
 struct tt_tracing_buff_each_core {
     tt_tracing_slot_t slots[TT_TRACING_SLOT_NUM];
-}
+};
 
 struct tt_tracing_buff {
     struct tt_tracing_buff_each_core cores[0]; // variable length
-}
+};
 
 STATIC_ASSERT_SIZEOF(struct tt_tracing_buff_each_core, TT_TRACING_CORE_BUFF_SIZE);
 STATIC_ASSERT_SIZEOF(tt_tracing_slot_t, TT_TRACING_ENTRY_SIZE);
@@ -58,7 +57,7 @@ STATIC_ASSERT_SIZEOF(tt_tracing_slot_t, TT_TRACING_ENTRY_SIZE);
  * Interface for tracing event
  */
 // init tt-tracing
-void tt_tracing_init(void *tt_tracing_buff);
+// void tt_tracing_init(void *tt_tracing_buff);
 // dump all logs
 void tt_tracing_dump_log(void);
 /*

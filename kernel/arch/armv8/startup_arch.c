@@ -1,7 +1,6 @@
 /*
  * Copyright (c) 2009,2010,2015, ETH Zurich.
- * Copyright (c) 2015, Hewlett Packard Enterprise Development LP.
- * All rights reserved.
+ * Copyright (c) 2015, Hewlett Packard Enterprise Development LP.  * All rights reserved.
  *
  * This file is distributed under the terms in the attached LICENSE file.
  * If you do not find this file, copies can be found by writing to:
@@ -941,11 +940,11 @@ static errval_t ttmp_msg_transfer(uint16_t msg_id)
 
 static void ttmp_service_loop(void)
 {
-    //unsigned int current = 0;
+    unsigned int current = 0;
     /* get msg sch table */
-    //struct ttmp_buff *ttmp_buffer = (struct ttmp_buff *)(global->ttmp_ctrl_info).ttmp_buff;
-    //union ttmp_sch_table_slot *sch_table = ttmp_buffer->sch_table;
-if 0
+    struct ttmp_buff *ttmp_buffer = (struct ttmp_buff *)(global->ttmp_ctrl_info).ttmp_buff;
+    union ttmp_sch_table_slot *sch_table = ttmp_buffer->sch_table;
+#if 0
     /* Test */
     uint16_t msg_id = 0 & 0xFFFF;
     int count = 0;
@@ -1011,7 +1010,6 @@ void arm_kernel_startup(void *pointer)
         MSG("Global tt-tracing buffer base is 0x%llx.\n", tt_tracing_buff_base);
         /* clean */
         memset((void *)tt_tracing_buff_base, 0, TT_TRACING_BUFF_SIZE);
-        tt_tracing_init((void *)tt_tracing_buff_base);
 #if 0   //not used
         print_page_tables_by_vaddr((lpaddr_t)armv8_TTBR1_EL1_rd(NULL), (lvaddr_t)TTMP_BUFF_BASE);
         dsp_map_ttmp_buff((lvaddr_t)TTMP_BUFF_BASE, ttmp_buff_base, TTMP_BUFF_SIZE);
@@ -1058,6 +1056,16 @@ void arm_kernel_startup(void *pointer)
             (app_alloc_phys_end - app_alloc_phys_start + 1) >> 10);
 
         kcb_current= (struct kcb *)local_phys_to_mem(core_data->kcb);
+
+#if 0
+        /* Test Time Triggered Tracing */
+        if (my_core_id % 2 == 1) {
+            tt_tracing_add_kernel_event(16, TT_TRACING_SUBSYS_KERNEL, TT_TRACING_KERNEL_SYS_SYNC_DONE);
+            tt_tracing_add_sche_event(32, TT_TRACING_SUBSYS_SCHE, TT_TRACING_SCHE_TASK_RELEASE, 1, 2);
+            tt_tracing_add_ttmp_event(64, TT_TRACING_SUBSYS_TTMP, TT_TRACING_TTMP_TRANSFER, 3, 4, 5, 6);
+        }
+        tt_tracing_dump_log();
+#endif
 
         /* Zynqmp core 3 is used to be tt-msg-passing core */
         struct platform_info pi;

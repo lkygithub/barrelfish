@@ -14,7 +14,7 @@
 struct tt_tracing_buff_fixed {
     struct tt_tracing_buff var;
     struct tt_tracing_buff_each_core cores[TT_TRACING_CORE_NUM];
-}
+};
 
 STATIC_ASSERT_SIZEOF(struct tt_tracing_buff_fixed, TT_TRACING_BUFF_SIZE);
 
