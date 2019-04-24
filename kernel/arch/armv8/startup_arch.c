@@ -40,6 +40,7 @@
 #include <efi.h>
 #include <arch/arm/gic.h>
 #include <arch/armv8/ttmp_zynqmp.h>
+#include <arch/armv8/tt_tracing_zynqmp.h>
 
 #define CNODE(cte)              get_address(&(cte)->cap)
 
@@ -1005,6 +1006,12 @@ void arm_kernel_startup(void *pointer)
         MSG("Global ttmp buffer base is 0x%llx.\n", ttmp_buff_base);
         /* clean */
         memset((void *)ttmp_buff_base, 0, TTMP_BUFF_SIZE);
+        /* alloc memory for tt_tracing */
+        lvaddr_t tt_tracing_buff_base = local_phys_to_mem(bsp_alloc_phys_aligned(TT_TRACING_BUFF_SIZE, BASE_PAGE_SIZE));
+        MSG("Global tt-tracing buffer base is 0x%llx.\n", tt_tracing_buff_base);
+        /* clean */
+        memset((void *)tt_tracing_buff_base, 0, TT_TRACING_BUFF_SIZE);
+        tt_tracing_init((void *)tt_tracing_buff_base);
 #if 0   //not used
         print_page_tables_by_vaddr((lpaddr_t)armv8_TTBR1_EL1_rd(NULL), (lvaddr_t)TTMP_BUFF_BASE);
         dsp_map_ttmp_buff((lvaddr_t)TTMP_BUFF_BASE, ttmp_buff_base, TTMP_BUFF_SIZE);
@@ -1024,7 +1031,7 @@ void arm_kernel_startup(void *pointer)
         global->ttmp_ctrl_info.sys_launch_time = 0u;
         global->ttmp_ctrl_info.cores = TTMP_TASK_CORE_NUM;
         global->ttmp_ctrl_info.ttmp_buff = (void *)ttmp_buff_base;
-
+        global->ttmp_ctrl_info.tt_tracing_buff = (void *)tt_tracing_buff_base;
 
         /* allocate initial KCB */
         kcb_current= (struct kcb *)local_phys_to_mem(

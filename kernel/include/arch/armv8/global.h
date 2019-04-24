@@ -39,7 +39,9 @@ struct global {
         systime_t sys_launch_time;  ///< the launch time of all cores after sync
         uint16_t cores;             ///< the number of cores
         void *ttmp_buff;            ///< address of ttmp buffer
+        void *tt_tracing_buff;      ///< address of tt tracing buffer
     } ttmp_ctrl_info;
+
 };
 
 extern struct global *global;
