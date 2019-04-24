@@ -15,6 +15,7 @@
 #define TTMP_TX_SLOT_NUM        64
 #define TTMP_RX_SLOT_NUM        64
 #define TTMP_SET_SLOT_NUM       4
+#define TTMP_SCHD_ENTRY_NUM     1024
 
 typedef struct
 {
@@ -45,12 +46,12 @@ union ttmp_sch_table_slot {
 };
 
 struct ttmp_msg_buff_each_core {
-    struct ttmp_msg_buff_slot tx_slots[64];
-    struct ttmp_msg_buff_slot rx_slots[64];
+    struct ttmp_msg_buff_slot tx_slots[TTMP_TX_SLOT_NUM];
+    struct ttmp_msg_buff_slot rx_slots[TTMP_RX_SLOT_NUM];
 };
 
 struct ttmp_buff {
-    union ttmp_sch_table_slot sch_table[1024];
+    union ttmp_sch_table_slot sch_table[TTMP_SCHD_ENTRY_NUM];
     struct ttmp_msg_buff_each_core cores[0]; // variable length
 };
 
