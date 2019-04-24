@@ -944,7 +944,7 @@ static void ttmp_service_loop(void)
     /* get msg sch table */
     //struct ttmp_buff *ttmp_buffer = (struct ttmp_buff *)(global->ttmp_ctrl_info).ttmp_buff;
     //union ttmp_sch_table_slot *sch_table = ttmp_buffer->sch_table;
-
+if 0
     /* Test */
     uint16_t msg_id = 0 & 0xFFFF;
     int count = 0;
@@ -955,7 +955,9 @@ static void ttmp_service_loop(void)
     }
     printf("####transfer successed in %d times\n", count);
     while(1);
-#if 0
+#endif
+
+#if 1
     /* service loop */
     while (1) {
         /* check tail */
