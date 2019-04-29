@@ -78,20 +78,25 @@ struct dcb *schedule(void)
     } else {
         // tt mode
         assert(kcb_current->n_sched >= 2);
+
+        if (!kcb_current->time_triggered && kcb_current->t_base) {
+            // make sure entered in timer interrupt. No-op otherwise.
+            /*if (kcb_current->t_base + kcb_current->sched_tbl[kcb_current->current_task].tstart_shift <= systime_now()) {
+                printk(LOG_ERR, "my checkp current_task, tbase, shift, now:%d, %ld, %ld, %ld.\n", kcb_current->current_task, kcb_current->t_base, kcb_current->sched_tbl[kcb_current->current_task].tstart_shift, systime_now());
+            }*/
+            systime_t next_time = kcb_current->t_base + kcb_current->sched_tbl[kcb_current->current_task].tstart_shift;
+            assert(next_time > systime_now());
+            timer_set(next_time);
+            return NULL;
+            //wait_for_interrupt();
+        }
+
         if (kcb_current->current_task == kcb_current->n_sched - 1)
         {
             //The last task in the sched queue is not a valid task.
             //It serves calc of tstart of the first task in the next round.
             //Thus current_task should be reset to 0.
             kcb_current->current_task = 0;
-        }
-
-        if (!kcb_current->time_triggered) {
-            // make sure entered in timer interrupt. No-op otherwise.
-            assert(kcb_current->t_base + kcb_current->sched_tbl[kcb_current->current_task].tstart_shift > systime_now());
-            timer_set(kcb_current->t_base + kcb_current->sched_tbl[kcb_current->current_task].tstart_shift);
-            return NULL;
-            //wait_for_interrupt();
         }
 
         // accumulate the last schduled task's execution time before reset tbase.
@@ -124,7 +129,6 @@ struct dcb *schedule(void)
         }
         */
 
-        //printf("my checkp 1.\n");
         struct dcb *dcb = kcb_current->sched_tbl[kcb_current->current_task].dcb;
         if (dcb == NULL)
         {
