@@ -37,17 +37,14 @@
  */
 void timers_init(int timeslice);
 
-
 /**
  * @brief resets the timer to fire in $ms milliseconds
  *
  * @param ms millisecons
  */
-#ifdef CONFIG_SCHEDULER_TT
-void timer_reset(uint64_t ns);
-#else
 void timer_reset(uint64_t ms);
-#endif
+
+void timer_set(systime_t timestamp);
 
 /**
  * @brief obtains the current frequency

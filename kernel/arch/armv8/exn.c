@@ -218,10 +218,11 @@ void handle_irq(arch_registers_state_t* save_area, uintptr_t fault_pc,
     save_area->named.pc    = fault_pc;
 
     uint32_t irq = gicv3_get_active_irq();
-
+#if 0
     debug(SUBSYS_DISPATCH, "IRQ %"PRIu32" while %s\n", irq,
           dcb_current ? (dcb_current->disabled ? "disabled": "enabled") :
                         "in kernel");
+#endif
 
     if (dcb_current != NULL) {
         dispatcher_handle_t handle = dcb_current->disp;
@@ -239,7 +240,6 @@ void handle_irq(arch_registers_state_t* save_area, uintptr_t fault_pc,
             dcb_current->disabled = false;
         }
     }
-
 /* XXX - put this back. */
 #if 0
     if (pit_handle_irq(irq)) {
@@ -254,15 +254,11 @@ void handle_irq(arch_registers_state_t* save_area, uintptr_t fault_pc,
     else
 #endif
     gicv3_ack_irq(irq);
-
     if (irq == 30 || irq==29) {
 #ifdef CONFIG_SCHEDULER_TT
+        switch_tt_flag();
         struct dcb *dcb = schedule();
-        if (dcb) {
-            timer_reset(systime_to_ns(dcb->interval));
-            if (dcb->interval != 1000) printk(LOG_ERR, "my checkp interval:%d/%d.\n", dcb->interval, systime_to_ns(dcb->interval));
-        }
-        else printk(LOG_ERR, "NULL dcb.\n");
+        switch_tt_flag();
         //wakeup queue is no concerned by this scheduler
         //wakeup_check(systime_now());
         dispatch(dcb);
@@ -307,9 +303,9 @@ void handle_irq_kernel(arch_registers_state_t* save_area, uintptr_t fault_pc,
 
     if (irq == 30 || irq==29) {
 #ifdef CONFIG_SCHEDULER_TT
+        switch_tt_flag();
         struct dcb *dcb = schedule();
-        if (dcb) timer_reset(systime_to_ns(dcb->interval));
-        else printk(LOG_ERR, "NULL dcb.\n");
+        switch_tt_flag();
         dispatch(dcb);
 #else
         timer_reset(CONFIG_TIMESLICE);

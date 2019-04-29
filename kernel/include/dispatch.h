@@ -62,7 +62,6 @@ struct dcb {
 #if defined(CONFIG_SCHEDULER_TT)
     int64_t  task_id;//rr task => 0, rr interval => neg, rt task => pos
     systime_t   release_time, etime, wcet, period, deadline;
-    systime_t   interval;//the timer interval after this dcb is dispatched.
 #endif
 };
 

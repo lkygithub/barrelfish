@@ -15,136 +15,149 @@
 #include <kernel.h>
 #include <dispatch.h>
 #include <kcb.h>
+#include <exec.h>
 
+#include <timers.h>
 #include <timer.h> // update_sched_timer
 #include <systime.h>
 
-#define TT_THRESHOLD (50 * 1000) //ns. decides whether the task should be scheduled.
-#define ABS_SUB(a, b) (((a) > (b)) ? ((a) - (b)) : ((b) - (a)))
+#define TT_THRESHOLD 1000 //us. decides whether the task should be scheduled.
+#define TT_DBG
+
 /**
  * \brief Scheduler policy.
  *
  * \return Next DCB to schedule or NULL if wait for interrupts.
  */
 
-unsigned int prev_sched_index(void) {
+#ifdef TT_DBG
+static systime_t atime[512];
+static systime_t stime[512];
+static unsigned int myindex = 0;
+#endif
 
-    if (kcb_current->current_task == 0) return kcb_current->n_sched - 2;
-    else return kcb_current->current_task - 1;
+unsigned int prev_sched_index(void)
+{
+    if (kcb_current->current_task == 0)
+        return kcb_current->n_sched - 2;
+    else
+        return kcb_current->current_task - 1;
+}
+
+void switch_tt_flag(void) {
+    kcb_current->time_triggered = !kcb_current->time_triggered;
 }
 
 struct dcb *schedule(void)
 {
-    if (!kcb_current->tt_started)
+    if (kcb_current->tt_status == 0)
     {
-        //tt not up, fall back to rr.    
-        if(kcb_current->ring_current == NULL) return NULL;
+        // rr mode
+        if (kcb_current->ring_current == NULL)
+        {
+            return NULL;
+        }
         struct dcb *dcb = kcb_current->ring_current;
-#ifdef CONFIG_ONESHOT_TIMER
-        update_sched_timer(kernel_now + kernel_timeslice);
-#endif
         kcb_current->ring_current = kcb_current->ring_current->next;
-        dcb->interval = ns_to_systime(CONFIG_TIMESLICE * 1000000);
+        if (!kcb_current->t_base) {
+            // tt scheduler not started.
+            timer_reset(CONFIG_TIMESLICE);
+        } else {
+            // tt scheduler running in rr mode.
+            systime_t next_tstart = kcb_current->sched_tbl[kcb_current->current_task].tstart_shift + kcb_current->t_base;
+            if (systime_now() + MS_TO_SYS_SCALE(CONFIG_TIMESLICE) >= next_tstart) {
+                assert(systime_now() < next_tstart);
+                //last timeslice in rr mode
+                kcb_current->tt_status = 1;
+                timer_set(next_tstart);
+            } else {
+                timer_reset(CONFIG_TIMESLICE);
+            }
+        }
         return dcb;
-    }
-    assert(kcb_current->n_sched > 1);
-    systime_t now = systime_now();
-    if (!kcb_current->t_base) kcb_current->t_base = now;
-    if (kcb_current->rr_counter == 0)
-    {
-        //tt mode
-        if (kcb_current->current_task == kcb_current->n_sched - 1) {
+    } else {
+        // tt mode
+        assert(kcb_current->n_sched >= 2);
+        if (kcb_current->current_task == kcb_current->n_sched - 1)
+        {
             //The last task in the sched queue is not a valid task.
-            //It serves calc of interval of the last - 1 task.
+            //It serves calc of tstart of the first task in the next round.
             //Thus current_task should be reset to 0.
             kcb_current->current_task = 0;
         }
-        //printf("my checkp 0.\n");
-        if (ABS_SUB(kcb_current->sched_tbl[kcb_current->current_task].tstart + kcb_current->t_base, now) 
-                > ns_to_systime(TT_THRESHOLD)) {
-            //printf("my checkp tstart:%d.\n", kcb_current->sched_tbl[kcb_current->current_task].tstart);
-            //printk(LOG_ERR, "my checkp tbase:%d.\n", kcb_current->t_base);
-            //printk(LOG_ERR, "my checkp now:%d.\n", now);
-            //printf("my checkp abs:%d.\n", ABS_SUB(kcb_current->sched_tbl[kcb_current->current_task].tstart + kcb_current->t_base, now));
-            //Schedule called from dispatcher exit.
-            unsigned int i = prev_sched_index();
-            assert(kcb_current->sched_tbl[kcb_current->current_task].tstart + kcb_current->t_base > now);
-            assert(kcb_current->sched_tbl[i].tstart + kcb_current->t_base < now);
-            if (kcb_current->sched_tbl[i].dcb) {
-                kcb_current->sched_tbl[i].dcb->etime += now - kcb_current->t_base - 
-                        kcb_current->sched_tbl[i].tstart;
-            }
+
+        if (!kcb_current->time_triggered) {
+            // make sure entered in timer interrupt. No-op otherwise.
+            assert(kcb_current->t_base + kcb_current->sched_tbl[kcb_current->current_task].tstart_shift > systime_now());
+            timer_set(kcb_current->t_base + kcb_current->sched_tbl[kcb_current->current_task].tstart_shift);
             return NULL;
+            //wait_for_interrupt();
         }
-        //printf("my checkp 1.\n");
-        systime_t t_delta = kcb_current->sched_tbl[kcb_current->current_task + 1].tstart -
-                kcb_current->sched_tbl[kcb_current->current_task].tstart;
-        struct dcb *dcb = kcb_current->sched_tbl[kcb_current->current_task].dcb;
 
+        // accumulate the last schduled task's execution time before reset tbase.
         unsigned int i = prev_sched_index();
-        if (kcb_current->sched_tbl[i].dcb) {
-            kcb_current->sched_tbl[i].dcb->etime += kcb_current->sched_tbl[i].dcb->interval;
+        if (kcb_current->sched_tbl[i].dcb)
+        {
+            kcb_current->sched_tbl[i].dcb->etime += systime_now() - kcb_current->t_base - kcb_current->sched_tbl[i].tstart_shift;
         }
 
+        if (kcb_current->current_task == 0) {
+            //Should reset shift base when a round is finished.
+            kcb_current->t_base = systime_now();
+        }
+        /*
+        systime_t tstart = kcb_current->sched_tbl[kcb_current->current_task].tstart_shift + kcb_current->t_base;
+        if (tstart + US_TO_SYS_SCALE(TT_THRESHOLD) < systime_now() ) {
+            // Schedule failure, should reset all statistical values.
+            for (i = 0; i < N_BUCKETS; i++) {
+                for (struct dcb *tmp = kcb_current->hash_tbl[i]; tmp != NULL; tmp = tmp->next) {
+                    tmp->etime = 0;
+                    // Maybe some other statistical values should be reseted too.
+                }
+            }
+            printk(LOG_ERR, "too late.\n");
+        } else if (systime_now() + US_TO_SYS_SCALE(TT_THRESHOLD) < tstart) {
+            // Should wait for interrupt.
+            printk(LOG_ERR, "too soon.\n");
+            // return NULL;
+            wait_for_interrupt();
+        }
+        */
+
+        //printf("my checkp 1.\n");
+        struct dcb *dcb = kcb_current->sched_tbl[kcb_current->current_task].dcb;
         if (dcb == NULL)
         {
-            //printf("my checkp 11.\n");
+            printk(LOG_ERR, "rr interval.\n");
             // rr task interval
-            // the dimension of t_delta is supposed to be us
-            // the dimension of CONFIG_TIMESLICE is supposed to be ms, and is currently set to 1ms.
-            kcb_current->rr_counter = t_delta / ns_to_systime(CONFIG_TIMESLICE * 1000000) + 1;
-            kcb_current->last_timeslice = t_delta % ns_to_systime(CONFIG_TIMESLICE * 1000000);
+            kcb_current->tt_status = 0;
             kcb_current->current_task++;
             return schedule();
         }
         else
         {
-            //printf("my checkp 12.\n");
             // tt task
-            dcb->interval = t_delta;
 
-#ifdef CONFIG_ONESHOT_TIMER
-            update_sched_timer(kernel_now + t_delta);
+#ifdef TT_DBG
+        if (myindex < 512) {
+            atime[myindex] = systime_now();
+            stime[myindex] = kcb_current->t_base + kcb_current->sched_tbl[kcb_current->current_task].tstart_shift;
+            myindex++;
+            if (myindex >= 512) {
+                for (myindex = 0; myindex < 512; myindex++) {
+                    printk(LOG_ERR, "my checkp atime/stime:%ld/%ld.\n", atime[myindex], stime[myindex]);
+                }
+                for (myindex = 0; myindex < 511; myindex++) {
+                    printk(LOG_ERR, "my checkp ainterval/sinterval:%ld/%ld.\n", atime[myindex + 1] - atime[myindex], stime[myindex + 1] - stime[myindex]);
+                }
+                myindex++;
+            }
+        }
 #endif
+            timer_set(kcb_current->t_base + kcb_current->sched_tbl[kcb_current->current_task + 1].tstart_shift);
             kcb_current->current_task++;
-            //printf("my checkp 13.\n");
             return dcb;
         }
-    }
-    else
-    {
-        //printf("my checkp rr start.\n");
-        // rr mode
-        kcb_current->rr_counter--;
-        struct dcb *dcb = kcb_current->ring_current;
-        if (dcb == NULL)
-            return NULL;
-
-        if (kcb_current->rr_counter == 0)
-        {
-            if (kcb_current->last_timeslice != 0)
-            {
-                dcb->interval = kcb_current->last_timeslice;
-#ifdef CONFIG_ONESHOT_TIMER
-                update_sched_timer(kernel_now + kcb_current->t_last_timeslice);
-#endif
-            }
-            else
-            {
-                // the last timeslice is 0, should reschedule at once.
-                return schedule();
-            }
-        }
-        else
-        {
-            dcb->interval = ns_to_systime(CONFIG_TIMESLICE * 1000000);
-#ifdef CONFIG_ONESHOT_TIMER
-            update_sched_timer(kernel_now + kernel_timeslice);
-#endif
-        }
-        kcb_current->ring_current = kcb_current->ring_current->next;
-        //printf("my checkp rr end.\n");
-        return dcb;
     }
 }
 
@@ -153,18 +166,26 @@ void schedule_now(struct dcb *dcb)
     // No-Op in tt scheduler
 }
 
-struct dcb* insert_into_hash_tbl(struct dcb *dcb) {
+struct dcb *insert_into_hash_tbl(struct dcb *dcb)
+{
     // No-op for rr interval;
-    if (dcb->task_id < 0) return NULL;
-    if (dcb->task_id > 0) {
+    if (dcb->task_id < 0)
+        return NULL;
+    if (dcb->task_id > 0)
+    {
         int index = dcb->task_id % N_BUCKETS;
-        if (kcb_current->hash_tbl[index] == NULL) {
+        if (kcb_current->hash_tbl[index] == NULL)
+        {
             kcb_current->hash_tbl[index] = dcb;
-        } else {
+        }
+        else
+        {
             struct dcb *tmp = kcb_current->hash_tbl[index];
-            do {
-                if (tmp->task_id == dcb->task_id) return tmp;
-            } while(tmp->next != NULL);
+            do
+            {
+                if (tmp->task_id == dcb->task_id)
+                    return tmp;
+            } while (tmp->next != NULL);
             tmp->next = dcb;
             dcb->prev = tmp;
         }
@@ -172,13 +193,15 @@ struct dcb* insert_into_hash_tbl(struct dcb *dcb) {
     return dcb;
 }
 
-void insert_into_sched_tbl(struct dcb *dcb, int64_t tstart) {
-    if (tstart < 0) {
-        kcb_current->tt_started = true;
-        tstart = -tstart;
+void insert_into_sched_tbl(struct dcb *dcb, int64_t tstart_shift)
+{
+    if (tstart_shift < 0)
+    {
+        kcb_current->tt_status = 1;
+        tstart_shift = -tstart_shift;
     }
     kcb_current->sched_tbl[kcb_current->n_sched].dcb = dcb;
-    kcb_current->sched_tbl[kcb_current->n_sched].tstart = ns_to_systime(tstart * 1000);
+    kcb_current->sched_tbl[kcb_current->n_sched].tstart_shift = US_TO_SYS_SCALE(tstart_shift);
     kcb_current->n_sched++;
 }
 
@@ -260,15 +283,15 @@ void scheduler_remove(struct dcb *dcb)
  */
 void scheduler_yield(struct dcb *dcb)
 {
-    if (dcb->prev == NULL || dcb->next == NULL)
+    /*if (dcb->prev == NULL || dcb->next == NULL)
     {
         struct dispatcher_shared_generic *dsg =
             get_dispatcher_shared_generic(dcb->disp);
         panic("Yield of %.*s not in scheduler queue", DISP_NAME_LEN,
               dsg->name);
-    }
+    }*/
 
-    // No-op for the round-robin scheduler
+    // No-op for the tt scheduler
 }
 
 void scheduler_reset_time(void)

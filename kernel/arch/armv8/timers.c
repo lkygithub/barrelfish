@@ -69,18 +69,14 @@ void timers_init(int timeslice)
 
     while(timer_is_set())
         ;
-#ifdef CONFIG_SCHEDULER_TT
-    timer_reset(timeslice * 1000000);
-#else
     timer_reset(timeslice);
-#endif
 
     armv8_PMCR_EL0_t pmcr = 0;
     pmcr = armv8_PMCR_EL0_E_insert(pmcr, 1); /* All counters are enabled.*/
     pmcr = armv8_PMCR_EL0_P_insert(pmcr, 1); /* reset all event counters */
     pmcr = armv8_PMCR_EL0_C_insert(pmcr, 1); /* reset all clock counters */
     pmcr = armv8_PMCR_EL0_D_insert(pmcr, 0); /* set counter to tick every clock cycle (1=ever 64th) */
-    pmcr = armv8_PMCR_EL0_X_insert(pmcr, 1); /* enable event support */
+    pmcr = armv8_PMCR_EL0_X_insert(pmcr, 0); /* enable event support */
     pmcr = armv8_PMCR_EL0_DP_insert(pmcr, 0); /* don't disable cycle counter */
     //pmcr = armv8_PMCR_EL0_N_insert(pmcr, 6);  /* N is RO ? */
     armv8_PMCR_EL0_wr(NULL, pmcr);
@@ -103,17 +99,15 @@ void timers_init(int timeslice)
  *
  * @param ms
  */
-#ifdef CONFIG_SCHEDULER_TT
-void timer_reset(uint64_t ns)
-{
-    armv8_CNTP_TVAL_EL0_wr(NULL, ns * systime_frequency / 1000000);
-}
-#else
 void timer_reset(uint64_t ms)
 {
     armv8_CNTP_TVAL_EL0_wr(NULL, ms * systime_frequency);
 }
-#endif
+
+void timer_set(systime_t timestamp)
+{
+    armv8_CNTP_CVAL_EL0_wr(NULL, timestamp);
+}
 
 systime_t systime_now(void)
 {

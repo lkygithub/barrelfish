@@ -17,6 +17,14 @@
 
 #include <barrelfish_kpi/types.h> /* systime_t */
 
+#define SCALE 1000 // translation between ns and systime seems weild. a scaler is needed.
+#define NS_TO_SYS_SCALE(ns) (ns_to_systime(ns) * SCALE)
+#define SYS_TO_NS_SCALE(sys) systime_to_ns((sys) / SCALE)
+#define US_TO_SYS_SCALE(us) NS_TO_SYS_SCALE(us * 1000)
+#define SYS_TO_US_SCALE(sys) (SYS_TO_NS_SCALE(sys) / 1000)
+#define MS_TO_SYS_SCALE(ms) US_TO_SYS_SCALE(ms * 1000)
+#define SYS_TO_MS_SCALE(sys) (SYS_TO_US_SCALE(sys) / 1000)
+
 /// Frequency of the system time ticks (systime)
 extern systime_t systime_frequency;
 

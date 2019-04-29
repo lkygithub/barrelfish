@@ -219,7 +219,7 @@ sys_dispatcher_properties(struct capability *to,
 
 struct sysret
 sys_dispatcher_enq_tt(struct capability *to,
-                          int64_t task_id, int64_t tstart)
+                          int64_t task_id, int64_t tstart_shift)
 {
 #ifdef CONFIG_SCHEDULER_TT
     assert(to->type == ObjType_Dispatcher);
@@ -229,7 +229,7 @@ sys_dispatcher_enq_tt(struct capability *to,
     // The left dcb can be null or an already existed one according to the 
     // right dcb's task_id
     dcb = insert_into_hash_tbl(dcb); 
-    insert_into_sched_tbl(dcb, tstart);
+    insert_into_sched_tbl(dcb, tstart_shift);
 #endif
     return SYSRET(SYS_ERR_OK);
 }

@@ -33,8 +33,8 @@ enum sched_state {
 };
 
 struct tt_task_entry {
-    systime_t tstart; //tt task start time(ticks). the last tt task has a neg tstart.
-    struct dcb *dcb; //pointer for fast access.
+    systime_t tstart_shift; //tt task start time(ticks). Shift value. the last tt task has a neg tstart.
+    struct dcb *dcb; // pointer for fast access.
 };
 
 /**
@@ -69,12 +69,11 @@ struct kcb {
     /// TT scheduler state
     struct tt_task_entry sched_tbl[N_SCHED_MAX]; // schedule table
     struct dcb * hash_tbl[N_BUCKETS]; // hash storage for dcbs.
-    bool tt_started; //the last tt task enqueued will set this value to true
+    unsigned int tt_status; //0:rr, 1:tt. the last tt task enqueued will set this value to true
     systime_t t_base; //the systime when tt schedule is called for the first time
     unsigned int n_sched; //number of tasks in sched_tbl
     unsigned int current_task; // index of currently scheduled task in sched_tbl
-    unsigned int rr_counter; // for tt state machine
-    systime_t last_timeslice; // the length of the last timeslice of an rr interval.
+    bool time_triggered; // true if schedule() is triggered by a timer interrupt.
 
     /// current time since kernel start in timeslices. This is necessary to
     /// make the scheduler work correctly
