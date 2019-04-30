@@ -43,3 +43,8 @@ errval_t sys_getchar(char *c)
     *c= ret.value;
     return ret.error;
 }
+
+errval_t sys_setoff_tt(void)
+{
+    return syscall1(SYSCALL_SETOFF_TT).error;
+}

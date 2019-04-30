@@ -66,7 +66,10 @@ struct dcb *schedule(void)
             // tt scheduler running in rr mode.
             systime_t next_tstart = kcb_current->sched_tbl[kcb_current->current_task].tstart_shift + kcb_current->t_base;
             if (systime_now() + MS_TO_SYS_SCALE(CONFIG_TIMESLICE) >= next_tstart) {
-                assert(systime_now() < next_tstart);
+                //assert(systime_now() < next_tstart);
+                if (systime_now() >= next_tstart) {
+                    printk(LOG_ERR, "my checkp assertion failed, now/next_tstart:%ld/%ld.\n", systime_now(), next_tstart);
+                }
                 //last timeslice in rr mode
                 kcb_current->tt_status = 1;
                 timer_set(next_tstart);
@@ -84,9 +87,9 @@ struct dcb *schedule(void)
             /*if (kcb_current->t_base + kcb_current->sched_tbl[kcb_current->current_task].tstart_shift <= systime_now()) {
                 printk(LOG_ERR, "my checkp current_task, tbase, shift, now:%d, %ld, %ld, %ld.\n", kcb_current->current_task, kcb_current->t_base, kcb_current->sched_tbl[kcb_current->current_task].tstart_shift, systime_now());
             }*/
-            systime_t next_time = kcb_current->t_base + kcb_current->sched_tbl[kcb_current->current_task].tstart_shift;
-            assert(next_time > systime_now());
-            timer_set(next_time);
+            systime_t next_tstart = kcb_current->t_base + kcb_current->sched_tbl[kcb_current->current_task].tstart_shift;
+            assert(next_tstart > systime_now());
+            timer_set(next_tstart);
             return NULL;
             //wait_for_interrupt();
         }
@@ -110,8 +113,8 @@ struct dcb *schedule(void)
             //Should reset shift base when a round is finished.
             kcb_current->t_base = systime_now();
         }
-        /*
-        systime_t tstart = kcb_current->sched_tbl[kcb_current->current_task].tstart_shift + kcb_current->t_base;
+        
+        /*systime_t tstart = kcb_current->sched_tbl[kcb_current->current_task].tstart_shift + kcb_current->t_base;
         if (tstart + US_TO_SYS_SCALE(TT_THRESHOLD) < systime_now() ) {
             // Schedule failure, should reset all statistical values.
             for (i = 0; i < N_BUCKETS; i++) {
@@ -120,19 +123,19 @@ struct dcb *schedule(void)
                     // Maybe some other statistical values should be reseted too.
                 }
             }
-            printk(LOG_ERR, "too late.\n");
+            printk(LOG_ERR, "too late, tstart/now:%ld/%ld.\n", tstart, systime_now());
         } else if (systime_now() + US_TO_SYS_SCALE(TT_THRESHOLD) < tstart) {
             // Should wait for interrupt.
             printk(LOG_ERR, "too soon.\n");
-            // return NULL;
-            wait_for_interrupt();
-        }
-        */
+            timer_set(tstart);
+            return NULL;
+            //wait_for_interrupt();
+        }*/
+        
 
         struct dcb *dcb = kcb_current->sched_tbl[kcb_current->current_task].dcb;
         if (dcb == NULL)
         {
-            printk(LOG_ERR, "rr interval.\n");
             // rr task interval
             kcb_current->tt_status = 0;
             kcb_current->current_task++;
@@ -152,9 +155,12 @@ struct dcb *schedule(void)
                     printk(LOG_ERR, "my checkp atime/stime:%ld/%ld.\n", atime[myindex], stime[myindex]);
                 }
                 for (myindex = 0; myindex < 511; myindex++) {
-                    printk(LOG_ERR, "my checkp ainterval/sinterval:%ld/%ld.\n", atime[myindex + 1] - atime[myindex], stime[myindex + 1] - stime[myindex]);
+                    printk(LOG_ERR, "my checkp i/ainterval/sinterval:%ld/%ld/%ld.\n", myindex, atime[myindex + 1] - atime[myindex], stime[myindex + 1] - stime[myindex]);
                 }
                 myindex++;
+                //return to rr scheduler.
+                kcb_current->t_base = 0;
+                kcb_current->tt_status = 0;
             }
         }
 #endif
@@ -199,11 +205,6 @@ struct dcb *insert_into_hash_tbl(struct dcb *dcb)
 
 void insert_into_sched_tbl(struct dcb *dcb, int64_t tstart_shift)
 {
-    if (tstart_shift < 0)
-    {
-        kcb_current->tt_status = 1;
-        tstart_shift = -tstart_shift;
-    }
     kcb_current->sched_tbl[kcb_current->n_sched].dcb = dcb;
     kcb_current->sched_tbl[kcb_current->n_sched].tstart_shift = US_TO_SYS_SCALE(tstart_shift);
     kcb_current->n_sched++;

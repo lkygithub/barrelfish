@@ -158,14 +158,11 @@ static errval_t spawn(struct capref domain_cap, const char *path,
         }
     }
 
-    if (strcmp(argv[0], "tt_task") == 0) printf("my checkp 0.\n");
 #ifdef USE_TT_SCHEDULER
     if (strcmp(argv[0], "tt_task") == 0) {
         int64_t task_id = strtoll(argv[1], NULL, 10);
         int64_t tstart = strtoll(argv[2], NULL, 10);
-    if (strcmp(argv[0], "tt_task") == 0) printf("my checkp 1.\n");
         invoke_dispatcher_enq_tt(si.dcb, task_id, tstart);
-    if (strcmp(argv[0], "tt_task") == 0) printf("my checkp 2.\n");
     }
 #endif
 
@@ -176,7 +173,6 @@ static errval_t spawn(struct capref domain_cap, const char *path,
         spawn_free(&si);
         return err_push(err, SPAWN_ERR_RUN);
     }
-    if (strcmp(argv[0], "tt_task") == 0) printf("my checkp 3.\n");
 
     // Allocate domain id
     struct ps_entry *pe = malloc(sizeof(struct ps_entry));
@@ -203,7 +199,6 @@ static errval_t spawn(struct capref domain_cap, const char *path,
     err = cap_copy(pe->dcb, si.dcb);
     assert(err_is_ok(err));
     pe->status = PS_STATUS_RUNNING;
-    if (strcmp(argv[0], "tt_task") == 0) printf("my checkp 4.\n");
     
     if (!capref_is_null(domain_cap)) {
         err = ps_hash_domain(pe, domain_cap);
@@ -219,7 +214,6 @@ static errval_t spawn(struct capref domain_cap, const char *path,
         free(pe);
     }
 
-    if (strcmp(argv[0], "tt_task") == 0) printf("my checkp 5.\n");
     // Store in target dispatcher frame
     struct dispatcher_generic *dg = get_dispatcher_generic(si.handle);
     dg->domain_id = *domainid;
@@ -230,7 +224,6 @@ static errval_t spawn(struct capref domain_cap, const char *path,
         return err_push(err, SPAWN_ERR_FREE);
     }
 
-    if (strcmp(argv[0], "tt_task") == 0) printf("my checkp 6.\n");
     return SYS_ERR_OK;
 }
 

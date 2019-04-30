@@ -60,6 +60,9 @@ struct sysret {
 #define SYSCALL_ARMv7_CACHE_CLEAN    8    ///< Clean (write back) by VA
 #define SYSCALL_ARMv7_CACHE_INVAL    9    ///< Invalidate (discard) by VA
 
+/* scpecific purposed syscalls for tt scheduler(only for armv8)*/
+#define SYSCALL_SETOFF_TT           8
+
 #define SYSCALL_COUNT               12     ///< Number of syscalls [0..SYSCALL_COUNT - 1]
 
 /*

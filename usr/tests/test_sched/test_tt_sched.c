@@ -1,30 +1,26 @@
 #include <barrelfish/barrelfish.h>
 #include <barrelfish/spawn_client.h>
 
-static char *task_id[] = {"1", "2", "3", "4", "5"};
-static char *tstart[] = {"0", "5000", "11000", "18000", "-30000"};
+uint64_t now(void);
+
+static char *task_id[] = {"1", "2", "-3", "4", "5"};
+static char *tstart[] = {"0", "5000", "11000", "18000", "30000"};
+
+uint64_t now(void)
+{
+
+    uint64_t cntpct;
+    __asm volatile(
+        "mrs %[cntpct], cntpct_el0 \n\t"
+        : [cntpct] "=r"(cntpct));
+    return cntpct;
+}
 
 int main(int argc, char *argv[])
 {
-    coreid_t core_id = disp_get_core_id();
-    errval_t err;
-    int i;
-    if (argc == 1)
+    if (!strcmp(argv[0], "tt_task"))
     {
-        //spawn
-        for (i = 0; i < sizeof(task_id) / sizeof(char *); i++)
-        {
-            char *xargv[] = {"tt_task", task_id[i], tstart[i], NULL};
-            printf("spawning... coreid:%d\n", core_id);
-            err = spawn_program(core_id, argv[0], xargv, NULL,
-                                SPAWN_FLAGS_DEFAULT, NULL);
-            printf("spawned.\n");
-            assert(err_is_ok(err));
-        }
-    }
-    else
-    {
-        i = 1234567;
+        int i = 1234567;
         while (true)
         {
             if (i % 2)
@@ -33,10 +29,47 @@ int main(int argc, char *argv[])
             {
                 i = i * 3 + 1;
             }
-            if (i == 22222222) {
+            if (i == 22222222)
+            {
                 printf("i = 2222\n");
             }
-            //printf("test tt sched taskid:%s\n", argv[1]);
+        }
+    }
+    else if (!strcmp(argv[0], "tt_starter"))
+    {
+        sys_setoff_tt();
+    }
+    else
+    {
+        errval_t err;
+        int i, j;
+        //spawn
+        printf("spawning...\n");
+        for (i = 1; i <= argc; i++)
+        {
+            coreid_t coreid = strtol(argv[i], NULL, 10);
+            for (j = 0; j < sizeof(task_id) / sizeof(char *); j++)
+            {
+                char *xargv[] = {"tt_task", task_id[j], tstart[j], NULL};
+                err = spawn_program(coreid, argv[0], xargv, NULL,
+                                    SPAWN_FLAGS_DEFAULT, NULL);
+                printf("spawned %d on core %d.\n", j, coreid);
+                assert(err_is_ok(err));
+            }
+        }
+
+        uint64_t base = now();
+        uint64_t twait = 0x50000000; //some seconds.
+        while (now() <= base + twait)
+            ;
+        for (i = 1; i <= argc; i++)
+        {
+            coreid_t coreid = strtol(argv[i], NULL, 10);
+            char *xargv[] = {"tt_starter", NULL};
+            err = spawn_program(coreid, argv[0], xargv, NULL,
+                                    SPAWN_FLAGS_DEFAULT, NULL);
+            printf("spawned tt starter on core %d\n", coreid);
+            assert(err_is_ok(err));
         }
     }
 }

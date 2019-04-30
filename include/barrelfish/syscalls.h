@@ -58,6 +58,7 @@ errval_t sys_print(const char *string, size_t length);
 
 errval_t sys_getchar(char *c);
 
+errval_t sys_setoff_tt(void);
 /**
  * \brief get time elapsed (in milliseconds) since system boot.
  */

@@ -234,6 +234,15 @@ sys_dispatcher_enq_tt(struct capability *to,
     return SYSRET(SYS_ERR_OK);
 }
 
+struct sysret
+sys_setoff_tt(void)
+{
+#ifdef CONFIG_SCHEDULER_TT
+    kcb_current->tt_status = 1;
+#endif
+    return SYSRET(SYS_ERR_OK);
+}
+
 /**
  * \param root                  Source CSpace root cnode to invoke
  * \param source_croot          Source capability cspace root

@@ -20,8 +20,15 @@
 #include <irq.h>
 #include <mdb/mdb_tree.h>
 
+#define TT_DBG
+
+#ifdef TT_DBG
+#define N_SCHED_MAX 16
+#define N_BUCKETS 8
+#else 
 #define N_SCHED_MAX 1024
 #define N_BUCKETS 64
+#endif
 
 struct cte;
 struct dcb;

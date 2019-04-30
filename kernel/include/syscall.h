@@ -36,6 +36,8 @@ struct sysret
 sys_dispatcher_enq_tt(struct capability *to,
                           int64_t task_id, int64_t tstart);
 struct sysret
+sys_setoff_tt(void);
+struct sysret
 sys_retype(struct capability *root, capaddr_t source_croot, capaddr_t source_cptr,
            gensize_t offset, enum objtype type, gensize_t objsize, size_t count,
            capaddr_t dest_cspace_ptr, capaddr_t dest_cnode_cptr,
