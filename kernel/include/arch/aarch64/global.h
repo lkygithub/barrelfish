@@ -31,6 +31,7 @@ struct global {
 
     uint32_t tickspersec;
     uint64_t tt_start_timestamp;
+    uint64_t *tt_task_sch_tbl_base;
 
     genpaddr_t notify[MAX_COREID];
 };
