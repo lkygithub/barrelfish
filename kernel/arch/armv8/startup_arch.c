@@ -1083,11 +1083,11 @@ void arm_kernel_startup(void *pointer)
         load_sche_tbl_img(tt_task_sche_module_name_0, task_sche_base, TT_TASK_SCHD_CORE_SIZE);
         // core 1
         task_sche_base += TT_TASK_SCHD_CORE_SIZE;
-        printf("%llx", task_sche_base);
+        //printf("%llx\n", task_sche_base);
         load_sche_tbl_img(tt_task_sche_module_name_1, task_sche_base, TT_TASK_SCHD_CORE_SIZE);
         // core 2
         task_sche_base += TT_TASK_SCHD_CORE_SIZE;
-        printf("%llx", task_sche_base);
+        //printf("%llx\n", task_sche_base);
         load_sche_tbl_img(tt_task_sche_module_name_2, task_sche_base, TT_TASK_SCHD_CORE_SIZE);
 
         /* allocate initial KCB */
