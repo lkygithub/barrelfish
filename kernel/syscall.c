@@ -923,17 +923,25 @@ struct sysret sys_ttmp_send(void)
     struct ttmp_buff *buffer = (global->ttmp_ctrl_info).ttmp_buff;
     struct ttmp_msg_buff_slot *dst_slot;
     /* copy msg into buffer*/
-    for(i = start_idx; i < start_idx + TTMP_SET_SLOT_NUM; i++) {
-        dst_slot = (buffer->cores[my_core_id]).tx_slots + i;
+    #if 1
+    for(int j = start_idx; j < start_idx + TTMP_SET_SLOT_NUM; j++) {
+        dst_slot = (buffer->cores[my_core_id]).tx_slots + j;
         /* check if it's used */
-        if ((dst_slot->head).valid)
+        if ((dst_slot->head).valid){
             continue;
+        }
         else {
             /* copy msg */
             memcpy(dst_slot, disp->ttmsg, TTMP_MSG_SLOT_SIZE);
             break;
         }
     }
+    #endif
+    #if 0
+    dst_slot = (buffer->cores[my_core_id]).tx_slots + start_idx;
+    memcpy(dst_slot, disp->ttmsg, TTMP_MSG_SLOT_SIZE);
+    i = start_idx;
+    #endif
 
     /* For Debug */
     //dump_ttmp_msg_buff(disp->ttask_id, 1); // 1 -> tx slots
@@ -967,11 +975,13 @@ struct sysret sys_ttmp_receive(void)
     struct ttmp_buff *buffer = global->ttmp_ctrl_info.ttmp_buff;
     struct ttmp_msg_buff_slot *dst_slot;
     /* copy msg into buffer*/
+#if 1
     for (i = start_idx; i < start_idx + TTMP_SET_SLOT_NUM; i++)
     {
         dst_slot = (buffer->cores[my_core_id]).rx_slots + i;
         uint16_t dst = ((my_core_id & 0xFF) << 8) | (disp->ttask_id & 0xFF);
         /* check if it's used */
+
         if (!(dst_slot->head).valid || (dst_slot->head).dst != dst)
             continue;
         else {
@@ -980,6 +990,13 @@ struct sysret sys_ttmp_receive(void)
             break;
         }
     }
+#endif
+#if 0
+    i = start_idx;
+    dst_slot = (buffer->cores[my_core_id]).rx_slots + i;
+    memcpy(disp->ttmsg, dst_slot, TTMP_MSG_SLOT_SIZE);
+#endif
+
 
     if (i == start_idx + TTMP_SET_SLOT_NUM)
         return SYSRET(TTMP_ERR_RX_NO_MSG);

@@ -40,6 +40,7 @@
 #include <arch/arm/gic.h>
 #include <arch/armv8/ttmp_zynqmp.h>
 #include <arch/armv8/tt_tracing_zynqmp.h>
+#include <systime.h>
 
 #define CNODE(cte)              get_address(&(cte)->cap)
 
@@ -944,20 +945,26 @@ static void ttmp_service_loop(void)
     /* get msg sch table */
     struct ttmp_buff *ttmp_buffer = (struct ttmp_buff *)(global->ttmp_ctrl_info).ttmp_buff;
     union ttmp_sch_table_slot *sch_table = ttmp_buffer->sch_table;
-#if 0
+#if 1
     /* Test */
-    uint16_t msg_id = 0 & 0xFFFF;
-    int count = 0;
+    //uint16_t msg_id = 0 & 0xFFFF;
+    uint64_t count = 0;
+    uint64_t time_0, time_1;
+    time_0 = systime_now();
+    uint64_t tp = sch_table[current].named.timestamp;
+    uint16_t msg_id = sch_table[current].named.msg_id;
     errval_t err = ttmp_msg_transfer(msg_id);
-    while(err_is_fail(err)) {
+    time_1 = systime_now();
+    printf("#### TEST tt-transfer cost: %lld, %lld, %lld\n", time_0, time_1, time_1 - time_0);
+    while(1) {
         err = ttmp_msg_transfer(msg_id);
-        count++;
+        count += tp;
     }
-    printf("####transfer successed in %d times\n", count);
-    while(1);
+    //printf("####transfer successed in %d times\n", count);
+    //while(1);
 #endif
 
-#if 1
+#if 0
     /* service loop */
     while (1) {
         /* check tail */

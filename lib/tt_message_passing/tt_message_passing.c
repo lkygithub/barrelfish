@@ -92,9 +92,9 @@ errval_t tt_msg_receive(uint8_t src_core_id, uint8_t src_task_id,
     errval_t err = SYS_ERR_OK;
     //bool was_enabled;
     //dispatcher_handle_t disp = disp_try_disable(&was_enabled);
-    PRINT_DEBUG("Start receive syscall\n");
+    //PRINT_DEBUG("Start receive syscall\n");
     err = sys_ttmp_receive();
-    PRINT_DEBUG("Receive syscall done\n");
+    //PRINT_DEBUG("Receive syscall done\n");
     if (err_is_fail(err)) {
         PRINT_ERR("Syscall err in %s line %d\n", __FILE__, __LINE__);
         goto out;
@@ -102,16 +102,18 @@ errval_t tt_msg_receive(uint8_t src_core_id, uint8_t src_task_id,
     /* get tt message from disp buffer */
     /* get disp tt-msg buffer */
     tt_msg_head_t *head = &((tt_msg_info.tt_msg)->head);
-    PRINT_DEBUG("Head addr is 0x%p\n", head);
+    //PRINT_DEBUG("Head addr is 0x%p\n", head);
     unsigned char *payload = ((tt_msg_info.tt_msg)->payload).value;
-    PRINT_DEBUG("Payload addr is 0x%p\n", payload);
+    //PRINT_DEBUG("Payload addr is 0x%p\n", payload);
     /* Check tt message header */
+#if 1
     if (head->src != ((src_core_id & 0xFF) << 8 | (src_task_id & 0xFF))
         || head-> valid != 1) {
             PRINT_ERR("Wrong header err in %s, line %d\n", __FILE__, __LINE__);
             err = TTMP_ERR_WRONG_HEADER;
             goto out;
     }
+#endif
     /* Setup size */
     *buff_size = head->size;
     /* Copy */
