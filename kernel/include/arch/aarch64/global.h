@@ -30,6 +30,7 @@ struct global {
     } locks;
 
     uint32_t tickspersec;
+    uint64_t tt_start_timestamp;
 
     genpaddr_t notify[MAX_COREID];
 };

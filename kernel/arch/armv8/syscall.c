@@ -1271,7 +1271,7 @@ void sys_syscall(uint64_t a0, uint64_t a1, uint64_t a2, uint64_t a3,
 
             break;
         case SYSCALL_SETOFF_TT:
-            r = sys_setoff_tt();
+            r = sys_setoff_tt(a1);
             break;
             
         default:

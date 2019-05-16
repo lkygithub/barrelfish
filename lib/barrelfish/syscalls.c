@@ -44,7 +44,7 @@ errval_t sys_getchar(char *c)
     return ret.error;
 }
 
-errval_t sys_setoff_tt(void)
+errval_t sys_setoff_tt(uint64_t tt_start_timestamp)
 {
-    return syscall1(SYSCALL_SETOFF_TT).error;
+    return syscall2(SYSCALL_SETOFF_TT, tt_start_timestamp).error;
 }

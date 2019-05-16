@@ -229,13 +229,13 @@ sys_dispatcher_enq_tt(struct capability *to,
     // The left dcb can be null or an already existed one according to the 
     // right dcb's task_id
     dcb = insert_into_hash_tbl(dcb); 
-    insert_into_sched_tbl(dcb, tstart_shift);
+    //insert_into_sched_tbl(dcb, tstart_shift);
 #endif
     return SYSRET(SYS_ERR_OK);
 }
 
 struct sysret
-sys_setoff_tt(void)
+sys_setoff_tt(uint64_t tt_start_timestamp)
 {
 #ifdef CONFIG_SCHEDULER_TT
     kcb_current->tt_status = 1;

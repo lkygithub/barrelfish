@@ -37,7 +37,9 @@ int main(int argc, char *argv[])
     }
     else if (!strcmp(argv[0], "tt_starter"))
     {
-        sys_setoff_tt();
+        uint64_t t = now();
+        t += 100 * 1000000 * 3; //3s
+        sys_setoff_tt(t);
     }
     else
     {

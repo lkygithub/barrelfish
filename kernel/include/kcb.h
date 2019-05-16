@@ -20,7 +20,7 @@
 #include <irq.h>
 #include <mdb/mdb_tree.h>
 
-#define TT_DBG
+//#define TT_DBG
 
 #ifdef TT_DBG
 #define N_SCHED_MAX 16

@@ -22,7 +22,7 @@
 #include <systime.h>
 
 #define TT_THRESHOLD 1000 //us. decides whether the task should be scheduled.
-#define TT_DBG
+//#define TT_DBG
 
 /**
  * \brief Scheduler policy.
