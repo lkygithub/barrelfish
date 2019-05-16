@@ -242,7 +242,7 @@ sys_setoff_tt(uint64_t tt_start_timestamp)
 #ifdef CONFIG_SCHEDULER_TT
     global->tt_ctrl_info.sys_launch_time = tt_start_timestamp;
     init_sched_tbl();
-    kcb_current->tt_status = 1;
+    //kcb_current->tt_status = 1;
 #endif
     return SYSRET(SYS_ERR_OK);
 }

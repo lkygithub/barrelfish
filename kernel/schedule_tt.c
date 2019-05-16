@@ -21,6 +21,7 @@
 #include <timer.h> // update_sched_timer
 #include <systime.h>
 #include <global.h>
+#include <tt_zynqmp.h>
 
 #define TT_THRESHOLD 1000 //us. decides whether the task should be scheduled.
 //#define TT_DBG
@@ -305,12 +306,13 @@ void init_sched_tbl(void)
     uint64_t *base = global->tt_ctrl_info.tt_task_sch_tbl_buff;
     struct dcb *dcb;
     for (i = 0; i < my_core_id; i++) {
-        base += base[0];
+        base += TT_TASK_ENTRY_NUM; // skip to next core
     }
     for (i = 0; i < base[0]; i++) {
         task_id = (int64_t) ((base[i + 1] & 0xffff000000000000) >> 48);
         tstart_shift = (uint64_t) (base[i + 1] & 0x0000ffffffffffff);
         dcb = search_hash_tbl(task_id);
+        printk(LOG_ERR, "task_id/tstart_shift:%ld/%ld\n", task_id, tstart_shift);
         insert_into_sched_tbl(dcb, tstart_shift);
     }
 }
