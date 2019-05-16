@@ -1,7 +1,6 @@
 /*
  * Copyright (c) 2009,2010,2015, ETH Zurich.
- * Copyright (c) 2015, Hewlett Packard Enterprise Development LP.
- * All rights reserved.
+ * Copyright (c) 2015, Hewlett Packard Enterprise Development LP.  * All rights reserved.
  *
  * This file is distributed under the terms in the attached LICENSE file.
  * If you do not find this file, copies can be found by writing to:
@@ -39,6 +38,9 @@
 
 #include <efi.h>
 #include <arch/arm/gic.h>
+#include <arch/armv8/ttmp_zynqmp.h>
+#include <arch/armv8/tt_tracing_zynqmp.h>
+#include <systime.h>
 
 #define CNODE(cte)              get_address(&(cte)->cap)
 
@@ -55,7 +57,7 @@
 #define BSP_INIT_MODULE_NAME    BF_BINARY_PREFIX "armv8/sbin/init"
 #define APP_INIT_MODULE_NAME    BF_BINARY_PREFIX "armv8/sbin/monitor"
 
-
+struct ttmp_buff *global_ttmp_buff;
 //static phys_mmap_t* g_phys_mmap;        // Physical memory map
 static union armv8_ttable_entry *init_l0; // L1 page table for init
 static union armv8_ttable_entry *init_l1; // L1 page table for init
@@ -342,7 +344,7 @@ static void create_phys_caps(lpaddr_t reserved_start, lpaddr_t reserved_end)
             local_phys_to_mem(armv8_glbl_core_data->efi_mmap);
 
     lpaddr_t last_end_addr = 0;
-    
+
     for (size_t i = 0; i < (mmap->size - sizeof(struct multiboot_tag_efi_mmap)) / mmap->descr_size; i++) {
         efi_memory_descriptor *desc = (efi_memory_descriptor *)(mmap->efi_mmap) + i;
         //lpaddr_t end = desc->PhysicalStart + desc->NumberOfPages * BASE_PAGE_SIZE - 1;
@@ -724,6 +726,265 @@ struct dcb *spawn_app_init(struct armv8_core_data *core_data,
 
 }
 
+#if 0
+static void dsp_map_ttmp_buff(lvaddr_t va, lpaddr_t pa, size_t bytes)
+{
+    /**
+     * Check if page table is ready?
+     * if it's not, create page table for ttmp.
+     */
+
+    lpaddr_t ptable_root = armv8_TTBR1_EL1_rd(NULL);
+    MSG("TEST(in %s): ptable_root is 0x%llx\n", __func__, ptable_root);
+
+    union armv8_ttable_entry *l0_table;
+    union armv8_ttable_entry *l1_table;
+    union armv8_ttable_entry *l2_table;
+    union armv8_ttable_entry *l3_table;
+    union armv8_ttable_entry tmp_entry;
+
+    l0_table = (union armv8_ttable_entry *)local_phys_to_mem(ptable_root);
+    /* Get l1_table base */
+    tmp_entry = l0_table[VMSAv8_64_L0_BASE(va)];
+    if (!tmp_entry.d.valid) {
+        MSG("TTMP_BUFF_BASE l1_table is invalid, so create it.\n");
+        /* Create a page for l1_table */
+        l1_table = (void *)bsp_alloc_phys_aligned(VMSAv8_64_PTABLE_SIZE, VMSAv8_64_PTABLE_SIZE);
+        memset(l1_table, 0, VMSAv8_64_PTABLE_SIZE);
+        paging_map_table_l0(l0_table, va, pa);
+    }
+    else {
+        uint64_t tmp =  (tmp_entry.d.base << BASE_PAGE_BITS) & 0xFFFFFFFFFFFF;
+        l1_table = (void *) tmp;
+    }
+    MSG("TTMP_BUFF_BASE l1_table base is 0x%llx\n", l1_table);
+
+    /* Get l2_table base */
+    tmp_entry = l1_table[VMSAv8_64_L1_BASE(va)];
+    if (!tmp_entry.d.valid)
+    {
+        MSG("TTMP_BUFF_BASE l2_table is invalid, so create it.\n");
+        /* Create a page for l2_table */
+        l2_table = (void *)bsp_alloc_phys_aligned(VMSAv8_64_PTABLE_SIZE, VMSAv8_64_PTABLE_SIZE);
+        memset(l2_table, 0, VMSAv8_64_PTABLE_SIZE);
+        paging_map_table_l1(l1_table, va, pa);
+    }
+    else
+    {
+        uint64_t tmp = (tmp_entry.d.base << BASE_PAGE_BITS) & 0xFFFFFFFFFFFF;
+        l2_table = (void *) tmp;
+    }
+    MSG("TTMP_BUFF_BASE l2_table base is 0x%llx\n", l2_table);
+
+    /* Get l3_table base */
+    tmp_entry = l2_table[VMSAv8_64_L2_BASE(va)];
+    if (!tmp_entry.d.valid)
+    {
+        MSG("TTMP_BUFF_BASE l3_table is invalid, so create it.\n");
+        /* Create a page for l3_table */
+        l3_table = (void *)bsp_alloc_phys_aligned(VMSAv8_64_PTABLE_SIZE, VMSAv8_64_PTABLE_SIZE);
+        memset(l3_table, 0, VMSAv8_64_PTABLE_SIZE);
+        paging_map_table_l2(l2_table, va, pa);
+    }
+    else
+    {
+        uint64_t tmp = (tmp_entry.d.base << BASE_PAGE_BITS) & 0xFFFFFFFFFFFF;
+        l3_table = (void *) tmp;
+    }
+    MSG("TTMP_BUFF_BASE l3_table base is 0x%llx\n", l3_table);
+
+    /* write page table */
+    lvaddr_t vaddr = va;
+    lpaddr_t paddr = pa;
+    uintptr_t flag = VMSAv8_64_L3_USR_RW;
+    while (vaddr < va + TTMP_BUFF_BASE) {
+        MSG("Mapping va %llu to pa 0x%llx.\n", vaddr, paddr);
+        paging_map_page_l3(l3_table, vaddr, paddr, flag);
+        vaddr += BASE_PAGE_SIZE;
+        paddr += BASE_PAGE_SIZE;
+    }
+
+    /* invalid cache and tlb */
+    sysreg_invalidate_tlb();
+    sysreg_invalidate_i_and_d_caches();
+}
+
+static void print_page_tables_by_vaddr(lpaddr_t root, lvaddr_t va)
+{
+    union armv8_ttable_entry *l0 = (void *)local_phys_to_mem(root);
+
+    int l0_index = VMSAv8_64_L0_BASE(va);
+    int l1_index = VMSAv8_64_L1_BASE(va);
+    int l2_index = VMSAv8_64_L2_BASE(va);
+    int l3_index = VMSAv8_64_L3_BASE(va);
+
+    MSG("TEST PAGE TABLE: va 0x%llx, index %d.%d.%d.%d\n", va, l0_index, l1_index, l2_index, l3_index);
+
+    // get level0 table
+    union armv8_ttable_entry l0_e = l0[l0_index];
+    if (!l0_e.d.valid)
+    {
+        MSG("TEST PAGE TABLE: l0_table entry is invalid\n");
+        return;
+    }
+
+    genpaddr_t l1_gp = (genpaddr_t)(l0_e.d.base) << BASE_PAGE_BITS;
+    union armv8_ttable_entry *l1 = (void *)local_phys_to_mem(gen_phys_to_local_phys(l1_gp));
+    MSG("TEST PAGE TABLE: l0 %d -> %p\n", l0_index, l1);
+
+    // get level1 table
+    union armv8_ttable_entry l1_e = l1[l1_index];
+    if (!l1_e.d.valid)
+    {
+        MSG("TEST PAGE TABLE: l1_table entry is invalid\n");
+        return;
+    }
+    // check l1_e class
+    if (!l1_e.block_l1.mb0) {
+        // entry is a block
+        MSG("TEST PAGE TABLE: block l1_table entry map 1GB va 0x%llx to pa 0x%llx\n",
+            va & ~VMSAv8_64_L1_BLOCK_MASK, (genpaddr_t) (l1_e.block_l1.base) << VMSAv8_64_L1_BLOCK_BITS);
+        return;
+    }
+
+    genpaddr_t l2_gp = (genpaddr_t)(l1_e.d.base) << BASE_PAGE_BITS;
+    union armv8_ttable_entry *l2 = (void *)local_phys_to_mem(gen_phys_to_local_phys(l2_gp));
+    MSG("TEST PAGE TABLE: l1 %d -> %p\n", l1_index, l2);
+
+    // get level2 table
+    union armv8_ttable_entry l2_e = l2[l2_index];
+    if (!l2_e.d.valid)
+    {
+        MSG("TEST PAGE TABLE: l2_table entry is invalid\n");
+        return;
+    }
+    // check l2_e class
+    if (!l2_e.block_l2.mb0)
+    {
+        // entry is a block
+        MSG("TEST PAGE TABLE: block l2_table entry map 2MB va 0x%llx to pa 0x%llx\n",
+            va & ~VMSAv8_64_L2_BLOCK_MASK, (genpaddr_t)(l2_e.block_l2.base) << VMSAv8_64_L2_BLOCK_BITS);
+        return;
+    }
+
+    genpaddr_t l3_gp = (genpaddr_t)(l2_e.d.base) << BASE_PAGE_BITS;
+    union armv8_ttable_entry *l3 = (void *)local_phys_to_mem(gen_phys_to_local_phys(l3_gp));
+    printf("TEST PAGE TABLE: l2 %d -> %p\n", l2_index, l3);
+
+    union armv8_ttable_entry e = l3[l3_index];
+    genpaddr_t paddr = (genpaddr_t)(e.page.base) << BASE_PAGE_BITS;
+    if (!paddr)
+    {
+        MSG("TEST PAGE TABLE: l3_table entry is invalid\n");
+        return;
+    }
+
+    printf("%d.%d.%d.%d: 0x%" PRIxGENPADDR " \n", l0_index, l1_index, l2_index, l3_index, paddr);
+
+}
+#endif
+
+/**
+ * transfer message from TX slot to RX slot
+ * msg_id:
+ *     higher 16 bit ---> core_id
+ *     lower 16 bit ---> task_id
+ */
+static errval_t ttmp_msg_transfer(uint16_t msg_id)
+{
+    int i = 0;
+
+    struct ttmp_msg_buff_slot *src;
+    struct ttmp_msg_buff_slot *dst;
+    struct ttmp_buff *buffer = global->ttmp_ctrl_info.ttmp_buff;
+    /* calculate the index of Tx msg */
+    uint8_t ttask_id = msg_id & 0xFF;
+    uint8_t core_id = (msg_id >> 8) & 0xFF;
+    /* get msg in Tx buffer */
+    int set_idx = ttask_id % (TTMP_TX_SLOT_NUM / TTMP_SET_SLOT_NUM);
+    int start_idx = set_idx * TTMP_SET_SLOT_NUM;
+
+    for(i = start_idx; i < start_idx + TTMP_SET_SLOT_NUM; i++) {
+        src = (buffer->cores[core_id]).tx_slots + i;
+        /* check */
+        if (!(src->head).valid || (src->head).id != msg_id)
+            continue;
+        else
+            break;
+    }
+    if (i == start_idx + TTMP_SET_SLOT_NUM)
+        return TTMP_ERR_TX_NO_MSG;
+    /* reciever info */
+    ttask_id = (src->head).dst & 0xFF;
+    core_id = ((src->head).dst >> 8) & 0xFF;
+    /* calculate the index of Rx slot */
+    set_idx = ttask_id % (TTMP_TX_SLOT_NUM / TTMP_SET_SLOT_NUM);
+    start_idx = set_idx * TTMP_SET_SLOT_NUM;
+
+    for(i = start_idx; i < start_idx + TTMP_SET_SLOT_NUM; i++) {
+        dst = (buffer->cores[core_id]).rx_slots + i;
+        /* check if it's used */
+        if ((dst->head).valid)
+            continue;
+        else
+            break;
+    }
+    if (i == start_idx + TTMP_SET_SLOT_NUM)
+        return TTMP_ERR_RX_NO_SLOT;
+    /* copy */
+    memcpy(dst, src, TTMP_MSG_SLOT_SIZE);
+    /* Improtant!!! */
+    src->head.valid = 0;
+
+    return SYS_ERR_OK;
+}
+
+static void ttmp_service_loop(void)
+{
+    unsigned int current = 0;
+    /* get msg sch table */
+    struct ttmp_buff *ttmp_buffer = (struct ttmp_buff *)(global->ttmp_ctrl_info).ttmp_buff;
+    union ttmp_sch_table_slot *sch_table = ttmp_buffer->sch_table;
+#if 1
+    /* Test */
+    //uint16_t msg_id = 0 & 0xFFFF;
+    uint64_t count = 0;
+    uint64_t time_0, time_1;
+    time_0 = systime_now();
+    uint64_t tp = sch_table[current].named.timestamp;
+    uint16_t msg_id = sch_table[current].named.msg_id;
+    errval_t err = ttmp_msg_transfer(msg_id);
+    time_1 = systime_now();
+    printf("#### TEST tt-transfer cost: %lld, %lld, %lld\n", time_0, time_1, time_1 - time_0);
+    while(1) {
+        err = ttmp_msg_transfer(msg_id);
+        count += tp;
+    }
+    //printf("####transfer successed in %d times\n", count);
+    //while(1);
+#endif
+
+#if 0
+    /* service loop */
+    while (1) {
+        /* check tail */
+        if (sch_table[current].raw == 0) {
+            current = 0;
+            continue;
+        }
+        uint64_t tp = sch_table[current].named.timestamp;
+        uint16_t msg_id = sch_table[current].named.msg_id;
+        /* wait for timestamp */
+        while (timer_get_timestamp() < tp) {;}
+        /* do transfer */
+        ttmp_msg_transfer(msg_id);
+        /* next one */
+        current += 1;
+    }
+#endif
+    //do not return
+}
+
 void arm_kernel_startup(void *pointer)
 {
     /* Initialize the core_data */
@@ -741,6 +1002,41 @@ void arm_kernel_startup(void *pointer)
         /* Initialize the location to allocate phys memory from */
         printf("start_free_ram = 0x%lx\n", armv8_glbl_core_data->start_free_ram);
         bsp_init_alloc_addr = armv8_glbl_core_data->start_free_ram;
+
+        /**
+         * alloc and map buffer for ttmp and tt-tracing
+         */
+
+        /* alloc memory for ttmp */
+        lvaddr_t ttmp_buff_base = local_phys_to_mem(bsp_alloc_phys_aligned(TTMP_BUFF_SIZE, BASE_PAGE_SIZE));
+        MSG("Global ttmp buffer base is 0x%llx.\n", ttmp_buff_base);
+        /* clean */
+        memset((void *)ttmp_buff_base, 0, TTMP_BUFF_SIZE);
+        /* alloc memory for tt_tracing */
+        lvaddr_t tt_tracing_buff_base = local_phys_to_mem(bsp_alloc_phys_aligned(TT_TRACING_BUFF_SIZE, BASE_PAGE_SIZE));
+        MSG("Global tt-tracing buffer base is 0x%llx.\n", tt_tracing_buff_base);
+        /* clean */
+        memset((void *)tt_tracing_buff_base, 0, TT_TRACING_BUFF_SIZE);
+#if 0   //not used
+        print_page_tables_by_vaddr((lpaddr_t)armv8_TTBR1_EL1_rd(NULL), (lvaddr_t)TTMP_BUFF_BASE);
+        dsp_map_ttmp_buff((lvaddr_t)TTMP_BUFF_BASE, ttmp_buff_base, TTMP_BUFF_SIZE);
+        /* Test memory mapping */
+
+        uint64_t *paddr = (uint64_t *) ttmp_buff_base;
+        uint64_t *vaddr = (uint64_t *) TTMP_BUFF_BASE;
+        int i = 0;
+        while (vaddr < (uint64_t *) (TTMP_BUFF_BASE + TTMP_BUFF_SIZE)) {
+            *paddr = 0xFF55FF66FF77FF99 + i;
+            if (*vaddr != 0xFF55FF66FF77FF99 + i)
+                MSG("ERR: data isn't match in vaddr 0x%llx, paddr 0x%llx and data 0x%llx\n", vaddr, paddr, *vaddr);
+        }
+#endif
+        /* init time triggered message passing ctrl info */
+        global->ttmp_ctrl_info.sync_flag = 0;
+        global->ttmp_ctrl_info.sys_launch_time = 0u;
+        global->ttmp_ctrl_info.cores = TTMP_TASK_CORE_NUM;
+        global->ttmp_ctrl_info.ttmp_buff = (void *)ttmp_buff_base;
+        global->ttmp_ctrl_info.tt_tracing_buff = (void *)tt_tracing_buff_base;
 
         /* allocate initial KCB */
         kcb_current= (struct kcb *)local_phys_to_mem(
@@ -767,6 +1063,24 @@ void arm_kernel_startup(void *pointer)
             (app_alloc_phys_end - app_alloc_phys_start + 1) >> 10);
 
         kcb_current= (struct kcb *)local_phys_to_mem(core_data->kcb);
+
+#if 0
+        /* Test Time Triggered Tracing */
+        if (my_core_id % 2 == 1) {
+            tt_tracing_add_kernel_event(16, TT_TRACING_SUBSYS_KERNEL, TT_TRACING_KERNEL_SYS_SYNC_DONE);
+            tt_tracing_add_sche_event(32, TT_TRACING_SUBSYS_SCHE, TT_TRACING_SCHE_TASK_RELEASE, 1, 2);
+            tt_tracing_add_ttmp_event(64, TT_TRACING_SUBSYS_TTMP, TT_TRACING_TTMP_TRANSFER, 3, 4, 5, 6);
+        }
+        tt_tracing_dump_log();
+#endif
+
+        /* Zynqmp core 3 is used to be tt-msg-passing core */
+        struct platform_info pi;
+        platform_get_info(&pi);
+        if (my_core_id == 3 && pi.platform == PI_PLATFORM_ZYNQMP) {
+            /* jump to tt-msg loop */
+            ttmp_service_loop();
+        }
 
         init_dcb = spawn_app_init(core_data, APP_INIT_MODULE_NAME);
 

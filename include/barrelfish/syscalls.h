@@ -62,7 +62,15 @@ errval_t sys_setoff_tt(uint64_t tt_start_timestamp);
 /**
  * \brief get time elapsed (in milliseconds) since system boot.
  */
+
 uint64_t sys_get_absolute_time(void);
+
+/**
+ * \brief send/receive tt msg from kernel buffer.
+ */
+errval_t sys_ttmp_send(void);
+
+errval_t sys_ttmp_receive(void);
 __END_DECLS
 
 #endif //LIBBARRELFISH_SYSCALL_H

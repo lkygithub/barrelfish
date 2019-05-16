@@ -1114,6 +1114,36 @@ coreid_t disp_get_core_id(void)
 }
 
 /**
+ * \brief returns the ttask_id stored in disp_priv struct
+ */
+uint8_t disp_get_ttask_id(void)
+{
+    dispatcher_handle_t handle = curdispatcher();
+    struct dispatcher_shared_generic *disp = get_dispatcher_shared_generic(handle);
+    return disp->ttask_id;
+}
+
+/**
+ * \brief setup the ttask_id stored in disp_priv struct
+ */
+void disp_set_ttask_id(uint8_t id)
+{
+    dispatcher_handle_t handle = curdispatcher();
+    struct dispatcher_shared_generic *disp = get_dispatcher_shared_generic(handle);
+    disp->ttask_id = id;
+}
+
+/**
+ * \brief returns the ttmsg buffer pointer stored in disp struct
+ */
+unsigned char *disp_get_ttmsg_buffer(void)
+{
+    dispatcher_handle_t handle = curdispatcher();
+    struct dispatcher_shared_generic* disp = get_dispatcher_shared_generic(handle);
+    return (disp->ttmsg);
+}
+
+/**
  * \brief returns the current core_id stored in disp_shared struct
  */
 coreid_t disp_get_current_core_id(void)

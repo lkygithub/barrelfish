@@ -1314,3 +1314,12 @@ errors psci PSCI_ERR_{
     failure INVALID_ADDRESS  "Invald address provided",
     failure UNKNOWN_ERROR    "Error number unknown",
 };
+
+errors ttmp TTMP_ERR_{
+    failure INVALID_PARAMETER "Invalid parameters supplied",
+    failure WRONG_HEADER      "Wrong tt message header",
+    failure TX_NO_MSG     "Tx buffer has no msg",
+    failure TX_NO_SLOT        "Tx buffer is fulled",
+    failure RX_NO_MSG         "Rx buffer has no msg",
+    failure RX_NO_SLOT        "Rx buffer is fulled",
+};

@@ -302,6 +302,15 @@ errval_t wait_for_all_spawnds(void)
         count = cpu_count;
     }
 
+#if !defined(__ARM_ARCH_7A__)
+    if (platform == PI_PLATFORM_ZYNQMP) {
+        assert(count == 4);
+        /* the 4'rd core is used to tt-msg transfer */
+        /* should not wait monitor and spanwd up */
+        --count;
+    }
+#endif
+
     static char* spawnds = "r'spawn.[0-9]+' { iref: _ }";
     octopus_trigger_id_t tid;
     err = oct_trigger_existing_and_watch(spawnds, spawnd_change_event, (void*)count, &tid);

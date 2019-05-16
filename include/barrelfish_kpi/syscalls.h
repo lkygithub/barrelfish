@@ -60,10 +60,14 @@ struct sysret {
 #define SYSCALL_ARMv7_CACHE_CLEAN    8    ///< Clean (write back) by VA
 #define SYSCALL_ARMv7_CACHE_INVAL    9    ///< Invalidate (discard) by VA
 
-/* scpecific purposed syscalls for tt scheduler(only for armv8)*/
-#define SYSCALL_SETOFF_TT           8
+/* Time Triggerd Message Passing */
+#define SYSCALL_TTMP_SEND           12
+#define SYSCALL_TTMP_RECEIVE        13
 
-#define SYSCALL_COUNT               12     ///< Number of syscalls [0..SYSCALL_COUNT - 1]
+/* scpecific purposed syscalls for tt scheduler(only for armv8)*/
+#define SYSCALL_SETOFF_TT           14
+
+#define SYSCALL_COUNT               15     ///< Number of syscalls [0..SYSCALL_COUNT - 1]
 
 /*
  * To understand system calls it might be helpful to know that there

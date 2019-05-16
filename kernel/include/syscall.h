@@ -132,4 +132,10 @@ struct sysret sys_monitor_clear_step(capaddr_t ret_cn_addr,
                                      uint8_t ret_cn_bits,
                                      cslot_t ret_slot);
 
+/**
+ * time triggered message passing syscalls
+ */
+struct sysret sys_ttmp_send(void);
+struct sysret sys_ttmp_receive(void);
+
 #endif

@@ -36,6 +36,8 @@
 #include <kcb.h>
 #include <useraccess.h>
 #include <systime.h>
+#include <ttmp.h>
+#include <global.h>
 
 errval_t sys_print(const char *str, size_t length)
 {
@@ -887,3 +889,142 @@ struct sysret sys_get_absolute_time(void)
         .value = systime_now() + kcb_current->kernel_off,
     };
 }
+
+/**
+ * time triggered message passing syscalls
+ */
+#if 0
+#include "include/arch/armv8/ttmp_zynqmp.h"
+static void dump_ttmp_msg_buff(uint8_t task_id, int rx_or_tx)
+{
+    printf("ttmp_buff base: 0x%p\n", global->ttmp_ctrl_info.ttmp_buff);
+    struct ttmp_buff *buff = (global->ttmp_ctrl_info.ttmp_buff);
+    /*
+    uint8_t *p = (uint8_t *) buff->cores;
+    for (int i = 0; i < TTMP_BUFF_SIZE - TTMP_SCHD_BUFF_SIZE; i += 32) {
+        for (int j = i; j < i + 32; j++) {
+            printf("%02x ", *p);
+            p++;
+        }
+        printf("\n");
+    }
+    */
+    int set_idx = task_id % (TTMP_TX_SLOT_NUM / TTMP_SET_SLOT_NUM);
+    int start_idx = set_idx * TTMP_SET_SLOT_NUM;
+    struct ttmp_msg_buff_slot *dst_slot = NULL;
+    if (rx_or_tx)
+        dst_slot = (buff->cores[my_core_id]).tx_slots;
+    else
+        dst_slot = (buff->cores[my_core_id]).rx_slots;
+
+    for(int i = start_idx; i < start_idx + TTMP_SET_SLOT_NUM; i++) {
+        uint8_t *p = (uint8_t *) dst_slot;
+        for (int j = 0; j < 32; j++) {
+            printf("%02x ", *p);
+            p++;
+        }
+        printf("\n");
+        dst_slot++;
+    }
+}
+#endif
+
+struct sysret sys_ttmp_send(void)
+{
+    int i = 0;
+
+    dispatcher_handle_t handle = dcb_current->disp;
+    struct dispatcher_shared_generic *disp = get_dispatcher_shared_generic(handle);
+    /*
+    if (dcb_current->disabled == false)
+    {
+        printk(LOG_ERR, "SYSCALL_TTMP_SEND while enabled\n");
+        return SYSRET(SYS_ERR_CALLER_ENABLED);
+    }
+    */
+    /* calculate the index of msg */
+    int set_idx = disp->ttask_id % (TTMP_TX_SLOT_NUM / TTMP_SET_SLOT_NUM);
+    int start_idx = set_idx * TTMP_SET_SLOT_NUM;
+    struct ttmp_buff *buffer = (global->ttmp_ctrl_info).ttmp_buff;
+    struct ttmp_msg_buff_slot *dst_slot;
+    /* copy msg into buffer*/
+    #if 1
+    for(int j = start_idx; j < start_idx + TTMP_SET_SLOT_NUM; j++) {
+        dst_slot = (buffer->cores[my_core_id]).tx_slots + j;
+        /* check if it's used */
+        if ((dst_slot->head).valid){
+            continue;
+        }
+        else {
+            /* copy msg */
+            memcpy(dst_slot, disp->ttmsg, TTMP_MSG_SLOT_SIZE);
+            break;
+        }
+    }
+    #endif
+    #if 0
+    dst_slot = (buffer->cores[my_core_id]).tx_slots + start_idx;
+    memcpy(dst_slot, disp->ttmsg, TTMP_MSG_SLOT_SIZE);
+    i = start_idx;
+    #endif
+
+    /* For Debug */
+    //dump_ttmp_msg_buff(disp->ttask_id, 1); // 1 -> tx slots
+
+    if (i == start_idx + TTMP_SET_SLOT_NUM)
+        return SYSRET(TTMP_ERR_TX_NO_SLOT);
+
+    return SYSRET(SYS_ERR_OK);
+};
+
+struct sysret sys_ttmp_receive(void)
+{
+    int i = 0;
+
+    dispatcher_handle_t handle = dcb_current->disp;
+    struct dispatcher_shared_generic *disp = get_dispatcher_shared_generic(handle);
+    /*
+    if (dcb_current->disabled == false)
+    {
+        printk(LOG_ERR, "SYSCALL_TTMP_SEND while enabled\n");
+        return SYSRET(SYS_ERR_CALLER_ENABLED);
+    }
+    */
+
+    /* For Debug */
+    //dump_ttmp_msg_buff(disp->ttask_id, 0); // 0-> rx slots
+
+    /* calculate the index of msg */
+    int set_idx = disp->ttask_id % (TTMP_RX_SLOT_NUM / TTMP_SET_SLOT_NUM);
+    int start_idx = set_idx * TTMP_SET_SLOT_NUM;
+    struct ttmp_buff *buffer = global->ttmp_ctrl_info.ttmp_buff;
+    struct ttmp_msg_buff_slot *dst_slot;
+    /* copy msg into buffer*/
+#if 1
+    for (i = start_idx; i < start_idx + TTMP_SET_SLOT_NUM; i++)
+    {
+        dst_slot = (buffer->cores[my_core_id]).rx_slots + i;
+        uint16_t dst = ((my_core_id & 0xFF) << 8) | (disp->ttask_id & 0xFF);
+        /* check if it's used */
+
+        if (!(dst_slot->head).valid || (dst_slot->head).dst != dst)
+            continue;
+        else {
+            /* copy msg */
+            memcpy(disp->ttmsg, dst_slot, TTMP_MSG_SLOT_SIZE);
+            break;
+        }
+    }
+#endif
+#if 0
+    i = start_idx;
+    dst_slot = (buffer->cores[my_core_id]).rx_slots + i;
+    memcpy(disp->ttmsg, dst_slot, TTMP_MSG_SLOT_SIZE);
+#endif
+
+
+    if (i == start_idx + TTMP_SET_SLOT_NUM)
+        return SYSRET(TTMP_ERR_RX_NO_MSG);
+
+    return SYSRET(SYS_ERR_OK);
+};

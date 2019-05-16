@@ -48,3 +48,15 @@ errval_t sys_setoff_tt(uint64_t tt_start_timestamp)
 {
     return syscall2(SYSCALL_SETOFF_TT, tt_start_timestamp).error;
 }
+
+errval_t sys_ttmp_send(void)
+{
+    struct sysret ret = syscall1(SYSCALL_TTMP_SEND);
+    return ret.error;
+}
+
+errval_t sys_ttmp_receive(void)
+{
+    struct sysret ret = syscall1(SYSCALL_TTMP_RECEIVE);
+    return ret.error;
+}
