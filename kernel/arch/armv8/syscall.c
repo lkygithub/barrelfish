@@ -33,6 +33,7 @@
 #include <timers.h>
 #include <psci.h>
 #include <serial.h>
+#include <kcb.h>
 
 // helper macros  for invocation handler definitions
 #define INVOCATION_HANDLER(func) \
@@ -48,6 +49,19 @@ func( \
     struct registers_aarch64_syscall_args* sa = &context->syscall_args
 
 #define NYI(str) printf("armv8: %s\n", str)
+
+#ifndef TT_DBG
+//#define TT_DBG
+#endif
+
+#ifdef TT_DBG
+systime_t tstart_dbg[5000];
+systime_t tend_dbg[5000];
+int source_dbg[5000];
+int dest_dbg[5000];
+unsigned int index_dbg = -1;
+bool flag;
+#endif
 
 __attribute__((noreturn)) void sys_syscall_kernel(void);
 __attribute__((noreturn))
@@ -1204,7 +1218,14 @@ void sys_syscall(uint64_t a0, uint64_t a1, uint64_t a2, uint64_t a3,
     // Set dcb_current->disabled correctly.  This should really be
     // done in exceptions.S
     // XXX
-
+#ifdef TT_DBG
+    if (kcb_current->tt_status == 1 && index_dbg < 5000 - 1) {
+        assert(flag == false);
+        tstart_dbg[++index_dbg] = systime_now();
+        source_dbg[index_dbg] = 0;
+        flag = true;
+    }
+#endif
     assert(dcb_current != NULL);
     dispatcher_handle_t handle = dcb_current->disp;
     struct dispatcher_shared_generic *disp =

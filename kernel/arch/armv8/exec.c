@@ -22,6 +22,21 @@
 #include <exceptions.h>
 #include <misc.h>
 #include <sysreg.h>   // for invalidating tlb and cache
+#include <kcb.h>
+#include <systime.h>
+
+#ifndef TT_DBG
+//#define TT_DBG
+#endif
+
+#ifdef TT_DBG
+extern systime_t tstart_dbg[5000];
+extern systime_t tend_dbg[5000];
+extern int source_dbg[5000];
+extern int dest_dbg[5000];
+extern int index_dbg;
+extern bool flag;
+#endif
 
 static arch_registers_state_t upcall_state;
 
@@ -74,6 +89,19 @@ execute(lvaddr_t entry)
 
     state->named.pc = entry;
     ensure_user_mode_policy(state);
+#ifdef TT_DBG
+    if (kcb_current->tt_status == 1 && index_dbg < 5000 && flag) {
+        assert(tend_dbg[index_dbg] == 0);
+        tend_dbg[index_dbg] = systime_now();
+        dest_dbg[index_dbg] = 0;
+        if (index_dbg == 5000 - 1) {
+            for (index_dbg = 0; index_dbg < 5000; index_dbg++) {
+                printk(LOG_ERR, "##%d/%d/%ld/%ld.\n", source_dbg[index_dbg], dest_dbg[index_dbg], tstart_dbg[index_dbg], tend_dbg[index_dbg]);
+            }
+        }
+        flag = false;
+    }
+#endif
     do_resume(state->regs);
 }
 
@@ -96,6 +124,19 @@ void __attribute__ ((noreturn)) resume(arch_registers_state_t *state)
       If we hold the execution here after the first execption, we are still good
     */
     //    while(ctr>1);
+#ifdef TT_DBG
+    if (kcb_current->tt_status == 1 && index_dbg < 5000 && flag) {
+        assert(tend_dbg[index_dbg] == 0);
+        tend_dbg[index_dbg] = systime_now();
+        dest_dbg[index_dbg] = 1;
+        if (index_dbg == 5000 - 1) {
+            for (index_dbg = 0; index_dbg < 5000; index_dbg++) {
+                printk(LOG_ERR, "##%d/%d/%ld/%ld.\n", source_dbg[index_dbg], dest_dbg[index_dbg], tstart_dbg[index_dbg], tend_dbg[index_dbg]);
+            }
+        }
+        flag = false;
+    }
+#endif
     do_resume(state->regs);
 }
 
