@@ -40,6 +40,7 @@
 #include <arch/arm/gic.h>
 #include <arch/armv8/ttmp_zynqmp.h>
 #include <arch/armv8/tt_tracing_zynqmp.h>
+#include <arch/armv8/tt_zynqmp.h>
 #include <systime.h>
 
 #define CNODE(cte)              get_address(&(cte)->cap)
@@ -985,6 +986,33 @@ static void ttmp_service_loop(void)
     //do not return
 }
 
+static void load_sche_tbl_img(const char *name, void *buff_base, size_t buff_size)
+{
+    lvaddr_t img_base;
+    size_t img_bytes;
+
+    /* Load init ELF64 binary */
+    struct multiboot_header_tag *multiboot =
+            (struct multiboot_header_tag *) local_phys_to_mem(
+                    armv8_glbl_core_data->multiboot_image.base);
+    struct multiboot_tag_module_64 *module = multiboot2_find_module_64(
+            multiboot, armv8_glbl_core_data->multiboot_image.length, name);
+    if (module == NULL) {
+        panic("Could not find init module!");
+    }
+    /* get img base and size */
+    img_base = local_phys_to_mem(module->mod_start);
+    img_bytes = MULTIBOOT_MODULE_SIZE(*module);
+    assert(img_bytes <= buff_size);
+    /* copy sch table into schedule buffer */
+    memcpy(buff_base, (void *)img_base, img_bytes);
+}
+
+const char *ttmp_sche_module_name       = "armv8/ttsch/msg.bin";
+const char *tt_task_sche_module_name_0  = "armv8/ttsch/core0.bin";
+const char *tt_task_sche_module_name_1  = "armv8/ttsch/core1.bin";
+const char *tt_task_sche_module_name_2  = "armv8/ttsch/core2.bin";
+
 void arm_kernel_startup(void *pointer)
 {
     /* Initialize the core_data */
@@ -1015,8 +1043,13 @@ void arm_kernel_startup(void *pointer)
         /* alloc memory for tt_tracing */
         lvaddr_t tt_tracing_buff_base = local_phys_to_mem(bsp_alloc_phys_aligned(TT_TRACING_BUFF_SIZE, BASE_PAGE_SIZE));
         MSG("Global tt-tracing buffer base is 0x%llx.\n", tt_tracing_buff_base);
+        /* alloc memory for tt_task schedule table */
+        lvaddr_t tt_task_sch_tbl_base = local_phys_to_mem(bsp_alloc_phys_aligned(TT_TASK_SCHD_SIZE, BASE_PAGE_SIZE));
+        MSG("Global tt-task-sch-tbl buffer base is 0x%llx.\n", tt_task_sch_tbl_base);
         /* clean */
         memset((void *)tt_tracing_buff_base, 0, TT_TRACING_BUFF_SIZE);
+        memset((void *)tt_task_sch_tbl_base, 0, TT_TASK_SCHD_SIZE);
+
 #if 0   //not used
         print_page_tables_by_vaddr((lpaddr_t)armv8_TTBR1_EL1_rd(NULL), (lvaddr_t)TTMP_BUFF_BASE);
         dsp_map_ttmp_buff((lvaddr_t)TTMP_BUFF_BASE, ttmp_buff_base, TTMP_BUFF_SIZE);
@@ -1031,12 +1064,31 @@ void arm_kernel_startup(void *pointer)
                 MSG("ERR: data isn't match in vaddr 0x%llx, paddr 0x%llx and data 0x%llx\n", vaddr, paddr, *vaddr);
         }
 #endif
+
         /* init time triggered message passing ctrl info */
         global->tt_ctrl_info.sync_flag = 0;
         global->tt_ctrl_info.sys_launch_time = 0u;
         global->tt_ctrl_info.cores = TTMP_TASK_CORE_NUM;
         global->tt_ctrl_info.ttmp_buff = (void *)ttmp_buff_base;
         global->tt_ctrl_info.tt_tracing_buff = (void *)tt_tracing_buff_base;
+        global->tt_ctrl_info.tt_task_sch_tbl_buff = (void *)tt_task_sch_tbl_base;
+
+        /* fill ttmp schedule table with multiboot info */
+        struct ttmp_buff *buff = (struct ttmp_buff *) ttmp_buff_base;
+        void *ttmp_sche_base = (void *) &(buff->sch_table);
+        load_sche_tbl_img(ttmp_sche_module_name, ttmp_sche_base, TTMP_SCHD_BUFF_SIZE);
+        /* fill tt-task shce table with multiboot info */
+        // core 0
+        void * task_sche_base = (void *)tt_task_sch_tbl_base;
+        load_sche_tbl_img(tt_task_sche_module_name_0, task_sche_base, TT_TASK_SCHD_CORE_SIZE);
+        // core 1
+        task_sche_base += TT_TASK_SCHD_CORE_SIZE;
+        printf("%llx", task_sche_base);
+        load_sche_tbl_img(tt_task_sche_module_name_1, task_sche_base, TT_TASK_SCHD_CORE_SIZE);
+        // core 2
+        task_sche_base += TT_TASK_SCHD_CORE_SIZE;
+        printf("%llx", task_sche_base);
+        load_sche_tbl_img(tt_task_sche_module_name_2, task_sche_base, TT_TASK_SCHD_CORE_SIZE);
 
         /* allocate initial KCB */
         kcb_current= (struct kcb *)local_phys_to_mem(
