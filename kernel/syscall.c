@@ -897,8 +897,8 @@ struct sysret sys_get_absolute_time(void)
 #include "include/arch/armv8/ttmp_zynqmp.h"
 static void dump_ttmp_msg_buff(uint8_t task_id, int rx_or_tx)
 {
-    printf("ttmp_buff base: 0x%p\n", global->ttmp_ctrl_info.ttmp_buff);
-    struct ttmp_buff *buff = (global->ttmp_ctrl_info.ttmp_buff);
+    printf("ttmp_buff base: 0x%p\n", global->tt_ctrl_info.ttmp_buff);
+    struct ttmp_buff *buff = (global->tt_ctrl_info.ttmp_buff);
     /*
     uint8_t *p = (uint8_t *) buff->cores;
     for (int i = 0; i < TTMP_BUFF_SIZE - TTMP_SCHD_BUFF_SIZE; i += 32) {
@@ -945,7 +945,7 @@ struct sysret sys_ttmp_send(void)
     /* calculate the index of msg */
     int set_idx = disp->ttask_id % (TTMP_TX_SLOT_NUM / TTMP_SET_SLOT_NUM);
     int start_idx = set_idx * TTMP_SET_SLOT_NUM;
-    struct ttmp_buff *buffer = (global->ttmp_ctrl_info).ttmp_buff;
+    struct ttmp_buff *buffer = (global->tt_ctrl_info).ttmp_buff;
     struct ttmp_msg_buff_slot *dst_slot;
     /* copy msg into buffer*/
     #if 1
@@ -997,7 +997,7 @@ struct sysret sys_ttmp_receive(void)
     /* calculate the index of msg */
     int set_idx = disp->ttask_id % (TTMP_RX_SLOT_NUM / TTMP_SET_SLOT_NUM);
     int start_idx = set_idx * TTMP_SET_SLOT_NUM;
-    struct ttmp_buff *buffer = global->ttmp_ctrl_info.ttmp_buff;
+    struct ttmp_buff *buffer = global->tt_ctrl_info.ttmp_buff;
     struct ttmp_msg_buff_slot *dst_slot;
     /* copy msg into buffer*/
 #if 1

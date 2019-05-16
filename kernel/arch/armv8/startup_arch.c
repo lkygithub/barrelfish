@@ -896,7 +896,7 @@ static errval_t ttmp_msg_transfer(uint16_t msg_id)
 
     struct ttmp_msg_buff_slot *src;
     struct ttmp_msg_buff_slot *dst;
-    struct ttmp_buff *buffer = global->ttmp_ctrl_info.ttmp_buff;
+    struct ttmp_buff *buffer = global->tt_ctrl_info.ttmp_buff;
     /* calculate the index of Tx msg */
     uint8_t ttask_id = msg_id & 0xFF;
     uint8_t core_id = (msg_id >> 8) & 0xFF;
@@ -943,7 +943,7 @@ static void ttmp_service_loop(void)
 {
     unsigned int current = 0;
     /* get msg sch table */
-    struct ttmp_buff *ttmp_buffer = (struct ttmp_buff *)(global->ttmp_ctrl_info).ttmp_buff;
+    struct ttmp_buff *ttmp_buffer = (struct ttmp_buff *)(global->tt_ctrl_info).ttmp_buff;
     union ttmp_sch_table_slot *sch_table = ttmp_buffer->sch_table;
 #if 1
     /* Test */
@@ -1032,11 +1032,11 @@ void arm_kernel_startup(void *pointer)
         }
 #endif
         /* init time triggered message passing ctrl info */
-        global->ttmp_ctrl_info.sync_flag = 0;
-        global->ttmp_ctrl_info.sys_launch_time = 0u;
-        global->ttmp_ctrl_info.cores = TTMP_TASK_CORE_NUM;
-        global->ttmp_ctrl_info.ttmp_buff = (void *)ttmp_buff_base;
-        global->ttmp_ctrl_info.tt_tracing_buff = (void *)tt_tracing_buff_base;
+        global->tt_ctrl_info.sync_flag = 0;
+        global->tt_ctrl_info.sys_launch_time = 0u;
+        global->tt_ctrl_info.cores = TTMP_TASK_CORE_NUM;
+        global->tt_ctrl_info.ttmp_buff = (void *)ttmp_buff_base;
+        global->tt_ctrl_info.tt_tracing_buff = (void *)tt_tracing_buff_base;
 
         /* allocate initial KCB */
         kcb_current= (struct kcb *)local_phys_to_mem(

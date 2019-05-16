@@ -31,7 +31,6 @@ struct global {
     } locks;
 
     uint32_t tickspersec;
-    uint64_t tt_start_timestamp;
     uint64_t *tt_task_sch_tbl_base;
 
     genpaddr_t notify[MAX_COREID];
@@ -41,7 +40,7 @@ struct global {
         systime_t sys_launch_time; ///< the launch time of all cores after sync
         uint16_t cores;            ///< the number of cores
         void *ttmp_buff;           ///< address of ttmp buffer
-    } ttmp_ctrl_info;
+    } tt_ctrl_info;
 };
 
 extern struct global *global;

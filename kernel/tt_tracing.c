@@ -22,7 +22,7 @@ static inline void tt_tracing_add_event(uint64_t timestamp, uint8_t subsys, uint
         return;
     }
     // get core buffer
-    struct tt_tracing_buff *buff = (struct tt_tracing_buff *) global->ttmp_ctrl_info.tt_tracing_buff;
+    struct tt_tracing_buff *buff = (struct tt_tracing_buff *) global->tt_ctrl_info.tt_tracing_buff;
     struct tt_tracing_buff_each_core *core_buff = &(buff->cores[my_core_id]);
     // create log entry
     tt_tracing_slot_t *slot = &(core_buff->slots[pos]);
@@ -68,7 +68,7 @@ void tt_tracing_add_ttmp_event(uint64_t timestamp, uint8_t subsys, uint8_t event
 void tt_tracing_dump_log(void)
 {
     // get core buffer
-    struct tt_tracing_buff *buff = (struct tt_tracing_buff *) global->ttmp_ctrl_info.tt_tracing_buff;
+    struct tt_tracing_buff *buff = (struct tt_tracing_buff *) global->tt_ctrl_info.tt_tracing_buff;
     struct tt_tracing_buff_each_core *core_buff = &(buff->cores[my_core_id]);
     tt_tracing_slot_t *core_slot_base = (tt_tracing_slot_t *) core_buff;
 

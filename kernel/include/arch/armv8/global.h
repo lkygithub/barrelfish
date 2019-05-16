@@ -31,8 +31,6 @@ struct global {
     } locks;
 
     uint32_t tickspersec;
-    uint64_t tt_start_timestamp;
-    uint64_t *tt_task_sch_tbl_base;
 
     genpaddr_t notify[MAX_COREID];
 
@@ -42,7 +40,8 @@ struct global {
         uint16_t cores;             ///< the number of cores
         void *ttmp_buff;            ///< address of ttmp buffer
         void *tt_tracing_buff;      ///< address of tt tracing buffer
-    } ttmp_ctrl_info;
+        void *tt_task_sch_tbl_buff; ///< address of tt task schtbl buffer
+    } tt_ctrl_info;
 
 };
 
