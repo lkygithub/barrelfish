@@ -44,3 +44,8 @@ module /armv8/sbin/memtest nospawn
 #Time-Triggered application
 module /armv8/sbin/tt/producer nospawn
 module /armv8/sbin/tt/customer nospawn
+
+#Time-Triggered sch table
+module /armv8/ttsch/msg_sch_result.bin
+module /armv8/ttsch/task_sch_result_node_0.bin nospawn
+module /armv8/ttsch/task_sch_result_node_2.bin nospawn
