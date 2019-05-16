@@ -34,7 +34,7 @@ sys_dispatcher_properties(struct capability *to,
                           unsigned long release, unsigned short weight);
 struct sysret
 sys_dispatcher_enq_tt(struct capability *to,
-                          int64_t task_id, int64_t tstart);
+                          int64_t task_id, uint64_t tstart_shift);
 struct sysret
 sys_setoff_tt(uint64_t tt_start_timestamp);
 struct sysret

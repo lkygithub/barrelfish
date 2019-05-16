@@ -20,6 +20,7 @@
 #include <timers.h>
 #include <timer.h> // update_sched_timer
 #include <systime.h>
+#include <global.h>
 
 #define TT_THRESHOLD 1000 //us. decides whether the task should be scheduled.
 //#define TT_DBG
@@ -106,6 +107,9 @@ struct dcb *schedule(void)
     else
     {
         // tt mode
+
+        while(systime_now() < global->tt_ctrl_info.sys_launch_time);
+
         assert(kcb_current->n_sched >= 2);
 
         if (!kcb_current->time_triggered && kcb_current->t_base)
@@ -269,11 +273,46 @@ struct dcb *insert_into_hash_tbl(struct dcb *dcb)
     return dcb;
 }
 
-void insert_into_sched_tbl(struct dcb *dcb, int64_t tstart_shift)
+struct dcb *search_hash_tbl(int64_t task_id)
+{
+    if (task_id < 0)
+        return NULL;
+    if (task_id > 0)
+    {
+        int index = task_id % N_BUCKETS;
+        
+        for(struct dcb *tmp = kcb_current->hash_tbl[index]; tmp != NULL; tmp = tmp->next) {
+            if (tmp->task_id == task_id)
+                return tmp;
+        }
+    }
+    printk(LOG_ERR, "task not in hash tbl.\n");
+    return NULL;
+}
+
+void insert_into_sched_tbl(struct dcb *dcb, uint64_t tstart_shift)
 {
     kcb_current->sched_tbl[kcb_current->n_sched].dcb = dcb;
     kcb_current->sched_tbl[kcb_current->n_sched].tstart_shift = US_TO_SYS_SCALE(tstart_shift);
     kcb_current->n_sched++;
+}
+
+void init_sched_tbl(void)
+{
+    int i;
+    uint64_t tstart_shift;
+    int64_t task_id;
+    uint64_t *base = global->tt_ctrl_info.tt_task_sch_tbl_buff;
+    struct dcb *dcb;
+    for (i = 0; i < my_core_id; i++) {
+        base += base[0];
+    }
+    for (i = 0; i < base[0]; i++) {
+        task_id = (int64_t) ((base[i + 1] & 0xffff000000000000) >> 48);
+        tstart_shift = (uint64_t) (base[i + 1] & 0x0000ffffffffffff);
+        dcb = search_hash_tbl(task_id);
+        insert_into_sched_tbl(dcb, tstart_shift);
+    }
 }
 
 void make_runnable(struct dcb *dcb)
