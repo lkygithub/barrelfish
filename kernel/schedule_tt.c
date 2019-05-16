@@ -31,9 +31,12 @@
  */
 
 #ifdef TT_DBG
-static systime_t atime[512];
-static systime_t stime[512];
-static unsigned int myindex = 0;
+static systime_t atime[1024];
+static systime_t stime[1024];
+static unsigned int tindex = 0;
+static systime_t lognow[1024];
+static systime_t lognext[1024];
+static unsigned int lindex = 0;
 #endif
 
 unsigned int prev_sched_index(void)
@@ -44,7 +47,8 @@ unsigned int prev_sched_index(void)
         return kcb_current->current_task - 1;
 }
 
-void switch_tt_flag(void) {
+void switch_tt_flag(void)
+{
     kcb_current->time_triggered = !kcb_current->time_triggered;
 }
 
@@ -59,30 +63,53 @@ struct dcb *schedule(void)
         }
         struct dcb *dcb = kcb_current->ring_current;
         kcb_current->ring_current = kcb_current->ring_current->next;
-        if (!kcb_current->t_base) {
+        if (!kcb_current->t_base)
+        {
             // tt scheduler not started.
             timer_reset(CONFIG_TIMESLICE);
-        } else {
+        }
+        else
+        {
             // tt scheduler running in rr mode.
             systime_t next_tstart = kcb_current->sched_tbl[kcb_current->current_task].tstart_shift + kcb_current->t_base;
-            if (systime_now() + MS_TO_SYS_SCALE(CONFIG_TIMESLICE) >= next_tstart) {
+            if (systime_now() + MS_TO_SYS_SCALE(CONFIG_TIMESLICE) >= next_tstart)
+            {
                 //assert(systime_now() < next_tstart);
-                if (systime_now() >= next_tstart) {
-                    printk(LOG_ERR, "my checkp assertion failed, now/next_tstart:%ld/%ld.\n", systime_now(), next_tstart);
+                if (systime_now() >= next_tstart)
+                {
+#ifdef TT_DBG
+                    if (lindex < 1024)
+                    {
+                        lognow[lindex] = systime_now();
+                        lognext[lindex] = next_tstart;
+                        lindex++;
+                    } else {
+                        printk(LOG_ERR, "over 1024 logs, flush.\n");
+                        for (lindex = 0; lindex < 1024; lindex++) {
+                            printk(LOG_ERR, "my checkp assertion failed, now/next_tstart:%ld/%ld.\n", lognow[lindex], lognext[lindex]);
+                        }
+                    }
+#endif
+                    //printk(LOG_ERR, "my checkp assertion failed, now/next_tstart:%ld/%ld.\n", systime_now(), next_tstart);
                 }
                 //last timeslice in rr mode
                 kcb_current->tt_status = 1;
                 timer_set(next_tstart);
-            } else {
+            }
+            else
+            {
                 timer_reset(CONFIG_TIMESLICE);
             }
         }
         return dcb;
-    } else {
+    }
+    else
+    {
         // tt mode
         assert(kcb_current->n_sched >= 2);
 
-        if (!kcb_current->time_triggered && kcb_current->t_base) {
+        if (!kcb_current->time_triggered && kcb_current->t_base)
+        {
             // make sure entered in timer interrupt. No-op otherwise.
             /*if (kcb_current->t_base + kcb_current->sched_tbl[kcb_current->current_task].tstart_shift <= systime_now()) {
                 printk(LOG_ERR, "my checkp current_task, tbase, shift, now:%d, %ld, %ld, %ld.\n", kcb_current->current_task, kcb_current->t_base, kcb_current->sched_tbl[kcb_current->current_task].tstart_shift, systime_now());
@@ -109,11 +136,12 @@ struct dcb *schedule(void)
             kcb_current->sched_tbl[i].dcb->etime += systime_now() - kcb_current->t_base - kcb_current->sched_tbl[i].tstart_shift;
         }
 
-        if (kcb_current->current_task == 0) {
+        if (kcb_current->current_task == 0)
+        {
             //Should reset shift base when a round is finished.
             kcb_current->t_base = systime_now();
         }
-        
+
         /*systime_t tstart = kcb_current->sched_tbl[kcb_current->current_task].tstart_shift + kcb_current->t_base;
         if (tstart + US_TO_SYS_SCALE(TT_THRESHOLD) < systime_now() ) {
             // Schedule failure, should reset all statistical values.
@@ -131,12 +159,41 @@ struct dcb *schedule(void)
             return NULL;
             //wait_for_interrupt();
         }*/
-        
 
         struct dcb *dcb = kcb_current->sched_tbl[kcb_current->current_task].dcb;
         if (dcb == NULL)
         {
             // rr task interval
+
+#ifdef TT_DBG
+            if (tindex < 1024)
+            {
+                //atime[tindex] = systime_now();
+                //stime[tindex] = kcb_current->t_base + kcb_current->sched_tbl[kcb_current->current_task].tstart_shift;
+                atime[tindex] = systime_now() - kcb_current->t_base;
+                stime[tindex] = kcb_current->sched_tbl[kcb_current->current_task].tstart_shift;
+                tindex++;
+                if (tindex >= 1024)
+                {
+                    for (int tmpindex = 0; tmpindex < lindex; tmpindex++) {
+                        printk(LOG_ERR, "my checkp assertion failed, now/next_tstart:%ld/%ld.\n", lognow[lindex], lognext[lindex]);
+                    }
+                    for (tindex = 0; tindex < 1024; tindex++)
+                    {
+                        printk(LOG_ERR, "my checkp atime/stime:%ld/%ld.\n", atime[tindex], stime[tindex]);
+                    }
+                    /*for (tindex = 0; tindex < 511; tindex++)
+                    {
+                        printk(LOG_ERR, "my checkp i/ainterval/sinterval:%ld/%ld/%ld.\n", tindex, atime[tindex + 1] - atime[tindex], stime[tindex + 1] - stime[tindex]);
+                    }*/
+                    tindex++;
+                    //return to rr scheduler.
+                    kcb_current->t_base = 0;
+                    kcb_current->tt_status = 0;
+                }
+            }
+#endif
+
             kcb_current->tt_status = 0;
             kcb_current->current_task++;
             return schedule();
@@ -146,23 +203,32 @@ struct dcb *schedule(void)
             // tt task
 
 #ifdef TT_DBG
-        if (myindex < 512) {
-            atime[myindex] = systime_now();
-            stime[myindex] = kcb_current->t_base + kcb_current->sched_tbl[kcb_current->current_task].tstart_shift;
-            myindex++;
-            if (myindex >= 512) {
-                for (myindex = 0; myindex < 512; myindex++) {
-                    printk(LOG_ERR, "my checkp atime/stime:%ld/%ld.\n", atime[myindex], stime[myindex]);
+            if (tindex < 1024)
+            {
+                //atime[tindex] = systime_now();
+                //stime[tindex] = kcb_current->t_base + kcb_current->sched_tbl[kcb_current->current_task].tstart_shift;
+                atime[tindex] = systime_now() - kcb_current->t_base;
+                stime[tindex] = kcb_current->sched_tbl[kcb_current->current_task].tstart_shift;
+                tindex++;
+                if (tindex >= 1024)
+                {
+                    for (int tmpindex = 0; tmpindex < lindex; tmpindex++) {
+                        printk(LOG_ERR, "my checkp assertion failed, now/next_tstart:%ld/%ld.\n", lognow[lindex], lognext[lindex]);
+                    }
+                    for (tindex = 0; tindex < 1024; tindex++)
+                    {
+                        printk(LOG_ERR, "my checkp atime/stime:%ld/%ld.\n", atime[tindex], stime[tindex]);
+                    }
+                    /*for (tindex = 0; tindex < 511; tindex++)
+                    {
+                        printk(LOG_ERR, "my checkp i/ainterval/sinterval:%ld/%ld/%ld.\n", tindex, atime[tindex + 1] - atime[tindex], stime[tindex + 1] - stime[tindex]);
+                    }*/
+                    tindex++;
+                    //return to rr scheduler.
+                    kcb_current->t_base = 0;
+                    kcb_current->tt_status = 0;
                 }
-                for (myindex = 0; myindex < 511; myindex++) {
-                    printk(LOG_ERR, "my checkp i/ainterval/sinterval:%ld/%ld/%ld.\n", myindex, atime[myindex + 1] - atime[myindex], stime[myindex + 1] - stime[myindex]);
-                }
-                myindex++;
-                //return to rr scheduler.
-                kcb_current->t_base = 0;
-                kcb_current->tt_status = 0;
             }
-        }
 #endif
             timer_set(kcb_current->t_base + kcb_current->sched_tbl[kcb_current->current_task + 1].tstart_shift);
             kcb_current->current_task++;

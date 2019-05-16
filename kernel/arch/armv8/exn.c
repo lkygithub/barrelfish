@@ -23,6 +23,21 @@
 #include <arch/armv8/gic_v3.h>
 #include <dev/armv8_dev.h>
 #include <systime.h>
+#include <kcb.h>
+
+#ifndef TT_DBG
+//#define TT_DBG
+#endif
+
+#ifdef TT_DBG
+#pragma message("tt dbg.\n")
+extern systime_t tstart_dbg[5000];
+extern systime_t tend_dbg[5000];
+extern int source_dbg[5000];
+extern int dest_dbg[5000];
+extern int index_dbg;
+extern bool flag;
+#endif
 
 void handle_user_page_fault(lvaddr_t                fault_address,
                             arch_registers_state_t* save_area,
@@ -206,6 +221,16 @@ void handle_user_fault(lvaddr_t fault_address, uintptr_t cause,
 void handle_irq(arch_registers_state_t* save_area, uintptr_t fault_pc,
                 uint64_t x0, uint64_t x1, uint64_t x2, uint64_t x3)
 {
+
+#ifdef TT_DBG
+    if (kcb_current->tt_status == 1 && index_dbg < 5000 - 1) {
+        assert(flag == false);
+        tstart_dbg[++index_dbg] = systime_now();
+        source_dbg[index_dbg] = 1;
+        flag = true;
+    }
+#endif
+
     /* The assembly stub leaves the first 4 registers, the stack pointer,
      * the exception PC, and the SPSR for us to save, as it's run out of room for
      * the necessary instructions. */
