@@ -221,7 +221,7 @@ sys_dispatcher_properties(struct capability *to,
 
 struct sysret
 sys_dispatcher_enq_tt(struct capability *to,
-                          int64_t task_id, int64_t tstart_shift)
+                          int64_t task_id, uint64_t tstart_shift)
 {
 #ifdef CONFIG_SCHEDULER_TT
     assert(to->type == ObjType_Dispatcher);
@@ -240,6 +240,8 @@ struct sysret
 sys_setoff_tt(uint64_t tt_start_timestamp)
 {
 #ifdef CONFIG_SCHEDULER_TT
+    global->tt_ctrl_info.sys_launch_time = tt_start_timestamp;
+    init_sched_tbl();
     kcb_current->tt_status = 1;
 #endif
     return SYSRET(SYS_ERR_OK);

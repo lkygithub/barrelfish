@@ -29,8 +29,10 @@ void schedule_now(struct dcb *dcb);
 #ifdef CONFIG_SCHEDULER_TT
 unsigned int prev_sched_index(void);
 void switch_tt_flag(void);
-struct dcb* insert_into_hash_tbl(struct dcb *dcb);
-void insert_into_sched_tbl(struct dcb *dcb, int64_t tstart_shift);
+struct dcb *insert_into_hash_tbl(struct dcb *dcb);
+struct dcb *search_hash_tbl(int64_t task_id);
+void insert_into_sched_tbl(struct dcb *dcb, uint64_t tstart_shift);
+void init_sched_tbl(void);
 #endif
 
 /**
