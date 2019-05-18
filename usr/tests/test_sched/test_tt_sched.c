@@ -1,11 +1,8 @@
 #include <barrelfish/barrelfish.h>
 #include <barrelfish/spawn_client.h>
+#include <stdlib.h>
 
 uint64_t now(void);
-
-static char *task_id[] = {"1", "3", "2", "3", "-1", "1000"};
-static char *tstart[] = {"0", "15000", "16883", "21383", "34500", "50000"};
-
 uint64_t now(void)
 {
 
@@ -16,65 +13,57 @@ uint64_t now(void)
     return cntpct;
 }
 
+//static char *node_0_task_id[] = {NULL};
+static char *node_1_task_id[] = {"1", NULL};
+static char *node_2_task_id[] = {"1", NULL};
+
 int main(int argc, char *argv[])
 {
-    if (!strcmp(argv[0], "tt_task"))
-    {
-        int i = 1234567;
-        while (true)
-        {
-            if (i % 2)
-                i /= 2;
-            else
-            {
-                i = i * 3 + 1;
-            }
-            if (i == 22222222)
-            {
-                printf("i = 2222\n");
-            }
-        }
-    }
-    else if (!strcmp(argv[0], "tt_starter"))
-    {
-        uint64_t t = now();
-        t += 100 * 1000000 * 3; //3s
-        sys_setoff_tt(t);
-    }
-    else
-    {
-        errval_t err;
-        int i, j;
-        //spawn
-        assert(argc > 1);
-        printf("spawning...\n");
-        for (i = 1; i < argc; i++)
-        {
-            coreid_t coreid = strtol(argv[i], NULL, 10);
-            for (j = 0; j < sizeof(task_id) / sizeof(char *); j++)
-            {
-                char *xargv[] = {"tt_task", task_id[j], tstart[j], NULL};
-                err = spawn_program(coreid, argv[0], xargv, NULL,
-                                    SPAWN_FLAGS_DEFAULT, NULL);
-                printf("spawned %d on core %d.\n", j, coreid);
-                assert(err_is_ok(err));
-            }
-        }
 
-        uint64_t base = now();
-        uint64_t twait = 0x50000000; //some seconds.
-        printf("waiting.\n");
-        while (now() <= base + twait)
-            ;
-        printf("tt starting.\n");
-        for (i = 1; i < argc; i++)
-        {
-            coreid_t coreid = strtol(argv[i], NULL, 10);
-            char *xargv[] = {"tt_starter", NULL};
-            err = spawn_program(coreid, argv[0], xargv, NULL,
-                                    SPAWN_FLAGS_DEFAULT, NULL);
-            printf("spawned tt starter on core %d\n", coreid);
-            assert(err_is_ok(err));
-        }
+    errval_t err;
+    char time_str[20];
+    printf("my name is %s\n", argv[0]);
+    printf("spawning...\n");
+
+    /* core 0 */
+    printf("spawned on core %d.\n", 0);
+
+    /* core 1 */
+    printf("spawned on core %d.\n", 1);
+    char *xargv_1[] = {"tt_task", node_1_task_id[0], "0", /* for tt-sched */
+        "1",    /* my_task_id */
+        "2",    /* dst_node_id */
+        "1",    /* dst_core_id */
+        "9895", /* deadline */
+        "100000", /* peroid */
+        NULL};
+    err = spawn_program(1, "/armv8/sbin/tt/producer", xargv_1, NULL, SPAWN_FLAGS_DEFAULT, NULL);
+    assert(err_is_ok(err));
+
+    /* core 2 */
+    printf("spawned on core %d.\n", 2);
+    char *xargv_2[] = {"tt_task", node_2_task_id[0], "0",
+        "1",        /* my_task_id */
+        "1",        /* src_node_id */
+        "1",        /* dst_core_id */
+        "100000",   /* deadline */
+        "100000",   /* peroid */
+        NULL};
+    err = spawn_program(2, "/armv8/sbin/tt/consumer", xargv_2, NULL, SPAWN_FLAGS_DEFAULT, NULL);
+    assert(err_is_ok(err));
+
+    uint64_t t = now();
+    t += 100 * 1000000 * 4; //3s
+    sprintf(time_str, "%llu", t);
+
+    /* not notice core 0 */
+    for(int i = 1; i < 3; i++){
+        char *xargv[] = {time_str, "100000", NULL};
+        err = spawn_program(i, "/armv8/sbin/tt/tt_starter", xargv, NULL, SPAWN_FLAGS_DEFAULT, NULL);
+        assert(err_is_ok(err));
     }
+
+    t = now() + 100 * 1000000;
+    while(now() < t);
+    printf("tt schedule start after 6s\n");
 }

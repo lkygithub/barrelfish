@@ -44,9 +44,30 @@ errval_t sys_getchar(char *c)
     return ret.error;
 }
 
-errval_t sys_setoff_tt(uint64_t tt_start_timestamp)
+errval_t sys_setoff_tt(uint64_t tt_start_timestamp, uint64_t super_peroid)
 {
-    return syscall2(SYSCALL_SETOFF_TT, tt_start_timestamp).error;
+    return syscall3(SYSCALL_SETOFF_TT, tt_start_timestamp, super_peroid).error;
+}
+
+errval_t sys_get_current_period_start_ts(uint64_t *current)
+{
+    struct sysret ret = syscall1(SYSCALL_GET_CPST);
+    *current = ret.value;
+    return ret.error;
+}
+
+errval_t sys_get_tt_start_flag(bool *started)
+{
+    struct sysret ret = syscall1(SYSCALL_GET_TT_START_FLAG);
+    *started = ret.value;
+    return ret.error;
+}
+
+errval_t sys_get_tt_start_time(uint64_t *ts)
+{
+    struct sysret ret = syscall1(SYSCALL_GET_TT_START_TIME);
+    *ts = ret.value;
+    return ret.error;
 }
 
 errval_t sys_ttmp_send(void)

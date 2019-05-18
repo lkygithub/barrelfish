@@ -35,8 +35,12 @@ struct global {
     genpaddr_t notify[MAX_COREID];
 
     struct {
-        bool sync_flag;             ///< flag of syncED
-        systime_t sys_launch_time;  ///< the launch time of all cores after sync
+        //bool sync_flag;             ///< flag of syncED
+        volatile uint64_t tt_sche_start_time;  ///< the start time for all ttask schedule
+        volatile bool     real_sys_start_flag;
+        volatile uint64_t real_sys_start_time; ///< all init work done and run at this time
+        volatile uint64_t current_period_start_ts;
+        volatile uint64_t super_peroid;  ///< system super_peroid (us)
         uint16_t cores;             ///< the number of cores
         void *ttmp_buff;            ///< address of ttmp buffer
         void *tt_tracing_buff;      ///< address of tt tracing buffer

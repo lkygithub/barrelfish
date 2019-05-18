@@ -1,5 +1,5 @@
-#ifndef TT_PRODUCER_DEBUG_H
-#define TT_PRODUCER_DEBUG_H
+#ifndef TT_CONSUMER_DEBUG_H
+#define TT_CONSUMER_DEBUG_H
 
 /* xterm color control */
 #define XTERM_BLACK "\e[1;30m"
@@ -12,18 +12,18 @@
 
 #define XTERM_END "\e[0m"
 
-#ifdef PRODUCER_DEBUG
-#define PRINT_DEBUG(format, ...) printf(XTERM_YELLOW "PRODUCER[DEBUG]: " XTERM_END format, ##__VA_ARGS__)
+#ifdef CONSUMER_DEBUG
+#define PRINT_DEBUG(format, ...) printf(XTERM_YELLOW "CONSUMER[DEBUG]: " XTERM_END format, ##__VA_ARGS__)
 #else
 #define PRINT_DEBUG(format, ...) do{} while (0)
 #endif
 
-#define PRINT_ERR(format, ...) printf(XTERM_RED "PRODUCER[ERR]: " XTERM_END format, ##__VA_ARGS__)
+#define PRINT_ERR(format, ...) printf(XTERM_RED "CONSUMER[ERR]: " XTERM_END format, ##__VA_ARGS__)
 
 static inline uint64_t debug_get_syscounter(void);
 static inline uint64_t us_to_ticks(uint64_t us);
 
-static inline uint64_t debug_get_syscounter(void) {
+static inline uint64_t debug_get_syscounter(void){
     uint64_t cntpct;
     __asm volatile(
         "mrs %[cntpct], cntpct_el0 \n\t"
@@ -36,4 +36,4 @@ static inline uint64_t us_to_ticks(uint64_t us) {
     return us * 100;
 }
 
-#endif  //TT_PRODUCER_DEBUG_H
+#endif //TT_CONSUMER_DEBUG_H

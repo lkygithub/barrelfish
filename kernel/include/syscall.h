@@ -35,8 +35,8 @@ sys_dispatcher_properties(struct capability *to,
 struct sysret
 sys_dispatcher_enq_tt(struct capability *to,
                           int64_t task_id, uint64_t tstart_shift);
-struct sysret
-sys_setoff_tt(uint64_t tt_start_timestamp);
+struct sysret 
+sys_setoff_tt(uint64_t tt_start_timestamp, uint64_t super_peroid);
 struct sysret
 sys_retype(struct capability *root, capaddr_t source_croot, capaddr_t source_cptr,
            gensize_t offset, enum objtype type, gensize_t objsize, size_t count,
@@ -137,5 +137,7 @@ struct sysret sys_monitor_clear_step(capaddr_t ret_cn_addr,
  */
 struct sysret sys_ttmp_send(void);
 struct sysret sys_ttmp_receive(void);
-
+uint64_t sys_get_current_period_start_ts(void);
+bool sys_get_tt_start_flag(void);
+uint64_t sys_get_tt_start_time(void);
 #endif

@@ -120,7 +120,7 @@ handle_dispatcher_enq_tt(
 {
     struct registers_aarch64_syscall_args* sa = &context->syscall_args;
     int64_t task_id = sa->arg2;
-    int64_t tstart = sa->arg3;
+    uint64_t tstart = sa->arg3;
     return sys_dispatcher_enq_tt(to, task_id, tstart);
 } 
 
@@ -1293,7 +1293,22 @@ void sys_syscall(uint64_t a0, uint64_t a1, uint64_t a2, uint64_t a3,
             break;
         
         case SYSCALL_SETOFF_TT:
-            r = sys_setoff_tt(a1);
+            r = sys_setoff_tt(a1, a2);
+            break;
+
+        case SYSCALL_GET_CPST:
+            r.value = sys_get_current_period_start_ts();
+            r.error = SYS_ERR_OK;
+            break;
+
+        case SYSCALL_GET_TT_START_FLAG:
+            r.value = sys_get_tt_start_flag();
+            r.error = SYS_ERR_OK;
+            break;
+
+        case SYSCALL_GET_TT_START_TIME:
+            r.value = sys_get_tt_start_time();
+            r.error = SYS_ERR_OK;
             break;
 
         case SYSCALL_TTMP_SEND:

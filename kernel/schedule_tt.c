@@ -24,6 +24,8 @@
 #include <tt_zynqmp.h>
 
 #define TT_THRESHOLD 1000 //us. decides whether the task should be scheduled.
+static int tt_count = 0;
+//extern int my_core_id;
 //#define TT_DBG
 
 /**
@@ -52,6 +54,11 @@ unsigned int prev_sched_index(void)
 void switch_tt_flag(void)
 {
     kcb_current->time_triggered = !kcb_current->time_triggered;
+}
+
+static inline uint64_t us_to_ticks(uint64_t us)
+{
+    return us * 100;
 }
 
 struct dcb *schedule(void)
@@ -109,10 +116,6 @@ struct dcb *schedule(void)
     {
         // tt mode
 
-        while(systime_now() < global->tt_ctrl_info.sys_launch_time);
-
-        assert(kcb_current->n_sched >= 2);
-
         if (!kcb_current->time_triggered && kcb_current->t_base)
         {
             // make sure entered in timer interrupt. No-op otherwise.
@@ -131,6 +134,17 @@ struct dcb *schedule(void)
             //The last task in the sched queue is not a valid task.
             //It serves calc of tstart of the first task in the next round.
             //Thus current_task should be reset to 0.
+            tt_count += 1;
+            if (tt_count == 50) {
+                global->tt_ctrl_info.real_sys_start_time = global->tt_ctrl_info.tt_sche_start_time +
+                    70 * us_to_ticks(global->tt_ctrl_info.super_peroid);
+                global->tt_ctrl_info.real_sys_start_flag = true;
+                while(timer_get_timestamp() < global->tt_ctrl_info.real_sys_start_time)
+                    ;
+                tt_count = 70;
+            }
+            global->tt_ctrl_info.current_period_start_ts = global->tt_ctrl_info.tt_sche_start_time +
+                    tt_count * us_to_ticks(global->tt_ctrl_info.super_peroid);
             kcb_current->current_task = 0;
         }
 
@@ -237,6 +251,14 @@ struct dcb *schedule(void)
 #endif
             timer_set(kcb_current->t_base + kcb_current->sched_tbl[kcb_current->current_task + 1].tstart_shift);
             kcb_current->current_task++;
+#if 0
+            if (my_core_id == 2){
+                uint64_t _now = timer_get_timestamp();
+                printf("peroid start at %llx, now shchedule ttask at %llx, sub is %d\n",
+                    global->tt_ctrl_info.current_period_start_ts, _now, 
+                    (_now - global->tt_ctrl_info.current_period_start_ts)/100);
+            }
+#endif
             return dcb;
         }
     }
@@ -287,7 +309,7 @@ struct dcb *search_hash_tbl(int64_t task_id)
                 return tmp;
         }
     }
-    printk(LOG_ERR, "task not in hash tbl.\n");
+    printk(LOG_ERR, "task %d not in hash tbl.\n", task_id);
     return NULL;
 }
 
@@ -305,14 +327,13 @@ void init_sched_tbl(void)
     int64_t task_id;
     uint64_t *base = global->tt_ctrl_info.tt_task_sch_tbl_buff;
     struct dcb *dcb;
-    for (i = 0; i < my_core_id; i++) {
-        base += TT_TASK_ENTRY_NUM; // skip to next core
-    }
+    base += my_core_id * TT_TASK_ENTRY_NUM; // skip to next core
     for (i = 0; i < base[0]; i++) {
-        task_id = (int64_t) ((base[i + 1] & 0xffff000000000000) >> 48);
+        //printf("entry is 0x%016llx\n", base[i+1]);
+        task_id = (int16_t) ((base[i + 1] & 0xffff000000000000) >> 48);
         tstart_shift = (uint64_t) (base[i + 1] & 0x0000ffffffffffff);
         dcb = search_hash_tbl(task_id);
-        printk(LOG_ERR, "task_id/tstart_shift:%ld/%ld\n", task_id, tstart_shift);
+        //printk(LOG_ERR, "task_id/tstart_shift:%ld/%ld\n", task_id, tstart_shift);
         insert_into_sched_tbl(dcb, tstart_shift);
     }
 }

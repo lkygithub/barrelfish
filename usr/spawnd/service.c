@@ -161,7 +161,7 @@ static errval_t spawn(struct capref domain_cap, const char *path,
 #ifdef USE_TT_SCHEDULER
     if (strcmp(argv[0], "tt_task") == 0) {
         int64_t task_id = strtoll(argv[1], NULL, 10);
-        int64_t tstart = strtoll(argv[2], NULL, 10);
+        uint64_t tstart = strtoll(argv[2], NULL, 10);
         invoke_dispatcher_enq_tt(si.dcb, task_id, tstart);
     }
 #endif

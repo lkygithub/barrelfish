@@ -16,13 +16,10 @@
 #include <barrelfish/barrelfish.h>
 #include <tt_message_passing/tt_msg.h>
 
-#define CUSTOMER_DEBUG
+#define PRODUCER_DEBUG
 #include "debug.h"
 
 #define MAXCOUNT 5000
-
-unsigned char buffer[TTMSG_PAYLOAD_SIZE];
-uint16_t size;
 
 static inline uint64_t debug_get_syscounter(void);
 static inline uint64_t debug_get_syscounter(void){
@@ -37,39 +34,30 @@ static inline uint64_t debug_get_syscounter(void){
 int main(int argc, char **argv)
 {
 
+    tt_msg_payload_t content;
+
     /* init */
     disp_set_ttask_id(0);
     tt_msg_init();
-    PRINT_DEBUG("Wait for a while\n");
-    for(int i = 0; i < 400; i++) {
-        printf(".");
-        if ((i+1)%80 == 0)
-            printf("\n");
+    /* Write msg content */
+    for (int i = 0; i < TTMSG_PAYLOAD_SIZE; i++) {
+        content.value[i] = TTMSG_PAYLOAD_SIZE - i;
     }
-
-    /* Receive msg */
+    /* Send msg */
     uint64_t time_0, time_1, sum = 0;
     int count = 0;
-    PRINT_DEBUG("buffer addr 0x%p, size addr 0x%p\n", buffer, &size);
-    PRINT_DEBUG("Receiving message\n");
-
-    /* src_core_id = 0, src_task_id = 0 */
+    PRINT_DEBUG("Sending message\n");
+    /* dst_core_id = 1, dst_task_id = 0 */
+    
     for (int i = 0; i < MAXCOUNT; i++) {
         time_0 = debug_get_syscounter();
-        tt_msg_receive(0, 0, buffer, &size);
+        tt_msg_send(1, 0, content.value, TTMSG_PAYLOAD_SIZE);
         time_1 = debug_get_syscounter();
         sum += time_1 - time_0;
         count++;
     }
-
-    PRINT_DEBUG("Receive delay is %f\n", sum/(float)count/100);
-    PRINT_DEBUG("Receiving done\n");
-
-    printf("CUSTOMER receive data:\n");
-    for (int i = 0; i < size; i++) {
-        printf("%u ", buffer[i]);
-    }
-    printf("\n");
+    PRINT_DEBUG("Send delay is %f\n", sum/(float)count/100);
+    PRINT_DEBUG("Sending done\n");
 
     return 0;
 }

@@ -308,7 +308,7 @@ invoke_dispatcher_properties(struct capref dispatcher,
 }
 
 static inline errval_t
-invoke_dispatcher_enq_tt(struct capref dispatcher, int64_t task_id, systime_t tstart)
+invoke_dispatcher_enq_tt(struct capref dispatcher, int64_t task_id, uint64_t tstart)
 {
     return cap_invoke3(dispatcher, DispatcherCmd_Enq_TT, task_id, tstart).error;
 }

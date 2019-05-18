@@ -1,0 +1,14 @@
+--------------------------------------------------------------------------
+-- Copyright (c) 2018-2020, BUAA LES.
+-- All rights reserved.
+--
+-- Hakefile for /usr/tt/free
+--
+--------------------------------------------------------------------------
+
+[
+    build application { target = "tt/tt_starter",
+                        cFiles = [ "main.c" ],
+                        addIncludes = [ "" ]
+    }
+]

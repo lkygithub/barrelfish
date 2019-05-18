@@ -1,5 +1,5 @@
-#ifndef TT_CUSTOMER_DEBUG_H
-#define TT_CUSTOMER_DEBUG_H
+#ifndef TT_FREE_DEBUG_H
+#define TT_FREE_DEBUG_H
 
 /* xterm color control */
 #define XTERM_BLACK "\e[1;30m"
@@ -12,12 +12,12 @@
 
 #define XTERM_END "\e[0m"
 
-#ifdef CUSTOMER_DEBUG
-#define PRINT_DEBUG(format, ...) printf(XTERM_YELLOW "CUSTOMER[DEBUG]: " XTERM_END format, ##__VA_ARGS__)
+#ifdef FREE_DEBUG
+#define PRINT_DEBUG(format, ...) printf(XTERM_YELLOW "FREE[DEBUG]: " XTERM_END format, ##__VA_ARGS__)
 #else
 #define PRINT_DEBUG(format, ...) do{} while (0)
 #endif
 
-#define PRINT_ERR(format, ...) printf(XTERM_RED "CUSTOMER[ERR]: " XTERM_END format, ##__VA_ARGS__)
+#define PRINT_ERR(format, ...) printf(XTERM_RED "FREE[ERR]: " XTERM_END format, ##__VA_ARGS__)
 
-#endif //TT_CUSTOMER_DEBUG_H
+#endif  //TT_FREE_DEBUG_H

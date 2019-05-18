@@ -40,8 +40,8 @@ struct ttmp_msg_buff_slot
 union ttmp_sch_table_slot {
     uint64_t raw;
     struct {
-        uint64_t msg_id : 16;
         uint64_t timestamp : 48;
+        uint64_t msg_id : 16;
     } named;
 };
 

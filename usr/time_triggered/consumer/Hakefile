@@ -1,0 +1,15 @@
+--------------------------------------------------------------------------
+-- Copyright (c) 2018-2020, BUAA LES.
+-- All rights reserved.
+--
+-- Hakefile for /usr/tt/consumer
+--
+--------------------------------------------------------------------------
+
+[
+    build application { target = "tt/consumer",
+                        cFiles = [ "main.c" ],
+                        addIncludes = [ "" ],
+                        addLibraries = libDeps ["tt_message_passing"]
+    }
+]

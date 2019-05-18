@@ -33,7 +33,7 @@ typedef struct {
     tt_msg_payload_t payload;
 } tt_msg_t;
 
-void tt_msg_init(void);
+void tt_msg_init(uint8_t my_task_id);
 
 errval_t tt_msg_send(uint8_t dst_core_id, uint8_t dst_task_id,
                         unsigned char *buffer, uint16_t buff_size);

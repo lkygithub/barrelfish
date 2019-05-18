@@ -237,12 +237,13 @@ sys_dispatcher_enq_tt(struct capability *to,
 }
 
 struct sysret
-sys_setoff_tt(uint64_t tt_start_timestamp)
+sys_setoff_tt(uint64_t tt_start_timestamp, uint64_t super_peroid)
 {
 #ifdef CONFIG_SCHEDULER_TT
-    global->tt_ctrl_info.sys_launch_time = tt_start_timestamp;
+    global->tt_ctrl_info.tt_sche_start_time = tt_start_timestamp;
+    global->tt_ctrl_info.super_peroid = super_peroid;
     init_sched_tbl();
-    //kcb_current->tt_status = 1;
+    kcb_current->tt_status = 1;
 #endif
     return SYSRET(SYS_ERR_OK);
 }
@@ -1014,6 +1015,7 @@ struct sysret sys_ttmp_receive(void)
         else {
             /* copy msg */
             memcpy(disp->ttmsg, dst_slot, TTMP_MSG_SLOT_SIZE);
+            dst_slot->head.valid = 0;
             break;
         }
     }
@@ -1030,3 +1032,18 @@ struct sysret sys_ttmp_receive(void)
 
     return SYSRET(SYS_ERR_OK);
 };
+
+uint64_t sys_get_current_period_start_ts(void)
+{
+    return global->tt_ctrl_info.current_period_start_ts;
+}
+
+bool sys_get_tt_start_flag(void)
+{
+    return global->tt_ctrl_info.real_sys_start_flag;
+}
+
+uint64_t sys_get_tt_start_time(void)
+{
+    return global->tt_ctrl_info.real_sys_start_time;
+}

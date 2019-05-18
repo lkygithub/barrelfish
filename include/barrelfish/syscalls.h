@@ -58,7 +58,7 @@ errval_t sys_print(const char *string, size_t length);
 
 errval_t sys_getchar(char *c);
 
-errval_t sys_setoff_tt(uint64_t tt_start_timestamp);
+errval_t sys_setoff_tt(uint64_t tt_start_timestamp, uint64_t super_peroid);
 /**
  * \brief get time elapsed (in milliseconds) since system boot.
  */
@@ -71,6 +71,10 @@ uint64_t sys_get_absolute_time(void);
 errval_t sys_ttmp_send(void);
 
 errval_t sys_ttmp_receive(void);
+
+errval_t sys_get_current_period_start_ts(uint64_t *current);
+errval_t sys_get_tt_start_flag(bool *started);
+errval_t sys_get_tt_start_time(uint64_t *ts);
 __END_DECLS
 
 #endif //LIBBARRELFISH_SYSCALL_H

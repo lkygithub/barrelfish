@@ -19,45 +19,54 @@
 #define PRODUCER_DEBUG
 #include "debug.h"
 
-#define MAXCOUNT 5000
-
-static inline uint64_t debug_get_syscounter(void);
-static inline uint64_t debug_get_syscounter(void){
-    uint64_t cntpct;
-    __asm volatile(
-        "mrs %[cntpct], cntpct_el0 \n\t"
-        : [cntpct] "=r"(cntpct)
-        );
-    return cntpct;
-}
-
 int main(int argc, char **argv)
 {
 
     tt_msg_payload_t content;
-
+    bool started = false;
+    uint64_t start_time = 0xFFFFFFFFFFFFu;
+    uint64_t peroid_start_time;
+    uint64_t overhead = 5000u; // printf overhead ~= 5ms
+    uint64_t gap = 1; //us
     /* init */
-    disp_set_ttask_id(0);
-    tt_msg_init();
-    /* Write msg content */
-    for (int i = 0; i < TTMSG_PAYLOAD_SIZE; i++) {
-        content.value[i] = TTMSG_PAYLOAD_SIZE - i;
+    if (argc != 8){
+        PRINT_ERR("Param Number Error\n");
+        return 0;
     }
-    /* Send msg */
-    uint64_t time_0, time_1, sum = 0;
-    int count = 0;
-    PRINT_DEBUG("Sending message\n");
-    /* dst_core_id = 1, dst_task_id = 0 */
+    uint8_t my_task_id = atoi(argv[3]);
+    uint8_t dst_core_id = atoi(argv[4]);
+    uint8_t dst_task_id = atoi(argv[5]);
+    uint64_t deadline = atoi(argv[6]);
+    uint64_t peroid = atoi(argv[7]);
     
-    for (int i = 0; i < MAXCOUNT; i++) {
-        time_0 = debug_get_syscounter();
-        tt_msg_send(1, 0, content.value, TTMSG_PAYLOAD_SIZE);
-        time_1 = debug_get_syscounter();
-        sum += time_1 - time_0;
-        count++;
-    }
-    PRINT_DEBUG("Send delay is %f\n", sum/(float)count/100);
-    PRINT_DEBUG("Sending done\n");
+    disp_set_ttask_id(my_task_id);
+    tt_msg_init(my_task_id);
+    
+    /* wait for sync*/
+    do {
+        sys_get_tt_start_flag(&started);
+    } while(!started);
+    sys_get_tt_start_time(&start_time);
+    while(debug_get_syscounter() < start_time)
+        ;
+    //printf("4\n");
+my_start:
+    /* get start timestamp in period */
+    sys_get_current_period_start_ts(&peroid_start_time);
+    /* Write msg content */
+    content.value[0] = (int) debug_get_syscounter();
+    /* wait to send */
+    while ((debug_get_syscounter() - peroid_start_time) < us_to_ticks(deadline - overhead))
+        ;
+    /* Send msg */
+    tt_msg_send(dst_core_id, dst_task_id, content.value, 1);
+    uint64_t now = debug_get_syscounter();
+    PRINT_DEBUG("Sending message, this peroid start at 0x%llx, now is %dus,  msg is %02x\n", 
+            peroid_start_time, (now-peroid_start_time)/100, content.value[0]);
+    /* wait for next period */
+    while((debug_get_syscounter() - peroid_start_time) < us_to_ticks(peroid+gap))
+        ;
+    goto my_start;
 
     return 0;
 }

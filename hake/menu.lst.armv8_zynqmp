@@ -36,16 +36,19 @@ module /armv8/sbin/corectrl auto
 #module /armv8/sbin/test_rr_sched a
 #module /armv8/sbin/test_rr_sched b
 module /armv8/sbin/test_tt_sched 0
-module /armv8/sbin/fish nospawn
-module /armv8/sbin/angler serial0.terminal xterm
-module /armv8/sbin/memtest nospawn
+#module /armv8/sbin/fish nospawn
+#module /armv8/sbin/angler serial0.terminal xterm
+#module /armv8/sbin/memtest nospawn
 
 #Time-Triggered application
 module /armv8/sbin/tt/producer nospawn
-module /armv8/sbin/tt/customer nospawn
+module /armv8/sbin/tt/consumer nospawn
+module /armv8/sbin/tt/tt_starter nospawn
+#module /armv8/sbin/tt/free nospawn
+#module /armv8/sbin/tt/shaper nospawn
 
 #Time-Triggered sch table
 module /armv8/ttsch/msg.bin nospawn
-module /armv8/ttsch/core0.bin nospawn
-module /armv8/ttsch/core1.bin nospawn
-module /armv8/ttsch/core2.bin nospawn
+module /armv8/ttsch/node_0.bin nospawn
+module /armv8/ttsch/node_1.bin nospawn
+module /armv8/ttsch/node_2.bin nospawn

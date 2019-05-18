@@ -932,6 +932,10 @@ static errval_t ttmp_msg_transfer(uint16_t msg_id)
     }
     if (i == start_idx + TTMP_SET_SLOT_NUM)
         return TTMP_ERR_RX_NO_SLOT;
+    //printf("##transfer from %d_%d to %d_%d with value %08x\n",
+    //    msg_id & 0xFF, (msg_id >> 8) & 0xFF,
+    //    core_id, ttask_id,
+    //    src->payload.value[0]);
     /* copy */
     memcpy(dst, src, TTMP_MSG_SLOT_SIZE);
     /* Improtant!!! */
@@ -942,11 +946,12 @@ static errval_t ttmp_msg_transfer(uint16_t msg_id)
 
 static void ttmp_service_loop(void)
 {
-    unsigned int current = 0;
+
     /* get msg sch table */
+    errval_t err;
     struct ttmp_buff *ttmp_buffer = (struct ttmp_buff *)(global->tt_ctrl_info).ttmp_buff;
     union ttmp_sch_table_slot *sch_table = ttmp_buffer->sch_table;
-#if 1
+#if 0
     /* Test */
     //uint16_t msg_id = 0 & 0xFFFF;
     uint64_t count = 0;
@@ -965,22 +970,46 @@ static void ttmp_service_loop(void)
     //while(1);
 #endif
 
-#if 0
+#if 1
+    /* wait for tt schedule start */
+    while ( !(global->tt_ctrl_info.real_sys_start_flag) ||
+            (timer_get_timestamp() < global->tt_ctrl_info.real_sys_start_time))
+        ;
     /* service loop */
     while (1) {
-        /* check tail */
-        if (sch_table[current].raw == 0) {
-            current = 0;
-            continue;
+        unsigned int current = 0;
+        /* get peroid start time */
+        uint64_t peroid_start_tp = global->tt_ctrl_info.current_period_start_ts;
+        uint64_t super_peroid = global->tt_ctrl_info.super_peroid * 100; //us to ticks
+        void *base = (void *) &(ttmp_buffer->cores[0]);
+        memset(base, 0, TTMP_CORE_BUFF_SIZE * 3);
+        /* each peroid schedule */
+        while(timer_get_timestamp() < peroid_start_tp + super_peroid )
+        {
+            /* check tail */
+            if (sch_table[current].raw == 0) {
+                continue;
+            }
+
+            uint64_t tp = sch_table[current].named.timestamp * 100; //us to ticks
+            uint16_t msg_id = sch_table[current].named.msg_id;
+            
+            uint64_t overhead = 10 * 100;
+            /* wait for timestamp */
+            while (timer_get_timestamp() < tp + peroid_start_tp - overhead) {
+                ;
+            }
+            //uint64_t _now = timer_get_timestamp();
+            /* do transfer */
+            err = ttmp_msg_transfer(msg_id);
+            //printf("###Transfer message, this peroid start at %llx, now is %llx, sub is %dus\n", 
+            //    peroid_start_tp, _now, (_now-peroid_start_tp)/100);
+            if (err_is_fail(err)) {
+                printf("## MSG Transfer Error: %d\n", err);
+            }
+            /* next one */
+            current += 1;
         }
-        uint64_t tp = sch_table[current].named.timestamp;
-        uint16_t msg_id = sch_table[current].named.msg_id;
-        /* wait for timestamp */
-        while (timer_get_timestamp() < tp) {;}
-        /* do transfer */
-        ttmp_msg_transfer(msg_id);
-        /* next one */
-        current += 1;
     }
 #endif
     //do not return
@@ -1005,13 +1034,14 @@ static void load_sche_tbl_img(const char *name, void *buff_base, size_t buff_siz
     img_bytes = MULTIBOOT_MODULE_SIZE(*module);
     assert(img_bytes <= buff_size);
     /* copy sch table into schedule buffer */
-    memcpy(buff_base, (void *)img_base, img_bytes);
+    /* multiboot error:img_bytes should to add 1 */
+    memcpy(buff_base, (void *)img_base, img_bytes+1);
 }
 
 const char *ttmp_sche_module_name       = "armv8/ttsch/msg.bin";
-const char *tt_task_sche_module_name_0  = "armv8/ttsch/core0.bin";
-const char *tt_task_sche_module_name_1  = "armv8/ttsch/core1.bin";
-const char *tt_task_sche_module_name_2  = "armv8/ttsch/core2.bin";
+const char *tt_task_sche_module_name_0  = "armv8/ttsch/node_0.bin";
+const char *tt_task_sche_module_name_1  = "armv8/ttsch/node_1.bin";
+const char *tt_task_sche_module_name_2  = "armv8/ttsch/node_2.bin";
 
 void arm_kernel_startup(void *pointer)
 {
@@ -1066,8 +1096,10 @@ void arm_kernel_startup(void *pointer)
 #endif
 
         /* init time triggered message passing ctrl info */
-        global->tt_ctrl_info.sync_flag = 0;
-        global->tt_ctrl_info.sys_launch_time = 0u;
+        global->tt_ctrl_info.tt_sche_start_time = 0xFFFFFFFFFFFFu;
+        global->tt_ctrl_info.real_sys_start_flag = false;
+        global->tt_ctrl_info.real_sys_start_time = 0xFFFFFFFFFFFFu;
+        global->tt_ctrl_info.current_period_start_ts = 0u;
         global->tt_ctrl_info.cores = TTMP_TASK_CORE_NUM;
         global->tt_ctrl_info.ttmp_buff = (void *)ttmp_buff_base;
         global->tt_ctrl_info.tt_tracing_buff = (void *)tt_tracing_buff_base;
@@ -1089,6 +1121,8 @@ void arm_kernel_startup(void *pointer)
         task_sche_base += TT_TASK_SCHD_CORE_SIZE;
         //printf("%llx\n", task_sche_base);
         load_sche_tbl_img(tt_task_sche_module_name_2, task_sche_base, TT_TASK_SCHD_CORE_SIZE);
+        //uint64_t *ptr = (uint64_t *)tt_task_sch_tbl_base + 1 * TT_TASK_ENTRY_NUM;
+        //printf("### TEST entry %llx\n", ptr[3]);
 
         /* allocate initial KCB */
         kcb_current= (struct kcb *)local_phys_to_mem(
