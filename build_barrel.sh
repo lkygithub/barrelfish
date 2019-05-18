@@ -14,9 +14,9 @@ cd $BUILD_PATH
 #aarch64-linux-gnu-objcopy -I elf64-littleaarch64 -O elf64-littleaarch64 --change-addresses 0xffff00007737a000 cpu_zynqmp cpu_zynqmp_relocated
 #echo "kernel rellocated at 0xffff00007737a000\n"
 
-cd $SBIN_PATH
+#cd $SBIN_PATH
 #aarch64-linux-gnu-objcopy -I elf64-littleaarch64 -O elf64-littleaarch64 --change-addresses 0xffff000077378000 cpu_zynqmp cpu_zynqmp_relocated
-cd -
+#cd -
 
 # mount sdcard
 if [ ! -d "/mnt/sdcard" ]; then
@@ -26,8 +26,8 @@ fi
 sudo mount /dev/sdb1 $MOUNT_PATH
 
 # cp sbin
-echo "####: waiting for copy.\n"
 if [ $# -eq 0 ]; then
+    echo "Waiting for copying all binary\n"
     sudo rm -r $MOUNT_PATH/$SBIN_PATH
     sudo rm $MOUNT_PATH/$ECFILE
     sudo rm $MOUNT_PATH/$SKBFILE
@@ -35,15 +35,19 @@ if [ $# -eq 0 ]; then
     sudo cp $BARREL_PATH/$BUILD_PATH/$ECFILE $MOUNT_PATH/$ECFILE
     sudo cp $BARREL_PATH/$BUILD_PATH/$SKBFILE $MOUNT_PATH/$SKBFILE
     sudo cp $BARREL_PATH/hake/$MEMULIST $MOUNT_PATH/menu.lst
+    #umount sdcard
+    sudo umount $MOUNT_PATH
+elif [ "$1"x = "eject"x ]; then
+    #umount sdcard
+    sudo umount $MOUNT_PATH
+    # eject sdcard
+    sudo eject /dev/sdb
 else
+    echo "Waiting for copying $1 binary\n"
     sudo rm $MOUNT_PATH/$SBIN_PATH/$1
     sudo cp $BARREL_PATH/$BUILD_PATH/$SBIN_PATH/$1 $MOUNT_PATH/$SBIN_PATH/$1
+    #umount sdcard
+    sudo umount $MOUNT_PATH
 fi
-echo "####: copy done.\n"
 
-#umount sdcard
-sudo umount $MOUNT_PATH
-# eject sdcard
-sudo eject /dev/sdb
-
-echo "All is OK!"
+echo "Done"
