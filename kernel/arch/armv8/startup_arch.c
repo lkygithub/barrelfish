@@ -932,10 +932,11 @@ static errval_t ttmp_msg_transfer(uint16_t msg_id)
     }
     if (i == start_idx + TTMP_SET_SLOT_NUM)
         return TTMP_ERR_RX_NO_SLOT;
-    //printf("##transfer from %d_%d to %d_%d with value %08x\n",
-    //    msg_id & 0xFF, (msg_id >> 8) & 0xFF,
-    //    core_id, ttask_id,
-    //    src->payload.value[0]);
+    printk(LOG_NOTE, "Transfer from %d_%d to %d_%d with value %02x in %dus(relative to peroid)\n",
+        msg_id & 0xFF, (msg_id >> 8) & 0xFF,
+        core_id, ttask_id,
+        src->payload.value[0],
+        (timer_get_timestamp()-global->tt_ctrl_info.current_period_start_ts)/100);
     /* copy */
     memcpy(dst, src, TTMP_MSG_SLOT_SIZE);
     /* Improtant!!! */

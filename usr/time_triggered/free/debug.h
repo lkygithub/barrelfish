@@ -13,11 +13,32 @@
 #define XTERM_END "\e[0m"
 
 #ifdef FREE_DEBUG
-#define PRINT_DEBUG(format, ...) printf(XTERM_YELLOW "FREE[DEBUG]: " XTERM_END format, ##__VA_ARGS__)
+#define PRINT_DEBUG(format, ...) printf(XTERM_YELLOW "FREE    [DEBUG]: " XTERM_END format, ##__VA_ARGS__)
 #else
 #define PRINT_DEBUG(format, ...) do{} while (0)
 #endif
 
-#define PRINT_ERR(format, ...) printf(XTERM_RED "FREE[ERR]: " XTERM_END format, ##__VA_ARGS__)
+#define PRINT_ERR(format, ...) printf(XTERM_RED "FREE    [ERR]: " XTERM_END format, ##__VA_ARGS__)
+
+static inline uint64_t debug_get_syscounter(void);
+static inline uint64_t us_to_ticks(uint64_t us);
+static inline uint64_t ticks_to_us(uint64_t ticks);
+
+static inline uint64_t debug_get_syscounter(void){
+    uint64_t cntpct;
+    __asm volatile(
+        "mrs %[cntpct], cntpct_el0 \n\t"
+        : [cntpct] "=r"(cntpct)
+        );
+    return cntpct;
+}
+
+static inline uint64_t us_to_ticks(uint64_t us) {
+    return us * 100;
+}
+
+static inline uint64_t ticks_to_us(uint64_t ticks){
+    return ticks / 100;
+}
 
 #endif  //TT_FREE_DEBUG_H

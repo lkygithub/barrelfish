@@ -59,9 +59,9 @@ void timers_init(int timeslice)
 
     /* The timeslice is in ms */
     kernel_timeslice = ns_to_systime(timeslice * 1000000);
-
-    printf("System counter frequency is %uHz.\n", timer_get_frequency());
-    printf("Timeslice interrupt every %u ticks (%dms).\n",
+    printk( LOG_NOTE, "System counter frequency is %uHz.\n",
+            timer_get_frequency());
+    printk( LOG_NOTE, "Timeslice interrupt every %u ticks (%dms).\n",
             kernel_timeslice, timeslice);
 
     // Wait for n time units, close to cycles

@@ -143,14 +143,16 @@ struct dcb *schedule(void)
             //The last task in the sched queue is not a valid task.
             //It serves calc of tstart of the first task in the next round.
             //Thus current_task should be reset to 0.
+            int first_sync_count = 5;
+            int second_sync_count = 10;
             tt_count += 1;
-            if (tt_count == 50) {
+            if (tt_count == first_sync_count) {
                 global->tt_ctrl_info.real_sys_start_time = global->tt_ctrl_info.tt_sche_start_time +
-                    70 * us_to_ticks(global->tt_ctrl_info.super_peroid);
+                    second_sync_count * us_to_ticks(global->tt_ctrl_info.super_peroid);
                 global->tt_ctrl_info.real_sys_start_flag = true;
                 while(timer_get_timestamp() < global->tt_ctrl_info.real_sys_start_time)
                     ;
-                tt_count = 70;
+                tt_count = second_sync_count;
             }
             global->tt_ctrl_info.current_period_start_ts = global->tt_ctrl_info.tt_sche_start_time +
                     tt_count * us_to_ticks(global->tt_ctrl_info.super_peroid);

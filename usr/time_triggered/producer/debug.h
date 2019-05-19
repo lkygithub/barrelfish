@@ -13,7 +13,7 @@
 #define XTERM_END "\e[0m"
 
 #ifdef PRODUCER_DEBUG
-#define PRINT_DEBUG(format, ...) printf(XTERM_YELLOW "PRODUCER[DEBUG]: " XTERM_END format, ##__VA_ARGS__)
+#define PRINT_DEBUG(format, ...) printf(XTERM_PURPLE "PRODUCER[DEBUG]: " XTERM_END format, ##__VA_ARGS__)
 #else
 #define PRINT_DEBUG(format, ...) do{} while (0)
 #endif
@@ -22,6 +22,7 @@
 
 static inline uint64_t debug_get_syscounter(void);
 static inline uint64_t us_to_ticks(uint64_t us);
+static inline uint64_t ticks_to_us(uint64_t ticks);
 
 static inline uint64_t debug_get_syscounter(void) {
     uint64_t cntpct;
@@ -34,6 +35,10 @@ static inline uint64_t debug_get_syscounter(void) {
 
 static inline uint64_t us_to_ticks(uint64_t us) {
     return us * 100;
+}
+
+static inline uint64_t ticks_to_us(uint64_t ticks){
+    return ticks / 100;
 }
 
 #endif  //TT_PRODUCER_DEBUG_H

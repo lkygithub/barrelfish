@@ -44,8 +44,8 @@ module /armv8/sbin/test_tt_sched 0
 module /armv8/sbin/tt/producer nospawn
 module /armv8/sbin/tt/consumer nospawn
 module /armv8/sbin/tt/tt_starter nospawn
-#module /armv8/sbin/tt/free nospawn
-#module /armv8/sbin/tt/shaper nospawn
+module /armv8/sbin/tt/free nospawn
+module /armv8/sbin/tt/shaper nospawn
 
 #Time-Triggered sch table
 module /armv8/ttsch/msg.bin nospawn
