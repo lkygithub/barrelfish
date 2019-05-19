@@ -27,7 +27,7 @@ int main(int argc, char **argv)
     uint64_t start_time = 0xFFFFFFFFFFFFu;
     uint64_t peroid_start_time;
     uint64_t overhead = 5000u; // printf overhead ~= 5ms
-    uint64_t gap = 1; //us
+    uint64_t gap = 5; //us
     /* init */
     if (argc != 8){
         PRINT_ERR("Param Number Error\n");

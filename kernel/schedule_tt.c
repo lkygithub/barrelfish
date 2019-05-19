@@ -104,6 +104,15 @@ struct dcb *schedule(void)
                 //last timeslice in rr mode
                 kcb_current->tt_status = 1;
                 timer_set(next_tstart);
+#if 0
+                if (my_core_id == 2){
+
+                    printf("peroid start at %llx, next_start is %llx, sub is %d, t_base is %llx\n",
+                    global->tt_ctrl_info.current_period_start_ts, next_tstart, 
+                    (next_tstart - global->tt_ctrl_info.current_period_start_ts)/100, 
+                    kcb_current->t_base);
+                }
+#endif
             }
             else
             {
@@ -158,7 +167,8 @@ struct dcb *schedule(void)
         if (kcb_current->current_task == 0)
         {
             //Should reset shift base when a round is finished.
-            kcb_current->t_base = systime_now();
+            kcb_current->t_base = global->tt_ctrl_info.tt_sche_start_time +
+                    tt_count * us_to_ticks(global->tt_ctrl_info.super_peroid);
         }
 
         /*systime_t tstart = kcb_current->sched_tbl[kcb_current->current_task].tstart_shift + kcb_current->t_base;

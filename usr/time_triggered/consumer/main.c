@@ -27,8 +27,7 @@ int main(int argc, char **argv)
     uint64_t peroid_start_time;
     bool started = false;
     uint64_t start_time = 0xFFFFFFFFFFFFu;
-    uint64_t gap = 400; //us
-    uint64_t now_2;
+    uint64_t gap = 5; //us
 
     /* init */
     if (argc != 8) {
@@ -52,21 +51,17 @@ int main(int argc, char **argv)
         ;
     //printf("4\n");
 my_start:
-    now_2 = debug_get_syscounter();
+
     sys_get_current_period_start_ts(&peroid_start_time);
-    
-    while (debug_get_syscounter() < peroid_start_time + us_to_ticks(92000))
-        ;
     /* Receive msg */
     tt_msg_receive(src_core_id, src_task_id, buffer, &size);
     uint64_t now = debug_get_syscounter();
-    PRINT_DEBUG("Received message, this peroid start at 0x%llx, now is %dus, now_2 is %dus, msg: %02x\n",
-        peroid_start_time, (now-peroid_start_time)/100,(now_2-peroid_start_time)/100, buffer[0]);
+    PRINT_DEBUG("Received message, this peroid start at 0x%llx, now is %dus, msg: %02x\n",
+        peroid_start_time, (now-peroid_start_time)/100, buffer[0]);
 
     /* wait for next peroid */
     while (debug_get_syscounter() < peroid_start_time + us_to_ticks(peroid+gap))
         ;
-    
     goto my_start;
 
     return 0;
