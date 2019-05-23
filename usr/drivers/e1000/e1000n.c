@@ -491,9 +491,6 @@ static errval_t init(struct bfdriver_instance* bfi, const char* name, uint64_t
 
     errval_t err;
 
-    argc_g = argc;
-    argv_g = argv;
-
     /** Parse command line arguments. */
     E1000_DEBUG("e1000 driver module started. instance name=%s\n",
             bfi->name);

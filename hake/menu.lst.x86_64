@@ -49,8 +49,8 @@ module	/x86_64/sbin/angler serial0.terminal xterm
 
 # module	/x86_64/sbin/bfscope core=0
 # module	/x86_64/sbin/pixels nospwan
-module	/x86_64/sbin/spantest nospawn
-module	/x86_64/sbin/examples/xmpl-trace nospawn
+# module	/x86_64/sbin/spantest nospawn
+# module	/x86_64/sbin/examples/xmpl-trace nospawn
 
 # module	/x86_64/sbin/ed nospawn
 # module  /x86_64/sbin/examples/xmpl-span core=0 1
