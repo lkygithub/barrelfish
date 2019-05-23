@@ -555,8 +555,9 @@ static inline bool e10k_queue_get_rxbuf_avd(e10k_queue_t* q, regionid_t* rid,
 
     // Barrier needed according to linux driver to make sure nothing else is
     // read before the dd bit TODO: make sure
+#ifdef __X86_64__
     lfence();
-
+#endif
     // TODO add code for RSC
 
     *flags = ctx->buf.flags;

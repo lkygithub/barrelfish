@@ -22,7 +22,7 @@
     mackerelDevices = [ "zynqmp_gem" ],
     addLibraries = libDeps [ "driverkit", "thc", "netQmng", 
                              "contmng", "net_device_manager", "skb",
-                             "spawndomain", "netd" , "net", "lwip"],
+                             "net", "netd", "lwip2"],
     addCFlags = [ "-D ZYNQMP_GEM_DEBUG_ON" ]
   }
 ]

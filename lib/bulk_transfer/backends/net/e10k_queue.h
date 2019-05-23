@@ -292,8 +292,9 @@ static inline int e10k_queue_rxpoll(e10k_queue_t* q)
 
         // Barrier needed according to linux driver to make sure nothing else is
         // read before the dd bit TODO: make sure
+#ifdef __X86_64__
         lfence();
-
+#endif
         if (e10k_q_rdesc_adv_wb_rsccnt_extract(d)) {
             printf("e10k.q0: Part of a large receive\n");
         }
