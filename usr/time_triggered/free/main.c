@@ -47,13 +47,13 @@ my_start:
 
     sys_get_current_period_start_ts(&peroid_start_time);
     uint64_t now = debug_get_syscounter();
-    PRINT_DEBUG("Core %d FreeTask %d，周期开始时刻：0x%llx，当前时刻（周期内）：%d微秒\n",
+    PRINT_DEBUG("Core %d FreeTask %d, Peroid Start Time: 0x%llx, Current Time(relative to peroid): %8d us\n",
         my_core_id, my_task_id, peroid_start_time, ticks_to_us(now-peroid_start_time));
 
     while (debug_get_syscounter() < peroid_start_time + us_to_ticks(deadline - overhead))
         ;
     now = debug_get_syscounter();
-    PRINT_DEBUG("Core %d FreeTask %d，周期开始时刻：0x%llx，当前时刻（周期内）：%d微秒\n",
+    PRINT_DEBUG("Core %d FreeTask %d, Peroid Start Time: 0x%llx, Current Time(relative to peroid): %8d us\n",
         my_core_id, my_task_id, peroid_start_time, ticks_to_us(now-peroid_start_time));
     /* wait for next peroid */
     while (debug_get_syscounter() < peroid_start_time + us_to_ticks(peroid + gap))

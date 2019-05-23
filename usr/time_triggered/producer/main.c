@@ -61,7 +61,7 @@ my_start:
     /* Send msg */
     tt_msg_send(dst_core_id, dst_task_id, content.value, 1);
     uint64_t now = debug_get_syscounter();
-    PRINT_DEBUG("发送消息，         周期开始时刻：0x%llx，当前时刻（周期内）：%d微秒，消息：%02x\n", 
+    PRINT_DEBUG("Send Msg,          Peroid Start Time: 0x%llx, Current Time(relative to peroid): %8d us, Msg: 0x%02x\n", 
             peroid_start_time, ticks_to_us(now-peroid_start_time), content.value[0]);
     /* wait for next period */
     while((debug_get_syscounter() - peroid_start_time) < us_to_ticks(peroid+gap))
