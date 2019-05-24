@@ -147,23 +147,27 @@ errval_t start_networking(coreid_t core,
         return KALUGA_ERR_DRIVER_NOT_AUTO;
     }
 
-        driver->allow_multi = 1;
-        err = default_start_function(core, driver, record, placeholder);
-        if (err_is_fail(err)) {
-            DEBUG_ERR(err, "Spawning %s failed.", driver->path);
-            return err;
-        }
+    driver->allow_multi = 1;
+    err = default_start_function(core, driver, record, placeholder);
+    if (err_is_fail(err)) {
+        DEBUG_ERR(err, "Spawning %s failed.", driver->path);
+        return err;
+    }
 
-        // cards with driver in seperate process
-        struct module_info* test = find_module("zynqmp_gem_test");
-        if (test == NULL) {
-            printf("Test not found\n");
-            return KALUGA_ERR_DRIVER_NOT_AUTO;
-        }
+    // cards with driver in seperate process
+    struct module_info* net_sockets = find_module("net_sockets_server");
+    if (net_sockets == NULL) {
+        printf("Net sockets server not found\n");
+        return KALUGA_ERR_DRIVER_NOT_AUTO;
+    }
 
-        err = spawn_program(core, test->path, test->argv, environ, 0,
-                            get_did_ptr(test));
+    // Spawn net_sockets_server
+    net_sockets->argv[0] = "net_sockets_server";
+    net_sockets->argv[1] = "auto";
+    net_sockets->argv[2] = driver->binary;
 
+    err = spawn_program(core, net_sockets->path, net_sockets->argv, environ, 0,
+                        get_did_ptr(net_sockets));
     return err;
 }
 

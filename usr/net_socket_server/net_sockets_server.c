@@ -832,17 +832,24 @@ static void export_cb(void *st, errval_t err, iref_t iref)
 int main(int argc, char *argv[])
 {
     errval_t err;
-    
+    char card_name[64];
+
+#ifdef __aarch64__
+    if (argc < 3) {
+        printf("%s: missing arguments! \n", argv[0]);
+        return -1;
+    }
+
+    snprintf(card_name, sizeof(card_name), "%s", argv[2]);
+#else 
     if (argc < 4) {
         printf("%s: missing arguments! \n", argv[0]);
         return -1;
     }
 
-    debug_printf("Net socket server started for %s.\n", argv[2]);
-
-    char card_name[64];
     snprintf(card_name, sizeof(card_name), "%s:%s", argv[2], argv[argc - 1]);
-
+#endif
+    debug_printf("Net socket server started for %s.\n", argv[2]);
     char *ip = NULL;
     char *netmask = NULL;
     char *gw = NULL;

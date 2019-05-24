@@ -1,0 +1,26 @@
+--------------------------------------------------------------------------
+--
+-- This file is distributed under the terms in the attached LICENSE file.
+-- Hakefile for drivers/zynqmp_gem
+--
+--------------------------------------------------------------------------
+
+[ 
+
+  build library { target = "devif_backend_zynqmp_gem",
+    cFiles = [ "devif_backend_zynqmp_gem.c"],
+    flounderBindings = [ "zynqmp_gem_devif"],
+    flounderDefs = [ "zynqmp_gem_devif" ],
+    mackerelDevices = [ "zynqmp_gem"],
+    addCFlags = [ "-D ZYNQMP_GEM_DEBUG_ON" ]
+  },
+  build application { target = "zynqmp_gem",
+    cFiles = ["zynqmp_gem.c"],
+    addLinkFlags = ["-T" ++ Config.source_dir ++ "/lib/driverkit/bfdrivers.ld" ],
+    flounderBindings = [ "zynqmp_gem_devif"],
+    flounderDefs = [ "zynqmp_gem_devif" ],
+    mackerelDevices = [ "zynqmp_gem" ],
+    addLibraries = libDeps [ "driverkit", "thc", "contmng", "skb", "net", "lwip2"],
+    addCFlags = [ "-D ZYNQMP_GEM_DEBUG_ON" ]
+  }
+]
