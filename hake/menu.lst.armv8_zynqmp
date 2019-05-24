@@ -30,6 +30,9 @@ module /armv8/sbin/corectrl auto
 module /armv8/sbin/serial_kernel irq=53
 # module /armv8/sbin/pci auto
 
+# For networking
+module /armv8/sbin/zynqmp_gem auto
+module /armv8/sbin/net_sockets_server nospawn 
 
 # General user domains
 module /armv8/sbin/fish nospawn

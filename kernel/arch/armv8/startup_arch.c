@@ -551,6 +551,22 @@ static struct dcb *spawn_init_common(const char *name,
     /* Tell init the vspace addr of its dispatcher. */
     disp->udisp = INIT_DISPATCHER_VBASE;
 
+    /* hard coded device phys addr to keep kaluga usable*/
+    lpaddr_t device_base, device_length;
+    device_base = 0x80000000;
+    device_length = 0x80000000;
+
+    struct platform_info pi;
+    platform_get_info(&pi);
+    if (pi.platform == PI_PLATFORM_ZYNQMP) {
+        struct cte *iocap=
+            caps_locate_slot(CNODE(spawn_state.taskcn), TASKCN_SLOT_IO);
+        errval_t err=
+            caps_create_new(ObjType_DevFrame, device_base, device_length,
+                    device_length, my_core_id, iocap);
+        assert(err_is_ok(err));
+    }
+
     /* TODO: write the contet ID for init */
 
     /* Set the thread ID register to point to the shared structure. */

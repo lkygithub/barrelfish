@@ -26,6 +26,7 @@
 #include <devif/backends/net/e10k_devif.h>
 #include <devif/backends/net/e1000_devif.h>
 #include <devif/backends/net/mlx4_devif.h>
+#include <devif/backends/net/zynqmp_gem_devif.h>
 
 #include <lwip/netif.h>
 

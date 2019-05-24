@@ -61,6 +61,11 @@ static void add_start_function_overrides(void)
 #ifdef __ARM_ARCH_7A__
     set_start_function("driverdomain", newstyle_start_function);
 #endif
+
+#ifdef __ARM_ARCH_8A__
+    set_start_function("zynqmp_gem", start_networking);
+#endif
+
     //set_start_function("driverdomain", default_start_function_new);
 }
 
@@ -140,9 +145,11 @@ int main(int argc, char** argv)
     }
 
     err = arch_startup(add_device_db_file);
+    KALUGA_DEBUG("my dbg arch started.\n");
     if (err_is_fail(err)) {
         USER_PANIC_ERR(err, "arch startup");
     }
     THCFinish();
+    KALUGA_DEBUG("my dbg kaluga return.\n");
     return EXIT_SUCCESS;
 }

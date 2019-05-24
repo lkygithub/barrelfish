@@ -36,10 +36,15 @@
  #include <machine/atomic.h>
  */
 
+#ifdef __X86_64__
 #define	mb()	__asm __volatile("mfence;" : : : "memory")
 #define	wmb()	__asm __volatile("sfence;" : : : "memory")
 #define	rmb()	__asm __volatile("lfence;" : : : "memory")
-
+#else 
+#define	mb()	
+#define	wmb()
+#define	rmb()
+#endif
 typedef struct {
 	volatile u_int counter;
 } atomic_t;
