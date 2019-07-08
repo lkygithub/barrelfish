@@ -727,7 +727,12 @@ mem_malloc_adjust_lfree:
         LWIP_ASSERT("mem_malloc: sanity check alignment",
           (((mem_ptr_t)mem) & (MEM_ALIGNMENT-1)) == 0);
 
+#ifdef __aarch64__
+        return (u8_t *)mem;
+#else 
         return (u8_t *)mem + SIZEOF_STRUCT_MEM;
+#endif
+
       }
     }
 #if LWIP_ALLOW_MEM_FREE_FROM_OTHER_CONTEXT

@@ -27,7 +27,15 @@ extern systime_t systime_frequency;
  */
 static inline systime_t systime_now(void)
 {
+#ifdef __aarch64__
+    uint64_t cntpct; 
+    __asm volatile( 
+        "mrs %[cntpct], cntpct_el0 \n\t" 
+        : [cntpct] "=r"(cntpct)); 
+    return cntpct; 
+#else
     return rdtsc();
+#endif
 }
 
 /**
