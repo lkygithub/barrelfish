@@ -1,4 +1,4 @@
-BARREL_PATH=~/barrelfish
+BARREL_PATH=~/lwip2_barrelfish
 BUILD_DIR=build
 MOUNT_PATH=/mnt/shared_folder
 SBIN_DIR=armv8/sbin

@@ -106,6 +106,7 @@ errval_t dhcpd_start(net_flags_t flags)
             // will call event_dispatch()/event_dispatch_nonblock()
             networking_poll();
             if (st->dhcp_ticks > DHCP_TIMEOUT_MSECS / DHCP_FINE_TIMER_MSECS) {
+                printf("DHCP timeout failure.\n");
                 dhcpd_stop();
                 return -1;
             }

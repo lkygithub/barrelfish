@@ -859,7 +859,7 @@ err_t etharp_output(struct netif *netif, struct pbuf *q, struct ip_addr *ipaddr)
 {
     struct eth_addr *dest, mcastaddr;
 
-    LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, "etharp_output : called\n");
+    LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_output : called\n"));
     /* make room for Ethernet header - should not fail */
     if (pbuf_header(q, sizeof(struct eth_hdr)) != 0) {
         /* bail out */

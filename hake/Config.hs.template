@@ -220,7 +220,7 @@ lpc_timer_debug :: Bool
 lpc_timer_debug = False
 
 lwip_debug :: Bool
-lwip_debug = False
+lwip_debug = True
 
 libpci_debug :: Bool
 libpci_debug = False
@@ -384,7 +384,7 @@ defines = [ Str ("-D" ++ d) | d <- [
              if acpi_interface_debug then "ACPI_BF_DEBUG" else "",
              if acpi_service_debug then "ACPI_SERVICE_DEBUG" else "",
              if lpc_timer_debug then "LPC_TIMER_DEBUG" else "",
-             if lwip_debug then "LWIP_BARRELFISH_DEBUG" else "",
+             if lwip_debug then "LWIP_DEBUG" else "",
              if libpci_debug then "PCI_LIB_DEBUG" else "",
              if usrpci_debug then "PCI_SERVICE_DEBUG" else "",
              if timer_debug then "TIMER_CLIENT_DEBUG" else "",

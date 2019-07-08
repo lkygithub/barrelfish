@@ -145,11 +145,9 @@ int main(int argc, char** argv)
     }
 
     err = arch_startup(add_device_db_file);
-    KALUGA_DEBUG("my dbg arch started.\n");
     if (err_is_fail(err)) {
         USER_PANIC_ERR(err, "arch startup");
     }
     THCFinish();
-    KALUGA_DEBUG("my dbg kaluga return.\n");
     return EXIT_SUCCESS;
 }

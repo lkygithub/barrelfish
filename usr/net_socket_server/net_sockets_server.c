@@ -898,6 +898,7 @@ int main(int argc, char *argv[])
 
     /* connect to the network */
     err = networking_init(card_name, (!ip ? NET_FLAGS_DO_DHCP: 0) | NET_FLAGS_DEFAULT_QUEUE | NET_FLAGS_BLOCKING_INIT );
+    printf("my dbg networking initialized.\n");
     if (err_is_fail(err)) {
         USER_PANIC_ERR(err, "Failed to initialize the network");
     }
@@ -919,11 +920,13 @@ int main(int argc, char *argv[])
 
     err = descq_create(&exp_queue, DESCQ_DEFAULT_SIZE, queue_name,
                        true, true, 0, NULL, &f);
+    printf("my dbg descq created.\n");
     assert(err_is_ok(err));
 
 
     err = net_sockets_export(service_name, export_cb, connect_cb, get_default_waitset(),
                             IDC_EXPORT_FLAGS_DEFAULT);
+    printf("my dbg net sockets exported.\n");
     assert(err_is_ok(err));
 
     while(1) {

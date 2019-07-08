@@ -295,7 +295,7 @@ static void export_devif_cb(void *st, errval_t err, iref_t iref)
 
     // Build label for interal management service
     sprintf(name, "%s_%s", s->service_name, suffix);
-
+    ZYNQMP_GEM_DEBUG("registering nameservice %s.\n", name);
     err = nameservice_register(name, iref);
     assert(err_is_ok(err));
     s->initialized = true;
@@ -312,7 +312,6 @@ static errval_t connect_devif_cb(void *st, struct zynqmp_gem_devif_binding *b)
 static void zynqmp_gem_init_mngif(struct zynqmp_gem_state *st)
 {
     errval_t err;
-    return ;
     err = zynqmp_gem_devif_export(st, export_devif_cb, connect_devif_cb,
                            get_default_waitset(), 1);
     assert(err_is_ok(err));
@@ -322,7 +321,6 @@ static void zynqmp_gem_init(void) {
     errval_t err;
 
     ZYNQMP_GEM_DEBUG("Init hardware.\n");
-    return ;
     zynqmp_gem_hardware_init();
     err = inthandler_setup_arm(zynqmp_gem_interrupt_handler, NULL, ZYNQMP_GEM_IRQ);
     if (err_is_fail(err)) {

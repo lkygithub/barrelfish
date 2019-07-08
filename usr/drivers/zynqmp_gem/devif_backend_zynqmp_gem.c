@@ -330,16 +330,21 @@ errval_t zynqmp_gem_queue_create(zynqmp_gem_queue_t ** pq, void (*int_handler)(v
     char service[128] = "zynqmp_gem_devif";
 
     iref_t iref;
+
+    ZYNQMP_GEM_DEBUG("looking up nameservice %s.\n", service);
     err = nameservice_blocking_lookup(service, &iref);
+    ZYNQMP_GEM_DEBUG("nameservice found.\n", service);
     if (err_is_fail(err)) {
         return err;
     }
 
+    ZYNQMP_GEM_DEBUG("binding devif.\n");
     err = zynqmp_gem_devif_bind(iref, bind_cb, q, get_default_waitset(), 1);
     if (err_is_fail(err)) {
         return err;
     }
     
+    ZYNQMP_GEM_DEBUG("devif bound.\n");
     // wait until bound
     while(!q->bound) {
         event_dispatch(get_default_waitset());
