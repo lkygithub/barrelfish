@@ -63,6 +63,5 @@ let commonCFiles = [ "boot_modules.c",
                                                "spawndomain", "elf", "mm",
                                                "trace", "int_route_client",
                                                "driverkit", "pci"],
-                      addCFlags = [ "-D KALUGA_DEBUG_ON" ],
                       architectures = [ "armv8" ] }
 ]
