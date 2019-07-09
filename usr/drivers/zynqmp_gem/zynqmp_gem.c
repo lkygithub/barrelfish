@@ -46,42 +46,11 @@ static void sleep(delayus_t us) {
     printf("my dbg end sleeping.\n");
 }
 
-/**
- * \brief Zynqmp gem IRQ handler
- *
- * This handler assumes the card is at page 0.
- *
- * The order of actions in this function is important. An interrupt
- * needs to be acknowledged to the card first, before reading packets
- * from the card. Otherwise a race between reading packets and newly
- * received packets arises and packet reception can be delayed
- * arbitrarily.
- */
-
-static void polling_loop(void)
-{
-    errval_t err;
-    struct waitset *ws = get_default_waitset();
-    while (1) {
-        ZYNQMP_GEM_DEBUG("in polling loop.\n");
-        err = event_dispatch(ws);
-        if (err_is_fail(err)) {
-            DEBUG_ERR(err, "in event_dispatch");
-            break;
-        }
-    }
-}
-
-static void zynqmp_gem_hardware_init(void) {
+static void zynqmp_gem_hardware_init(mackerel_addr_t vbase) {
     int i;
     uint64_t mac_addr;
 
-    errval_t err;
-    lvaddr_t vbase;
-    err = map_device_register(ZYNQMP_GEM0_BASEADDR, 0x1000, &vbase);
-    assert(err_is_ok(err) && vbase);
-
-    zynqmp_gem_initialize(&device, (mackerel_addr_t)vbase);
+    zynqmp_gem_initialize(&device, vbase);
 
     //Disable all interrupts(This reg is reset as disabled, so no need to do this I guess)
     //zynqmp_gem_intdis_wr(&device, 0x7FFFEFF);
@@ -240,10 +209,24 @@ static void zynqmp_gem_init_mngif(struct zynqmp_gem_state *st)
     assert(err_is_ok(err));
 }
 
-static void zynqmp_gem_init(void) {
+static errval_t init(struct bfdriver_instance* bfi, const char* name, uint64_t
+        flags, struct capref* caps, size_t caps_len, char** args, size_t
+        args_len, iref_t* dev) {
+
+    struct zynqmp_gem_state *st;
+    st = (struct zynqmp_gem_state*)malloc(sizeof(struct zynqmp_gem_state));
+    st->initialized = false;
+    st->service_name = "zynqmp_gem";
+
+    errval_t err;
+    lvaddr_t vbase;
+    ZYNQMP_GEM_DEBUG("Map device capability.\n");
+    err = map_device_cap(caps[0], &vbase);
+    assert(err_is_ok(err) && vbase);
+    ZYNQMP_GEM_DEBUG("Device capability mapped.\n");
 
     ZYNQMP_GEM_DEBUG("Init hardware.\n");
-    zynqmp_gem_hardware_init();
+    zynqmp_gem_hardware_init((mackerel_addr_t)vbase);
     ZYNQMP_GEM_DEBUG("Hardware initialized.\n");
 
     //Enable interrupt
@@ -254,26 +237,67 @@ static void zynqmp_gem_init(void) {
     zynqmp_gem_netctl_er_wrf(&device, 0x1);
     zynqmp_gem_netctl_et_wrf(&device, 0x1);
 
-}
-
-int main(int argc, char *argv[])
-{
-    struct zynqmp_gem_state *st;
-  
-    ZYNQMP_GEM_DEBUG("Starting xilinx gem driver.....\n");
-    
-    // Initialize driver
-    zynqmp_gem_init();
-    ZYNQMP_GEM_DEBUG("Driver initialized\n");
-    st = (struct zynqmp_gem_state*)malloc(sizeof(struct zynqmp_gem_state));
-    st->initialized = false;
-    st->queue_init_done = false;
-    st->service_name = "zynqmp_gem";
     /* For use with the net_queue_manager */
 
+    ZYNQMP_GEM_DEBUG("Init management interface.\n");
     zynqmp_gem_init_mngif(st);
-
-    ZYNQMP_GEM_DEBUG("Manager interface started.\n");
-
-    polling_loop();
+    ZYNQMP_GEM_DEBUG("Management interface initialized.\n");
+    return SYS_ERR_OK;
 }
+
+/**
+ * Instructs driver to attach to the device.
+ * This function is only called if the driver has previously detached
+ * from the device (see also detach).
+ *
+ * \note After detachment the driver can not assume anything about the
+ * configuration of the device.
+ *
+ * \param[in]   bfi   The instance of this driver.
+ * \retval SYS_ERR_OK Device initialized successfully.
+ */
+static errval_t attach(struct bfdriver_instance* bfi) {
+    return SYS_ERR_OK;
+}
+
+/**
+ * Instructs driver to detach from the device.
+ * The driver must yield any control over to the device after this function returns.
+ * The device may be left in any state.
+ *
+ * \param[in]   bfi   The instance of this driver.
+ * \retval SYS_ERR_OK Device initialized successfully.
+ */
+static errval_t detach(struct bfdriver_instance* bfi) {
+    return SYS_ERR_OK;
+}
+
+/**
+ * Instructs the driver to go in a particular sleep state.
+ * Supported states are platform/device specific.
+ *
+ * \param[in]   bfi   The instance of this driver.
+ * \retval SYS_ERR_OK Device initialized successfully.
+ */
+static errval_t set_sleep_level(struct bfdriver_instance* bfi, uint32_t level) {
+    return SYS_ERR_OK;
+}
+
+/**
+ * Destroys this driver instance. The driver will yield any
+ * control over the device and free any state allocated.
+ *
+ * \param[in]   bfi   The instance of this driver.
+ * \retval SYS_ERR_OK Device initialized successfully.
+ */
+static errval_t destroy(struct bfdriver_instance* bfi) {
+    return SYS_ERR_OK;
+}
+
+/**
+ * Registers the driver module with the system.
+ *
+ * To link this particular module in your driver domain,
+ * add it to the addModules list in the Hakefile.
+ */
+DEFINE_MODULE(zynqmp_gem_module, init, attach, detach, set_sleep_level, destroy);

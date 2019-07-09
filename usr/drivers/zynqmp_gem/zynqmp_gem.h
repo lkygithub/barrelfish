@@ -16,7 +16,6 @@
 
 struct zynqmp_gem_state {
     bool initialized;
-    bool queue_init_done;
 
     /* For use with the net_queue_manager */
     char *service_name;

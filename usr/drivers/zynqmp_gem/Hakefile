@@ -6,7 +6,6 @@
 --------------------------------------------------------------------------
 
 [ 
-
   build library { target = "devif_backend_zynqmp_gem",
     cFiles = [ "devif_backend_zynqmp_gem.c"],
     flounderBindings = [ "zynqmp_gem_devif"],
@@ -14,13 +13,20 @@
     mackerelDevices = [ "zynqmp_gem"],
     addCFlags = [ "-D ZYNQMP_GEM_DEBUG_ON" ]
   },
+  build library { target = "zynqmp_gem_module",
+    cFiles = [ "zynqmp_gem.c"],
+    flounderBindings = [ "e1000_devif" ],
+    flounderDefs = [ "e1000_devif" ],
+    mackerelDevices = [ "zynqmp_gem" ],
+    architectures = [ "armv8" ],
+    addCFlags = [ "-DLIBRARY", "-D ZYNQMP_GEM_DEBUG_ON" ]
+  },
   build application { target = "zynqmp_gem",
-    cFiles = ["zynqmp_gem.c"],
+    cFiles = ["main.c"],
     addLinkFlags = ["-T" ++ Config.source_dir ++ "/lib/driverkit/bfdrivers.ld" ],
-    flounderBindings = [ "zynqmp_gem_devif"],
-    flounderDefs = [ "zynqmp_gem_devif" ],
     mackerelDevices = [ "zynqmp_gem" ],
     addLibraries = libDeps [ "driverkit", "thc", "contmng", "skb", "net", "lwip2"],
-    addCFlags = [ "-D ZYNQMP_GEM_DEBUG_ON" ]
+    addModules = ["zynqmp_gem_module"],
+    architectures = ["armv8"]
   }
 ]
