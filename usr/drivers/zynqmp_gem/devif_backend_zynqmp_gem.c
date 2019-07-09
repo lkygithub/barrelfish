@@ -29,6 +29,7 @@
  * allocate a single frame, mapping it into our vspace with given
  * attributes
  ****************************************************************/
+
 static void *alloc_map_frame(vregion_flags_t attr, size_t size, struct capref *retcap)
 {
     struct capref frame;

@@ -11,6 +11,7 @@
 #include <barrelfish/barrelfish.h>
 #include <barrelfish/inthandler.h>
 #include <barrelfish/nameservice_client.h>
+#include <barrelfish/systime.h>
 
 #include <maps/zynqmp_map.h>
 
@@ -28,116 +29,23 @@ static zynqmp_gem_t device;
 
 static uint8_t zynqmp_gem_mac[6];
 
-/* 
-static void add_txslot(uint32_t paddr, uint32_t len, void *opaque, bool islast) {
-    memset((void*)&txring[txtail], 0, sizeof(txbd));
-    tx_opaque[txtail] = opaque;
-    txring[txtail].addr = paddr;
-    txring[txtail].info = (len & ZYNQMP_GEM_TXBUF_LEN_MASK) | 
-        (islast ? ZYNQMP_GEM_TXBUF_LAST_MASK : 0) |
-        ((txtail + 1) % ZYNQMP_GEM_TX_RING_LEN ? 0 :ZYNQMP_GEM_TXBUF_WRAP_MASK);
-    txtail = (txtail + 1) % ZYNQMP_GEM_TX_RING_LEN;
-}
-static void get_txslot(void **opaque) {
-    *opaque = &tx_opaque[txhead];
-    // FIXME: Do something with info if needed
-    if (txring[txhead].info & ZYNQMP_GEM_TXBUF_EXHAUSTED) {
-#ifdef ZYNQMP_GEM_DEBUG
-        ZYNQMP_GEM_DEBUG("TX buffers exhausted in mid frame\n");
-#endif
-    }
-    txhead = (txhead + 1) % ZYNQMP_GEM_TX_RING_LEN;
-}
-
-static void add_rxslot(uint32_t paddr, void *opaque) {
-    memset((void*)&rxring[rxtail], 0, sizeof(rxbd));
-    rx_opaque[rxtail] = opaque;
-    rxring[rxtail].addr = (paddr & ZYNQMP_GEM_RXBUF_ADDR_MASK) |
-        ((rxtail + 1) % ZYNQMP_GEM_RX_RING_LEN ? 0 :ZYNQMP_GEM_RXBUF_WRAP_MASK);
-    rxring[rxtail].info = 0;
-    rxtail = (rxtail + 1) % ZYNQMP_GEM_RX_RING_LEN;
-}
-
-static void get_rxslot(void** opaque, size_t *len, bool *last) {
-    *opaque = &rx_opaque[rxhead];
-    //FIXME: Do someting with info if needed
-    *len = rxring[rxhead].info & ZYNQMP_GEM_RXBUF_LEN_MASK;
-    *last = rxring[rxhead].info & ZYNQMP_GEM_RXBUF_EOF_MASK;
-    rxhead = (rxhead + 1) % ZYNQMP_GEM_RX_RING_LEN;
-}
-
-
-static void get_mac_address_fn(uint8_t *mac)
+static uint64_t now(void)
 {
-    memcpy(mac, zynqmp_gem_mac, 6);
-}
- */
 
-/**
- * \brief Send Ethernet packet.
- *
- * The packet should be a complete Ethernet frame. Nothing is added
- * by the card or the driver.
- *
- */
-/*
-static errval_t transmit_pbuf_list_fn(struct driver_buffer *buffers, size_t count)
-{
-    size_t i;
-    size_t totallen = 0;
-
-#ifdef ZYNQMP_GEM_DEBUG
-    ZYNQMP_GEM_DEBUG("Add buffer callback %d:\n", count);
-#endif
-
-    for (i = 0; i < count; i++) {
-        totallen += buffers[i].len;
-    }
-
-    //FIXME: Copied code. Not sure if I should use txhead here. Remember to invoke cap to get phyaddr to fill into the desc
-    for (i = 0; i < count; i++) {
-        add_txslot(buffers[i].pa, buffers[i].len, buffers[i].opaque, i == count - 1);
-    }
-
-    return SYS_ERR_OK;
+    uint64_t cntpct;
+    __asm volatile(
+        "mrs %[cntpct], cntpct_el0 \n\t"
+        : [cntpct] "=r"(cntpct));
+    return cntpct;
 }
 
-static uint64_t tx_get_free_slots_fn(void) {
-    if (txtail >= txhead) {
-        return ZYNQMP_GEM_TX_RING_LEN - (txtail - txhead) - 1; // TODO: could this be off by 1?
-    } else {
-        return ZYNQMP_GEM_TX_RING_LEN - (txtail + ZYNQMP_GEM_TX_RING_LEN - txhead) - 1; // TODO: off by 1?
-    }
+static void sleep(delayus_t us) {
+    systime_t start = now();
+    printf("my dbg start sleeping.\n");
+    while(now() <= start + ns_to_systime(us * 1000));
+    printf("my dbg end sleeping.\n");
 }
 
-static bool handle_free_tx_slot_fn(void)
-{
-    void *opaque;
-    get_txslot(&opaque);
-    handle_tx_done(opaque);
-    return true;
-}
- */
-/** Callback for net_queue_mgr library. */
-/*
-static errval_t rx_register_buffer_fn(uintptr_t paddr, void *vaddr, void *opaque) {
-    add_rxslot(paddr, opaque);
-    return SYS_ERR_OK;
-}
- */
-/**
- * Callback for net_queue_mgr library. Since we do PIO anyways, we only ever use
- * one buffer.
- */
-/*
-static uint64_t rx_get_free_slots_fn(void) {
-    if (rxtail >= rxhead) {
-        return ZYNQMP_GEM_RX_RING_LEN - (rxtail - rxhead) - 1; // TODO: could this be off by 1?
-    } else {
-        return ZYNQMP_GEM_RX_RING_LEN - (rxtail + ZYNQMP_GEM_RX_RING_LEN - rxhead) - 1; // TODO: off by 1?
-    }
-}
- */
 /**
  * \brief Zynqmp gem IRQ handler
  *
@@ -170,7 +78,7 @@ static void zynqmp_gem_hardware_init(void) {
 
     errval_t err;
     lvaddr_t vbase;
-    err = map_device_register(ZYNQMP_GEM4_BASEADDR, 0x1000, &vbase);
+    err = map_device_register(ZYNQMP_GEM0_BASEADDR, 0x1000, &vbase);
     assert(err_is_ok(err) && vbase);
 
     zynqmp_gem_initialize(&device, (mackerel_addr_t)vbase);
@@ -183,7 +91,6 @@ static void zynqmp_gem_hardware_init(void) {
 
     //Clear the statistics registers
     zynqmp_gem_netctl_casr_wrf(&device, 0x1);
-
     //Clear the status registers
     zynqmp_gem_rxstat_wr(&device, 0x0F);
     zynqmp_gem_txstat_wr(&device, 0xFF);
@@ -212,6 +119,9 @@ static void zynqmp_gem_hardware_init(void) {
     zynqmp_gem_netcfg_gme_wrf(&device, 0x1);
     zynqmp_gem_netcfg_spd_wrf(&device, 0x1);
     
+    uint32_t netcfg = zynqmp_gem_netcfg_rd(&device);
+    printf("my dbg netcfg in hardware init:%x.\n", netcfg);
+
     //FIXME: use burned-in MAC address instead of random one if possible
     srand((int)time(0));
     mac_addr = ((uint64_t)ZYNQMP_GEM_MAC_PREFIX << 24) | ((uint64_t)rand() % 0x1000000);
@@ -262,7 +172,18 @@ static errval_t on_create_queue(struct zynqmp_gem_devif_binding *b,
 
 static void on_transmit_start(struct zynqmp_gem_devif_binding *b) {
     ZYNQMP_GEM_DEBUG("start transmission.\n");
+    uint32_t netctl, intstat, txstat;
+    netctl = zynqmp_gem_netctl_rd(&device);
+    intstat = zynqmp_gem_intstat_rd(&device);
+    txstat = zynqmp_gem_txstat_rd(&device);
+    printf("my dbg 1 netctl:%x, intstat:%x, txstat:%x.\n", netctl, intstat, txstat);
     zynqmp_gem_netctl_tsp_wrf(&device, 0x1);
+    //for debugging purpose
+    sleep(1000000 * 5);
+    netctl = zynqmp_gem_netctl_rd(&device);
+    intstat = zynqmp_gem_intstat_rd(&device);
+    txstat = zynqmp_gem_txstat_rd(&device);
+    printf("my dbg 2 netctl:%x, intstat:%x, txstat:%x.\n", netctl, intstat, txstat);
 }
 
 static void on_interrupt(struct zynqmp_gem_devif_binding *b)

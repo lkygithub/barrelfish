@@ -129,7 +129,7 @@ default_start_function(coreid_t where, struct module_info* driver,
 }
 
 
-errval_t start_networking(coreid_t core,
+errval_t start_networking(coreid_t where,
                           struct module_info* driver,
                           char* record, struct driver_argument *placeholder)
 {
@@ -148,7 +148,7 @@ errval_t start_networking(coreid_t core,
     }
 
     driver->allow_multi = 1;
-    err = default_start_function(core, driver, record, placeholder);
+    err = default_start_function(where, driver, record, placeholder);
     if (err_is_fail(err)) {
         DEBUG_ERR(err, "Spawning %s failed.", driver->path);
         return err;
@@ -166,24 +166,118 @@ errval_t start_networking(coreid_t core,
     net_sockets->argv[1] = "auto";
     net_sockets->argv[2] = driver->binary;
 
-    err = spawn_program(core, net_sockets->path, net_sockets->argv, environ, 0,
+    err = spawn_program(where, net_sockets->path, net_sockets->argv, environ, 0,
                         get_did_ptr(net_sockets));
     return err;
 }
 
-/* place holder function for armv8 without PCI 
- * should be implemented if PCI is applied
+static void provide_driver_with_caps(struct driver_instance* drv, char* name) {
+    errval_t err;
+
+    struct monitor_blocking_binding *m = get_monitor_blocking_binding();
+    assert(m != NULL);
+
+    uint32_t arch, platform;
+    err = m->rpc_tx_vtbl.get_platform(m, &arch, &platform);
+    assert(err_is_ok(err));
+    assert(arch == PI_ARCH_ARMV7A);
+
+    struct allowed_registers **regs= NULL;
+    switch(platform) {
+    case PI_PLATFORM_ZYNQMP:
+        regs= zynqmp;
+        break;
+    default:
+        printf("Unrecognised ARMv7 platform\n");
+        abort();
+    }
+
+    KALUGA_DEBUG("%s:%d: Finding caps for driver for %s\n", __FUNCTION__, __LINE__, name);
+    for (size_t i=0; regs[i] != NULL; i++) {
+        if(strcmp(name, regs[i]->binary) != 0) {
+            continue;
+        }
+
+        // Get the device cap from the managed capability tree
+        // put them all in a single cnode
+        for (size_t j=0; regs[i]->registers[j][0] != 0x0; j++) {
+            struct capref device_frame;
+            KALUGA_DEBUG("%s:%d: mapping 0x%"PRIxLPADDR" %"PRIuLPADDR"\n", __FUNCTION__, __LINE__,
+            regs[i]->registers[j][0], regs[i]->registers[j][1]);
+
+            lpaddr_t base = regs[i]->registers[j][0] & ~(BASE_PAGE_SIZE-1);
+            err = get_device_cap(base, regs[i]->registers[j][1], &device_frame);
+            assert(err_is_ok(err));
+
+            KALUGA_DEBUG("get_device_cap worked\n");
+            err = ddomain_driver_add_cap(drv, device_frame);
+            assert(err_is_ok(err));
+        }
+    }
+}
+
+/**
+ * \brief Startup function for new-style ARMv7 drivers.
+ *
+ * Launches the driver instance in a driver domain instead.
  */
 errval_t
 default_start_function_new(coreid_t where, struct module_info* mi, char* record,
-                           struct driver_argument* arg)
+                        struct driver_argument* arg)
 {
+    assert(mi != NULL);
+    assert(record != NULL);
+
+    struct domain_instance* inst = instantiate_driver_domain(mi->binary, where);
+
+    char module_name[100];
+    sprintf(module_name, "%s_module", mi->binary);
+
+    struct driver_instance* drv = ddomain_create_driver_instance(module_name, module_name);
+    provide_driver_with_caps(drv, mi->binary);
+    ddomain_instantiate_driver(inst, drv);
+
     return SYS_ERR_OK;
 }
 
 errval_t start_networking_new(coreid_t where,
                               struct module_info* driver,
-                              char* record, struct driver_argument * int_arg)
+                              char* record, struct driver_argument *arg)
 {
-    return SYS_ERR_OK;
+    errval_t err;
+
+    if (is_started(driver)) {
+        printf("Already started %s\n", driver->binary);
+        return KALUGA_ERR_DRIVER_ALREADY_STARTED;
+    }
+
+    if (!is_auto_driver(driver)) {
+        printf("Not auto %s\n", driver->binary);
+        return KALUGA_ERR_DRIVER_NOT_AUTO;
+    }
+
+    err = default_start_function_new(where, driver, record, arg);
+    if (err_is_fail(err)) {
+        DEBUG_ERR(err, "Spawning %s failed.", driver->path);
+        return err;
+    }
+
+
+    // cards with driver in seperate process TODO might put into same process
+
+    struct module_info* net_sockets = find_module("net_sockets_server");
+    if (net_sockets == NULL) {
+        printf("Net sockets server not found\n");
+        return KALUGA_ERR_DRIVER_NOT_AUTO;
+    }
+
+    // Spawn net_sockets_server
+    net_sockets->argv[0] = "net_sockets_server";
+    net_sockets->argv[1] = "auto";
+    net_sockets->argv[2] = driver->binary;
+
+    err = spawn_program(where, net_sockets->path, net_sockets->argv, environ, 0,
+                        get_did_ptr(net_sockets));
+
+    return err;
 }
