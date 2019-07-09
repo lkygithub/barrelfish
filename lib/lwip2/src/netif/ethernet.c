@@ -302,6 +302,7 @@ ethernet_output(struct netif* netif, struct pbuf* p,
     ("ethernet_output: sending packet %p\n", (void *)p));
 
   /* send the packet */
+  printf("my dbg netif linkoutput called.\n");
   return netif->linkoutput(netif, p);
 
 pbuf_header_failed:

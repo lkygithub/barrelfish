@@ -165,7 +165,7 @@ err_t bfnetif_poll(struct netif *netif)
 err_t bfnetif_init(struct netif *netif)
 {
     assert(netif);
-
+    printf("my dbg bfnetif init called. linkoutput fp:%x.\n", bfnetif_output);
     netif->output     = etharp_output;
     netif->linkoutput = bfnetif_output;
     netif->mtu        = BFNETIF_MTU;

@@ -190,6 +190,7 @@ static err_t devq_send(struct netif *netif, struct pbuf *p)
 
 static err_t devq_netif_init_fn(struct netif *netif)
 {
+    printf("my dbg devq netif init called. linkoutput fp:%x.\n", devq_send);
     /* maximum transfer unit */
     netif->mtu = 1500;
 

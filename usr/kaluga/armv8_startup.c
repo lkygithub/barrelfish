@@ -35,7 +35,7 @@ static struct allowed_registers zynqmp_gem = {
     .binary = "zynqmp_gem",
     .registers =
     {
-        {ZYNQMP_GEM4_BASEADDR, 0x1000},
+        {ZYNQMP_GEM0_BASEADDR, 0x1000},
         {0x0, 0x0}
     }
 };

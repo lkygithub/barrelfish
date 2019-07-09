@@ -862,6 +862,7 @@ etharp_output(struct netif *netif, struct pbuf *q, const ip4_addr_t *ipaddr)
             (ip4_addr_cmp(dst_addr, &arp_table[etharp_cached_entry].ipaddr))) {
           /* the per-pcb-cached entry is stable and the right one! */
           ETHARP_STATS_INC(etharp.cachehit);
+          printf("my dbg etharp output 1.\n");
           return etharp_output_to_arp_index(netif, q, etharp_cached_entry);
         }
 #if LWIP_NETIF_HWADDRHINT
@@ -879,17 +880,20 @@ etharp_output(struct netif *netif, struct pbuf *q, const ip4_addr_t *ipaddr)
           (ip4_addr_cmp(dst_addr, &arp_table[i].ipaddr))) {
         /* found an existing, stable entry */
         ETHARP_SET_HINT(netif, i);
+        printf("my dbg etharp output 2.\n");
         return etharp_output_to_arp_index(netif, q, i);
       }
     }
     /* no stable entry found, use the (slower) query function:
        queue on destination Ethernet address belonging to ipaddr */
+    printf("my dbg etharp output 3.\n");
     return etharp_query(netif, dst_addr, q);
   }
 
   /* continuation for multicast/broadcast destinations */
   /* obtain source Ethernet address of the given interface */
   /* send packet directly on the link */
+  printf("my dbg etharp output 4.\n");
   return ethernet_output(netif, q, (struct eth_addr*)(netif->hwaddr), dest, ETHTYPE_IP);
 }
 

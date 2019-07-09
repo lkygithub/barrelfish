@@ -8,7 +8,11 @@
 #define ZYNQMP_GEM_INT_RC_MASK 0x00000002
 #define ZYNQMP_GEM_N_RX_BUFS 256
 #define ZYNQMP_GEM_N_TX_BUFS 256
-#define ZYNQMP_GEM_IRQ  95
+#define ZYNQMP_GEM0_IRQ 89
+#define ZYNQMP_GEM1_IRQ 91
+#define ZYNQMP_GEM2_IRQ 93
+#define ZYNQMP_GEM3_IRQ 95
+#define ZYNQMP_GEM_IRQ ZYNQMP_GEM0_IRQ
 
 struct zynqmp_gem_state {
     bool initialized;

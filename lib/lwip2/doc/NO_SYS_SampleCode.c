@@ -45,6 +45,7 @@ static void netif_status_callback(struct netif *netif)
 
 static err_t netif_init(struct netif *netif)
 {
+  printf("my dbg netif init called. linkoutput fp:%x.\n", netif_output);
   netif->linkoutput = netif_output;
   netif->output     = etharp_output;
   netif->output_ip6 = ethip6_output;

@@ -1,4 +1,4 @@
-device zynqmp_gem msbfirst ( addr base ) "Zynq GEM"
+device zynqmp_gem msbfirst ( addr base ) "Zynqmp GEM"
 {
   register netctl rw addr(base, 0x0) "network_control" {
     _		6	mbz;

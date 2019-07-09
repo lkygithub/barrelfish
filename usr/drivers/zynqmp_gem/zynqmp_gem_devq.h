@@ -21,10 +21,10 @@ typedef struct zynqmp_gem_queue {
     volatile rx_desc_t *dummy_rx_ring;
     volatile tx_desc_t *tx_ring;
     volatile tx_desc_t *dummy_tx_ring;
-    struct capref rx;
-    struct capref dummy_rx;
-    struct capref tx;
-    struct capref dummy_tx;
+    struct capref rx_ring_cap;
+    struct capref dummy_rx_ring_cap;
+    struct capref tx_ring_cap;
+    struct capref dummy_tx_ring_cap;
 
     int n_rx_buffers;
     int n_tx_buffers;
@@ -35,6 +35,8 @@ typedef struct zynqmp_gem_queue {
 
     unsigned rx_head, rx_tail;
     unsigned tx_head, tx_tail;
+
+    void (*int_handler)(void *);
 
     // binding
     bool bound;

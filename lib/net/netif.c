@@ -83,6 +83,7 @@ errval_t net_if_get_hwaddr(struct netif *netif);
 static err_t net_if_linkoutput(struct netif *netif, struct pbuf *p)
 {
     errval_t err;
+    printf("my dbg net if add tx buf called in net if linkoutput.\n");
     err = net_if_add_tx_buf(netif, p);
     if (err_is_fail(err)) {
         return ERR_IF;
@@ -353,6 +354,7 @@ errval_t net_if_add_tx_buf(struct netif *netif, struct pbuf *pbuf)
 #if BENCH_DEVQ_ENQUEUE
     cycles_t tsc_start = rdtsc();
 #endif
+        printf("my dbg devq enqueue called in net_if_add_tx_buf.\n");
         err = devq_enqueue(st->queue, nb->region->regionid, nb->offset,
                            nb->region->buffer_size,
                            ((uintptr_t)tmpp->payload - (uintptr_t)nb->vbase),

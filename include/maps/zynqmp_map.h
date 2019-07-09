@@ -39,8 +39,8 @@ extern "C" {
 #define ZYNQMP_GPIO_BASEADDR               0xFF0A0000U
 #define ZYNQMP_GEM0_BASEADDR               0xFF0B0000U
 #define ZYNQMP_GEM1_BASEADDR               0xFF0C0000U
-#define ZYNQMP_GEM3_BASEADDR               0xFF0D0000U
-#define ZYNQMP_GEM4_BASEADDR               0xFF0E0000U
+#define ZYNQMP_GEM2_BASEADDR               0xFF0D0000U
+#define ZYNQMP_GEM3_BASEADDR               0xFF0E0000U
 #define ZYNQMP_QSPI_BASEADDR               0xFF0F0000U
 #define ZYNQMP_NAND_BASEADDR               0xFF100000U
 #define ZYNQMP_SDIO0_BASEADDR              0xFF160000U

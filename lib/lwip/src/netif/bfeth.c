@@ -304,6 +304,7 @@ static void bfeth_input_handler(void *data, uint64_t pbuf_id, uint64_t paddr,
 err_t bfeth_init(struct netif *netif)
 {
     struct bfeth *bfeth;
+    printf("my dbg bfeth init called. linkoutput fp:%x.\n", low_level_output);
 
     LWIP_ASSERT("netif != NULL", (netif != NULL));
 
