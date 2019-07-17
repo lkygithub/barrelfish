@@ -59,8 +59,6 @@ static void *alloc_map_frame(vregion_flags_t attr, size_t size, struct capref *r
 static errval_t zynqmp_gem_register(struct devq* q, struct capref cap,
                                   regionid_t rid)
 {    
-    ZYNQMP_GEM_DEBUG("register: rid:%d, base:%lx, size:%lx\n", rid);
-    return SYS_ERR_OK;
     zynqmp_gem_queue_t *q_ext = (zynqmp_gem_queue_t *)q;
     struct frame_identity id;
     errval_t err;
@@ -71,6 +69,9 @@ static errval_t zynqmp_gem_register(struct devq* q, struct capref cap,
     q_ext->region_id = rid;
     q_ext->region_base = id.base;
     q_ext->region_size = id.bytes;
+    ZYNQMP_GEM_DEBUG("buffer region registered: rid:%d, base:%lx, size:%lx\n",
+            rid, id.base, id.bytes);
+
     return SYS_ERR_OK;
 }
 
@@ -101,8 +102,8 @@ static errval_t zynqmp_gem_enqueue_rx(zynqmp_gem_queue_t *q, regionid_t rid,
 
     rx_desc_t rxdesc;
 
-    rxdesc.addr &= ZYNQMP_GEM_RX_WRAP_MASK;
-    rxdesc.addr |= (q->region_base + offset) & ZYNQMP_GEM_RX_ADDR_MASK;
+    rxdesc.addr = ((q->rx_tail == q->n_rx_buffers - 1) ? ZYNQMP_GEM_RX_WRAP_MASK : 0)
+            | ((q->region_base + offset) & ZYNQMP_GEM_RX_ADDR_MASK);
     rxdesc.info = 0;
 
     q->rx_ring[q->rx_tail] = rxdesc;
@@ -137,13 +138,17 @@ static errval_t zynqmp_gem_dequeue_rx(zynqmp_gem_queue_t *q, regionid_t* rid,
         return NIC_ERR_RX_PKT;
     }
     
-    q->rx_head = (q->rx_head + 1) % q->n_rx_buffers;
     *rid = q->region_id;
     *offset = (rxdesc->addr & ZYNQMP_GEM_RX_ADDR_MASK) - q->region_base;
     *length = ZYNQMP_GEM_RX_BUFSIZE;
     *valid_data = 0;
     *valid_length = rxdesc->info & ZYNQMP_GEM_RX_LEN_MASK;
     *flags = NETIF_RXFLAG;
+
+    rxdesc->addr = q->rx_head == q->n_rx_buffers - 1 ? ZYNQMP_GEM_RX_WRAP_MASK : 0;
+    rxdesc->info = 0;
+    q->rx_head = (q->rx_head + 1) % q->n_rx_buffers;
+
     return SYS_ERR_OK;
 }
 
@@ -159,18 +164,36 @@ static errval_t zynqmp_gem_enqueue_tx(zynqmp_gem_queue_t *q, regionid_t rid,
     }
     
     tx_desc_t txdesc;
-    
+
     txdesc.addr = q->region_base + offset + valid_data;
-    txdesc.info &= ZYNQMP_GEM_RX_WRAP_MASK;
-    txdesc.info |= valid_length & ZYNQMP_GEM_TX_LEN_MASK;
-    txdesc.info |= (flags & NETIF_TXFLAG_LAST) ? ZYNQMP_GEM_TX_LAST_MASK : 0;
+    txdesc.info = (valid_length & ZYNQMP_GEM_TX_LEN_MASK)
+            | ((flags & NETIF_TXFLAG_LAST) ? ZYNQMP_GEM_TX_LAST_MASK : 0)
+            | (q->tx_tail == q->n_tx_buffers - 1 ? ZYNQMP_GEM_TX_WRAP_MASK : 0);
+
+    ZYNQMP_GEM_DEBUG("insert txdesc into pos %d, addr:%x, info:%x.\n", q->tx_tail, txdesc.addr, txdesc.info);
+
+    //Magic.
+    q->tx_ring[(q->tx_tail + 1) % q->n_tx_buffers].info |= 0x00002000;
 
     q->tx_ring[q->tx_tail] = txdesc;
     q->tx_tail = (q->tx_tail + 1) % q->n_tx_buffers;
 
-    errval_t err;
-    err = q->b->tx_vtbl.transmit_start(q->b, NOP_CONT);
-    return err;
+    ZYNQMP_GEM_DEBUG("before transmit.\n");
+    for (int i = 0; i < 5; i++) {
+        ZYNQMP_GEM_DEBUG("txdesc[%d] addr:%x, info:%x.\n", i, q->tx_ring[i].addr, q->tx_ring[i].info);
+    }
+
+    errval_t err = SYS_ERR_OK;
+    if (flags & NETIF_TXFLAG_LAST) {
+        err = q->b->tx_vtbl.transmit_start(q->b, NOP_CONT);
+    }
+
+    ZYNQMP_GEM_DEBUG("after transmit.\n");
+    for (int i = 0; i < 5; i++) {
+        ZYNQMP_GEM_DEBUG("txdesc[%d] addr:%x, info:%x.\n", i, q->tx_ring[i].addr, q->tx_ring[i].info);
+    }
+
+    return SYS_ERR_OK;
 }
 
 static errval_t zynqmp_gem_dequeue_tx(zynqmp_gem_queue_t *q, regionid_t* rid, genoffset_t* offset,
@@ -185,7 +208,6 @@ static errval_t zynqmp_gem_dequeue_tx(zynqmp_gem_queue_t *q, regionid_t* rid, ge
     volatile tx_desc_t *txdesc;
 
     txdesc = &q->tx_ring[q->tx_head];
-    q->tx_head = (q->tx_head + 1) % q->n_tx_buffers;
     *rid = q->region_id;
     *offset = txdesc->addr - q->region_base;
     *length = ZYNQMP_GEM_TX_BUFSIZE;
@@ -196,6 +218,11 @@ static errval_t zynqmp_gem_dequeue_tx(zynqmp_gem_queue_t *q, regionid_t* rid, ge
     *valid_length = txdesc->info | ZYNQMP_GEM_TX_LEN_MASK;
     *flags = NETIF_TXFLAG;
     if (txdesc->info & ZYNQMP_GEM_TX_LAST_MASK) *flags |= NETIF_TXFLAG_LAST;
+
+    txdesc->addr = 0;
+    txdesc->info = q->tx_head == q->n_tx_buffers - 1 ? ZYNQMP_GEM_TX_WRAP_MASK : 0;
+    q->tx_head = (q->tx_head + 1) % q->n_tx_buffers;
+
     return SYS_ERR_OK;
 }
 
@@ -342,7 +369,6 @@ errval_t zynqmp_gem_queue_create(zynqmp_gem_queue_t ** pq, void (*int_handler)(v
     if (q->dummy_rx_ring == NULL) {
         return DEVQ_ERR_INIT_QUEUE;
     }
-
     q->tx_ring = alloc_map_frame(VREGION_FLAGS_READ_WRITE_NOCACHE, 
             ZYNQMP_GEM_N_TX_BUFS * sizeof(tx_desc_t), &q->tx_ring_cap);
     if (q->tx_ring == NULL) {
@@ -359,9 +385,9 @@ errval_t zynqmp_gem_queue_create(zynqmp_gem_queue_t ** pq, void (*int_handler)(v
         zynqmp_gem_enqueue_rx(q, 0, i * ZYNQMP_GEM_RX_BUFSIZE, ZYNQMP_GEM_RX_BUFSIZE,
                 0, ZYNQMP_GEM_RX_BUFSIZE, NETIF_RXFLAG);
     }
-    q->rx_ring[q->n_rx_buffers - 1].addr = ZYNQMP_GEM_RX_WRAP_MASK;
-    q->tx_ring[q->n_tx_buffers - 1].info = ZYNQMP_GEM_TX_WRAP_MASK;
     q->dummy_rx_ring[0].addr = ZYNQMP_GEM_RX_WRAP_MASK | ZYNQMP_GEM_RX_USED_MASK;
+    q->dummy_rx_ring[0].info = 0;
+    q->dummy_tx_ring[0].addr = 0;
     q->dummy_tx_ring[0].info = ZYNQMP_GEM_TX_WRAP_MASK | ZYNQMP_GEM_TX_USED_MASK | ZYNQMP_GEM_TX_LAST_MASK;
 
     q->int_handler = int_handler;

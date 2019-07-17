@@ -15,8 +15,8 @@
   },
   build library { target = "zynqmp_gem_module",
     cFiles = [ "zynqmp_gem.c"],
-    flounderBindings = [ "e1000_devif" ],
-    flounderDefs = [ "e1000_devif" ],
+    flounderBindings = [ "zynqmp_gem_devif" ],
+    flounderDefs = [ "zynqmp_gem_devif" ],
     mackerelDevices = [ "zynqmp_gem" ],
     architectures = [ "armv8" ],
     addCFlags = [ "-DLIBRARY", "-D ZYNQMP_GEM_DEBUG_ON" ]

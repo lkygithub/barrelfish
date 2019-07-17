@@ -29,27 +29,9 @@ static zynqmp_gem_t device;
 
 static uint8_t zynqmp_gem_mac[6];
 
-static uint64_t now(void)
-{
-
-    uint64_t cntpct;
-    __asm volatile(
-        "mrs %[cntpct], cntpct_el0 \n\t"
-        : [cntpct] "=r"(cntpct));
-    return cntpct;
-}
-
-static void sleep(delayus_t us) {
-    systime_t start = now();
-    printf("my dbg start sleeping.\n");
-    while(now() <= start + ns_to_systime(us * 1000));
-    printf("my dbg end sleeping.\n");
-}
-
 static void zynqmp_gem_hardware_init(mackerel_addr_t vbase) {
     int i;
     uint64_t mac_addr;
-
     zynqmp_gem_initialize(&device, vbase);
 
     //Disable all interrupts(This reg is reset as disabled, so no need to do this I guess)
@@ -87,9 +69,6 @@ static void zynqmp_gem_hardware_init(mackerel_addr_t vbase) {
     zynqmp_gem_netcfg_mcd_wrf(&device, 0x3);
     zynqmp_gem_netcfg_gme_wrf(&device, 0x1);
     zynqmp_gem_netcfg_spd_wrf(&device, 0x1);
-    
-    uint32_t netcfg = zynqmp_gem_netcfg_rd(&device);
-    printf("my dbg netcfg in hardware init:%x.\n", netcfg);
 
     //FIXME: use burned-in MAC address instead of random one if possible
     srand((int)time(0));
@@ -100,8 +79,11 @@ static void zynqmp_gem_hardware_init(mackerel_addr_t vbase) {
 
     zynqmp_gem_dmacfg_rbs_wrf(&device, 0x18);
     zynqmp_gem_dmacfg_rps_wrf(&device, 0x3);
-    zynqmp_gem_dmacfg_tps_wrf(&device, 0x1);
-    zynqmp_gem_dmacfg_abl_wrf(&device, 0x4);
+    zynqmp_gem_dmacfg_tps_wrf(&device, 0x0);
+    zynqmp_gem_dmacfg_tpte_wrf(&device, 0x1);
+    zynqmp_gem_dmacfg_esp_wrf(&device, 0);
+    zynqmp_gem_dmacfg_esm_wrf(&device, 0);
+    zynqmp_gem_dmacfg_abl_wrf(&device, 0x1);
 
     //FIXME: PHY configuration to be implemented if needed.
 }
@@ -127,6 +109,7 @@ static errval_t on_create_queue(struct zynqmp_gem_devif_binding *b,
     err = invoke_frame_identify(tx, &frameid);
     assert(err_is_ok(err));
     zynqmp_gem_txqptr_wr(&device, frameid.base);
+    ZYNQMP_GEM_DEBUG("original txqptr:%x.\n", frameid.base);
 
     err = invoke_frame_identify(dummy_tx, &frameid);
     assert(err_is_ok(err));
@@ -134,46 +117,46 @@ static errval_t on_create_queue(struct zynqmp_gem_devif_binding *b,
 
     memcpy(mac, zynqmp_gem_mac, sizeof(zynqmp_gem_mac));
 
+    //Enable controller
+    zynqmp_gem_netctl_mpe_wrf(&device, 0x1);
+    zynqmp_gem_netctl_er_wrf(&device, 0x1);
+    zynqmp_gem_netctl_et_wrf(&device, 0x1);
+
     ZYNQMP_GEM_DEBUG("on create queue return.\n");
 
     return SYS_ERR_OK;
 }
 
 static void on_transmit_start(struct zynqmp_gem_devif_binding *b) {
-    ZYNQMP_GEM_DEBUG("start transmission.\n");
-    uint32_t netctl, intstat, txstat;
-    netctl = zynqmp_gem_netctl_rd(&device);
-    intstat = zynqmp_gem_intstat_rd(&device);
-    txstat = zynqmp_gem_txstat_rd(&device);
-    printf("my dbg 1 netctl:%x, intstat:%x, txstat:%x.\n", netctl, intstat, txstat);
+    ZYNQMP_GEM_DEBUG("txstat:%x.\n", zynqmp_gem_txstat_rd(&device));
+    ZYNQMP_GEM_DEBUG("start transmission. qptr = %x\n", zynqmp_gem_txqptr_rd(&device));
     zynqmp_gem_netctl_tsp_wrf(&device, 0x1);
-    //for debugging purpose
-    sleep(1000000 * 5);
-    netctl = zynqmp_gem_netctl_rd(&device);
-    intstat = zynqmp_gem_intstat_rd(&device);
-    txstat = zynqmp_gem_txstat_rd(&device);
-    printf("my dbg 2 netctl:%x, intstat:%x, txstat:%x.\n", netctl, intstat, txstat);
 }
 
 static void on_interrupt(struct zynqmp_gem_devif_binding *b)
 {
     ZYNQMP_GEM_DEBUG("on interrupt called.\n");
-    uint32_t intstat = zynqmp_gem_intstat_rd(&device), txstat, rxstat;
+    uint32_t intstat, txstat, rxstat;
+    intstat = zynqmp_gem_intstat_rd(&device);
+    ZYNQMP_GEM_DEBUG("intstat:%x.\n", intstat);
     if (intstat & ZYNQMP_GEM_INT_TC_MASK) {
-        ZYNQMP_GEM_DEBUG("Tx completed.\n");
         txstat = zynqmp_gem_txstat_rd(&device);
         //FIXME:do something with txstat.
-        zynqmp_gem_intstat_tc_wrf(&device, 0x1);
-        zynqmp_gem_txstat_tc_wrf(&device, 0x1);
-    } else if (intstat & ZYNQMP_GEM_INT_RC_MASK) {
-        ZYNQMP_GEM_DEBUG("Rx completed.\n");
+        uint32_t qptr = zynqmp_gem_txqptr_rd(&device);
+        ZYNQMP_GEM_DEBUG("Tx completed, txstat:%x, qptr:%x.\n", txstat, qptr);
+        zynqmp_gem_txstat_wr(&device, 0xffffffff);
+    }
+    if (intstat & ZYNQMP_GEM_INT_RC_MASK) {
         rxstat = zynqmp_gem_rxstat_rd(&device);
         //FIXME:do something with rxstat.
-        zynqmp_gem_intstat_rc_wrf(&device, 0x1);
-        zynqmp_gem_rxstat_fr_wrf(&device, 0x1);
-    } else {
-        ZYNQMP_GEM_DEBUG("Unhandled interrupt.\n");
+        ZYNQMP_GEM_DEBUG("Rx completed, rxstat:%x.\n", rxstat);
+        zynqmp_gem_rxstat_wr(&device, 0xffffffff);
     }
+    if (intstat & ZYNQMP_GEM_INT_TXUSED_MASK) {
+        ZYNQMP_GEM_DEBUG("Tx used bit read.\n");
+        //zynqmp_gem_netctl_tsp_wrf(&device, 0x1);
+    } 
+    zynqmp_gem_intstat_wr(&device, 0xffffffff);
 }
 
 static void export_devif_cb(void *st, errval_t err, iref_t iref)
@@ -231,11 +214,6 @@ static errval_t init(struct bfdriver_instance* bfi, const char* name, uint64_t
 
     //Enable interrupt
     zynqmp_gem_inten_wr(&device, 0xFFFFFFFF);
-
-    //Enable controller
-    zynqmp_gem_netctl_mpe_wrf(&device, 0x1);
-    zynqmp_gem_netctl_er_wrf(&device, 0x1);
-    zynqmp_gem_netctl_et_wrf(&device, 0x1);
 
     /* For use with the net_queue_manager */
 

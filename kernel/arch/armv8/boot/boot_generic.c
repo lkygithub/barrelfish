@@ -79,6 +79,8 @@ static void debug_serial_putc(char c)
 #include <dev/zynqmp/zynqmp_uart_dev.h>
 #include <maps/zynqmp_map.h>
 
+#include <dev/zynqmp_gem_dev.h>
+
 zynqmp_uart_t uart;
 static void debug_uart_initialize(void) {
     zynqmp_uart_initialize(&uart, (mackerel_addr_t)ZYNQMP_UART0_BASEADDR);
@@ -101,7 +103,6 @@ static void debug_serial_putchar(char c) {
     debug_serial_putc(c);
 }
 
-
 static void debug_print_string(char *str)
 {
     while (str && *str) {
@@ -109,9 +110,101 @@ static void debug_print_string(char *str)
         str++;
     }
 }
+
+static void debug_print_32(uint32_t val)
+{
+    char buf[33];
+    int i;
+    for (i = 0; i < 32; i++) buf[31 - i] = ((val >> i) & 1) + '0';
+    buf[32] = '\0';
+    debug_print_string(buf);
+    debug_print_string("\n");
+}
+
+zynqmp_gem_t gem;
+static void debug_gem_initialize(void) {
+    return;
+    zynqmp_gem_initialize(&gem, (mackerel_addr_t)ZYNQMP_GEM3_BASEADDR);
+}
+
+static void debug_print_gem_regs(void) {
+    return;
+    debug_print_string("#####################GEM_REGS#####################.\n");
+    uint32_t netctl, netcfg, netsta, dmacfg, txstat, rxqptr, txqptr, rxstat,
+        intstat, phymng, hashbt, hashtp, pcsctrl;
+    netctl = zynqmp_gem_netctl_rd(&gem);
+    if (netctl != 0) {
+        debug_print_string("netctl is ");
+        debug_print_32(netctl);
+    }
+    netcfg = zynqmp_gem_netcfg_rd(&gem);
+    if (netcfg != 0) {
+        debug_print_string("netcfg is ");
+        debug_print_32(netcfg);
+    }
+    netsta = zynqmp_gem_netsta_rd(&gem);
+    if (netsta != 0) {
+        debug_print_string("netsta is ");
+        debug_print_32(netsta);
+    }
+    dmacfg = zynqmp_gem_dmacfg_rd(&gem);
+    if (dmacfg != 0) {
+        debug_print_string("dmacfg is ");
+        debug_print_32(dmacfg);
+    }
+    txstat = zynqmp_gem_txstat_rd(&gem);
+    if (txstat != 0) {
+        debug_print_string("txstat is ");
+        debug_print_32(txstat);
+    }
+    rxqptr = zynqmp_gem_rxqptr_rd(&gem);
+    if (rxqptr != 0) {
+        debug_print_string("rxqptr is ");
+        debug_print_32(rxqptr);
+    }
+    txqptr = zynqmp_gem_txqptr_rd(&gem);
+    if (txqptr != 0) {
+        debug_print_string("txqptr is ");
+        debug_print_32(txqptr);
+    }
+    rxstat = zynqmp_gem_rxstat_rd(&gem);
+    if (rxstat != 0) {
+        debug_print_string("rxstat is ");
+        debug_print_32(rxstat);
+    }
+    intstat = zynqmp_gem_intstat_rd(&gem);
+    if (intstat != 0) {
+        debug_print_string("intstat is ");
+        debug_print_32(intstat);
+    }
+    phymng = zynqmp_gem_phymng_rd(&gem);
+    if (phymng != 0) {
+        debug_print_string("phymng is ");
+        debug_print_32(phymng);
+    }
+    hashbt = zynqmp_gem_hashbt_rd(&gem);
+    if (hashbt != 0) {
+        debug_print_string("hashbt is ");
+        debug_print_32(hashbt);
+    }
+    hashtp = zynqmp_gem_hashtp_rd(&gem);
+    if (hashtp != 0) {
+        debug_print_string("hashtp is ");
+        debug_print_32(hashtp);
+    }
+    pcsctrl = zynqmp_gem_pcsctrl_rd(&gem);
+    if (pcsctrl != 0) {
+        debug_print_string("pcsctrl is ");
+        debug_print_32(pcsctrl);
+    }
+    debug_print_string("#####################GEM_REGS#####################.\n");
+}
+
 #else
 #define debug_print_string(x)
 #define debug_uart_initialize()
+#define debug_gem_initialize()
+#define debug_print_gem_regs()
 #endif
 
 
@@ -576,6 +669,8 @@ void boot_app_init(lpaddr_t state)
 
     debug_uart_initialize();
     debug_print_string("APP BOOTING\n");
+    debug_gem_initialize();
+    debug_print_gem_regs();
 
     struct armv8_core_data *cd = (struct armv8_core_data *)state;
 
@@ -640,6 +735,8 @@ boot_bsp_init(uint32_t magic, lpaddr_t pointer, lpaddr_t stack) {
 
     debug_uart_initialize();
     debug_print_string("BSP BOOTING\n");
+    debug_gem_initialize();
+    debug_print_gem_regs();
 
     /* Boot magic must be set */
     if (magic != MULTIBOOT2_BOOTLOADER_MAGIC) {

@@ -35,7 +35,7 @@ static struct allowed_registers zynqmp_gem = {
     .binary = "zynqmp_gem",
     .registers =
     {
-        {ZYNQMP_GEM0_BASEADDR, 0x1000},
+        {ZYNQMP_GEM3_BASEADDR, 0x1000},
         {0x0, 0x0}
     }
 };
@@ -46,7 +46,7 @@ static struct allowed_registers* zynqmp[] = {
 };
 
 /**
- * \brief Startup function for ARMv7 drivers.
+ * \brief Startup function for ARMv8 drivers.
  *
  * Makes sure we get the device register capabilities.
  */
@@ -180,7 +180,7 @@ static void provide_driver_with_caps(struct driver_instance* drv, char* name) {
     uint32_t arch, platform;
     err = m->rpc_tx_vtbl.get_platform(m, &arch, &platform);
     assert(err_is_ok(err));
-    assert(arch == PI_ARCH_ARMV7A);
+    assert(arch == PI_ARCH_ARMV8A);
 
     struct allowed_registers **regs= NULL;
     switch(platform) {
@@ -188,7 +188,7 @@ static void provide_driver_with_caps(struct driver_instance* drv, char* name) {
         regs= zynqmp;
         break;
     default:
-        printf("Unrecognised ARMv7 platform\n");
+        printf("Unrecognised ARMv8 platform\n");
         abort();
     }
 
@@ -217,7 +217,7 @@ static void provide_driver_with_caps(struct driver_instance* drv, char* name) {
 }
 
 /**
- * \brief Startup function for new-style ARMv7 drivers.
+ * \brief Startup function for new-style ARMv8 drivers.
  *
  * Launches the driver instance in a driver domain instead.
  */
