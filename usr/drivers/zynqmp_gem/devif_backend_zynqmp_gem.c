@@ -117,7 +117,7 @@ static errval_t zynqmp_gem_dequeue_rx(zynqmp_gem_queue_t *q, regionid_t* rid,
                                  genoffset_t* length, genoffset_t* valid_data,
                                  genoffset_t* valid_length, uint64_t* flags)
 {
-    ZYNQMP_GEM_DEBUG("zynqmp gem dequeue tx called.\n");
+    ZYNQMP_GEM_DEBUG("zynqmp gem dequeue rx called.\n");
     if (q->rx_head == q->rx_tail) {
         return DEVQ_ERR_QUEUE_EMPTY;
     }

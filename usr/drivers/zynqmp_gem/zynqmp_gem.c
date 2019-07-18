@@ -31,7 +31,7 @@ static uint8_t zynqmp_gem_mac[6];
 
 static void zynqmp_gem_hardware_init(mackerel_addr_t vbase) {
     int i;
-    uint64_t mac_addr;
+    uint64_t mac_prefix, mac_suffix;
     zynqmp_gem_initialize(&device, vbase);
 
     //Disable all interrupts(This reg is reset as disabled, so no need to do this I guess)
@@ -71,11 +71,14 @@ static void zynqmp_gem_hardware_init(mackerel_addr_t vbase) {
     zynqmp_gem_netcfg_spd_wrf(&device, 0x1);
 
     //FIXME: use burned-in MAC address instead of random one if possible
+    mac_prefix = ZYNQMP_GEM_MAC_PREFIX;
     srand((int)time(0));
-    mac_addr = ((uint64_t)ZYNQMP_GEM_MAC_PREFIX << 24) | ((uint64_t)rand() % 0x1000000);
-    for (i = 0; i < 6; i++) zynqmp_gem_mac[i] = (mac_addr & (0xff << (8 * (5 - i)))) >> (8 * (5 - i));
-    zynqmp_gem_spcaddbt_wr(&device, 0, mac_addr & 0xffffffff);
-    zynqmp_gem_spcaddtp_addr_wrf(&device, 0, (mac_addr & ((uint64_t)0xffff << 32)) >> 32);
+    mac_suffix = rand() % 0x1000000;
+    for (i = 0; i < 3; i++) zynqmp_gem_mac[i] = (mac_prefix & (0xff << (8 * (2 - i)))) >> (8 * (2 - i));
+    for (i = 3; i < 6; i++) zynqmp_gem_mac[i] = (mac_suffix & (0xff << (8 * (5 - i)))) >> (8 * (5 - i));
+    for (i = 0; i < 6; i++) ZYNQMP_GEM_DEBUG("mac %d is %x.\n", i, zynqmp_gem_mac[i]);
+    zynqmp_gem_spcaddbt_wr(&device, 0, ((mac_prefix & 0xff) << 24) | mac_suffix);
+    zynqmp_gem_spcaddtp_addr_wrf(&device, 0, (mac_prefix & 0xffff00) >> 8);
 
     zynqmp_gem_dmacfg_rbs_wrf(&device, 0x18);
     zynqmp_gem_dmacfg_rps_wrf(&device, 0x3);
@@ -121,8 +124,6 @@ static errval_t on_create_queue(struct zynqmp_gem_devif_binding *b,
     zynqmp_gem_netctl_mpe_wrf(&device, 0x1);
     zynqmp_gem_netctl_er_wrf(&device, 0x1);
     zynqmp_gem_netctl_et_wrf(&device, 0x1);
-
-    ZYNQMP_GEM_DEBUG("on create queue return.\n");
 
     return SYS_ERR_OK;
 }
