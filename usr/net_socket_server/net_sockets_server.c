@@ -833,23 +833,23 @@ int main(int argc, char *argv[])
 {
     errval_t err;
     char card_name[64];
+    char queue_name[64];
+    char service_name[64];
 
 #ifdef __aarch64__
     if (argc < 3) {
         printf("%s: missing arguments! \n", argv[0]);
         return -1;
     }
-
-    snprintf(card_name, sizeof(card_name), "%s", argv[2]);
 #else 
     if (argc < 4) {
         printf("%s: missing arguments! \n", argv[0]);
         return -1;
     }
-
-    snprintf(card_name, sizeof(card_name), "%s:%s", argv[2], argv[argc - 1]);
 #endif
-    debug_printf("Net socket server started for %s.\n", argv[2]);
+    snprintf(card_name, sizeof(card_name), "%s", argv[2]);
+    snprintf(queue_name, sizeof(queue_name), "net_sockets_queue_%s", argv[2]);
+    snprintf(service_name, sizeof(service_name), "net_sockets_service_%s", argv[2]);
     char *ip = NULL;
     char *netmask = NULL;
     char *gw = NULL;
@@ -913,14 +913,9 @@ int main(int argc, char *argv[])
     f.dereg = q_dereg;
     f.control = q_control;
 
-    char queue_name[64];
-    char service_name[64];
-    sprintf(queue_name, "net_sockets_queue_%s", argv[2]);
-    sprintf(service_name, "net_sockets_service_%s", argv[2]);
-
     err = descq_create(&exp_queue, DESCQ_DEFAULT_SIZE, queue_name,
                        true, true, 0, NULL, &f);
-    printf("my dbg descq created.\n");
+    printf("my dbg descq created queue.\n");
     assert(err_is_ok(err));
 
 

@@ -470,7 +470,6 @@ static errval_t connect_cb(void *st, struct descq_binding* b)
     q->f.control = state->f.control;
     q->f.reg = state->f.reg;
     q->f.dereg = state->f.dereg;
-
     if (state->head == NULL) {
         // allocated state
         state->head = q;
@@ -528,7 +527,9 @@ errval_t descq_create(struct descq** q,
         struct descq_endpoint_state* state = malloc(sizeof(struct descq_endpoint_state));
         state->name = strdup(name);
         assert(state->name);
-
+        state->qid = 0;
+        state->head = NULL;
+        state->tail = NULL;
         state->f.notify = f->notify;
         state->f.dereg = f->dereg;
         state->f.reg = f->reg;
@@ -589,7 +590,6 @@ errval_t descq_create(struct descq** q,
 
         tmp->bound_done = false;
         iref_t iref;
-
         err = nameservice_blocking_lookup(name, &iref);
         if (err_is_fail(err)) {
             goto cleanup5;
