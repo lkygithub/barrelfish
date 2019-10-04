@@ -123,7 +123,7 @@ static void net_if_status_cb(struct netif *netif)
 static err_t netif_init_cb(struct netif *netif)
 {
     errval_t err;
-
+    printf("my dbg netif init cb.\n");
     netif->hwaddr_len = ETHARP_HWADDR_LEN;
     netif->flags      = NETWORING_NETIF_FLAGS;
     netif->mtu        = NET_IF__MTU;
@@ -184,7 +184,7 @@ errval_t net_if_init_devq(struct netif *netif, struct devq *devq)
 errval_t net_if_add(struct netif *netif, void *st)
 {
     NETDEBUG("netif=%p, state=%p\n", netif, st);
-
+    printf("my dbg net if add.\n");
     netif_add(netif, IP_ADDR_ANY, IP_ADDR_ANY, IP_ADDR_ANY, st,
               netif_init_cb, netif_input);
 
@@ -223,6 +223,7 @@ errval_t net_if_get_hwaddr(struct netif *netif)
     struct devq *q = net_if_get_net_state(netif)->queue;
 
     uint64_t card_mac;
+    printf("my dbg netif get hwaddr.\n");
     err = devq_control(q, 0, 0, &card_mac);
     if (err_is_fail(err)) {
         return err;
@@ -399,6 +400,7 @@ errval_t net_if_poll(struct netif *netif)
 {
     //NETDEBUG("netif=%p\n", netif);
 
+    printf("my dbg in net if poll 0.\n");
     errval_t err;
 
     struct net_state *st = netif->state;
@@ -408,6 +410,7 @@ errval_t net_if_poll(struct netif *netif)
         return SYS_ERR_OK;
     }
 
+    printf("my dbg in net if poll 1.\n");
     //for (int i = 0; i < NET_IF_POLL_MAX; i++) {
     for (;;) {
 #if BENCH_DEVQ_DEQUEUE
@@ -416,6 +419,7 @@ errval_t net_if_poll(struct netif *netif)
         struct devq_buf buf;
         err = devq_dequeue(st->queue, &buf.rid, &buf.offset, &buf.length,
                            &buf.valid_data, &buf.valid_length, &buf.flags);
+    printf("my dbg in net if poll 2.\n");
 
 
 #if BENCH_DEVQ_DEQUEUE
@@ -450,6 +454,7 @@ errval_t net_if_poll(struct netif *netif)
             return err;
         }
 
+    printf("my dbg in net if poll 3.\n");
         struct pbuf *p = net_buf_get_by_region(st->pool, buf.rid, buf.offset);
         if (p == NULL) {
             NETDEBUG("netif=%p, ERROR. No PBUF found for rid=%u, "
@@ -460,6 +465,7 @@ errval_t net_if_poll(struct netif *netif)
 
 
 
+    printf("my dbg in net if poll 4.\n");
 #if NETBUF_DEBGUG
         struct net_buf_p *nb = (struct net_buf_p *)p;
 
@@ -483,7 +489,9 @@ errval_t net_if_poll(struct netif *netif)
         ((struct net_buf_p *)p)->timestamp = rdtsc();
 #endif
 
+    printf("my dbg in net if poll 5.\n");
         if (buf.flags & NETIF_TXFLAG) {
+    printf("my dbg in net if poll 6.\n");
             NETDEBUG("netif=%p, TX done of pbuf=%p (rid=%u, offset=%"PRIxLPADDR ")\n",
                      netif, p, buf.rid, buf.offset);
 
@@ -500,7 +508,7 @@ errval_t net_if_poll(struct netif *netif)
             p->payload += buf.valid_data;
 
             assert(!(buf.flags & NETIF_TXFLAG));
-
+    printf("my dbg in net if poll 7.\n");
             if (st->netif.input(p, &st->netif) != ERR_OK) {
                 net_if_add_rx_buf(&st->netif, p);
             } else {

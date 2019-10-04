@@ -184,6 +184,7 @@ udp_input_local_match(struct udp_pcb *pcb, struct netif *inp, u8_t broadcast)
 void
 udp_input(struct pbuf *p, struct netif *inp)
 {
+  printf("my dbg udp input 0.\n");
   struct udp_hdr *udphdr;
   struct udp_pcb *pcb, *prev;
   struct udp_pcb *uncon_pcb;
@@ -244,9 +245,13 @@ udp_input(struct pbuf *p, struct netif *inp)
     ip_addr_debug_print(UDP_DEBUG, &pcb->remote_ip);
     LWIP_DEBUGF(UDP_DEBUG, (", %"U16_F")\n", pcb->remote_port));
 
+    printf("my dbg local port/dest:%x/%x.\n", pcb->local_port, dest);
+    printf("my dbg local ip/dest:%x/%x.\n", pcb->local_ip.addr, ip_current_dest_addr()->addr);
+    printf("my dbg udp_input_local_match(pcb, inp, broadcast):%x.\n", udp_input_local_match(pcb, inp, broadcast));
     /* compare PCB local addr+port to UDP destination addr+port */
     if ((pcb->local_port == dest) &&
         (udp_input_local_match(pcb, inp, broadcast) != 0)) {
+          printf("my dbg udp input 01.\n");
       if (((pcb->flags & UDP_FLAGS_CONNECTED) == 0) &&
           ((uncon_pcb == NULL)
 #if SO_REUSE
@@ -255,6 +260,7 @@ udp_input(struct pbuf *p, struct netif *inp)
 #endif /* SO_REUSE */
           )) {
         /* the first unconnected matching PCB */
+          printf("my dbg udp input 02.\n");
         uncon_pcb = pcb;
       }
 
@@ -280,9 +286,10 @@ udp_input(struct pbuf *p, struct netif *inp)
   }
   /* no fully matching pcb found? then look for an unconnected pcb */
   if (pcb == NULL) {
+    printf("my dbg pcb = uncon pcb.\n");
     pcb = uncon_pcb;
   }
-
+  if (pcb == NULL) printf("my dbg pcb == NULL.\n");
   /* Check checksum if this is a match or if it was directed at us. */
   if (pcb != NULL) {
     for_us = 1;
@@ -299,6 +306,7 @@ udp_input(struct pbuf *p, struct netif *inp)
 #endif /* LWIP_IPV4 */
   }
 
+  printf("my dbg udp input 1.\n");
   if (for_us) {
     LWIP_DEBUGF(UDP_DEBUG | LWIP_DBG_TRACE, ("udp_input: calculating checksum\n"));
 #if CHECKSUM_CHECK_UDP
@@ -344,8 +352,10 @@ udp_input(struct pbuf *p, struct netif *inp)
       pbuf_free(p);
       goto end;
     }
+  printf("my dbg udp input 2.\n");
 
     if (pcb != NULL) {
+  printf("my dbg udp input 3.\n");
       MIB2_STATS_INC(mib2.udpindatagrams);
 #if SO_REUSE && SO_REUSE_RXTOALL
       if (ip_get_option(pcb, SOF_REUSEADDR) &&
@@ -374,6 +384,7 @@ udp_input(struct pbuf *p, struct netif *inp)
                   if (err == ERR_OK) {
                     /* move payload to UDP data */
                     pbuf_header(q, -hdrs_len);
+  printf("my dbg udp input 4.\n");
                     mpcb->recv(mpcb->recv_arg, mpcb, q, ip_current_src_addr(), src);
                   }
                 }
@@ -387,9 +398,11 @@ udp_input(struct pbuf *p, struct netif *inp)
         }
       }
 #endif /* SO_REUSE && SO_REUSE_RXTOALL */
+  printf("my dbg udp input 5.\n");
       /* callback */
       if (pcb->recv != NULL) {
         /* now the recv function is responsible for freeing p */
+  printf("my dbg udp input 6.\n");
         pcb->recv(pcb->recv_arg, pcb, p, ip_current_src_addr(), src);
       } else {
         /* no recv function registered? then we have to free the pbuf! */
@@ -397,6 +410,7 @@ udp_input(struct pbuf *p, struct netif *inp)
         goto end;
       }
     } else {
+  printf("my dbg udp input 7.\n");
       LWIP_DEBUGF(UDP_DEBUG | LWIP_DBG_TRACE, ("udp_input: not for us.\n"));
 
 #if LWIP_ICMP || LWIP_ICMP6
@@ -405,6 +419,7 @@ udp_input(struct pbuf *p, struct netif *inp)
       if (!broadcast && !ip_addr_ismulticast(ip_current_dest_addr())) {
         /* move payload pointer back to ip header */
         pbuf_header_force(p, (s16_t)(ip_current_header_tot_len() + UDP_HLEN));
+  printf("my dbg udp input 8.\n");
         icmp_port_unreach(ip_current_is_v6(), p);
       }
 #endif /* LWIP_ICMP || LWIP_ICMP6 */
@@ -454,6 +469,7 @@ chkerr:
 err_t
 udp_send(struct udp_pcb *pcb, struct pbuf *p)
 {
+  printf("my dbg udp send.\n");
   if ((pcb == NULL) || IP_IS_ANY_TYPE_VAL(pcb->remote_ip)) {
     return ERR_VAL;
   }
@@ -502,6 +518,7 @@ err_t
 udp_sendto(struct udp_pcb *pcb, struct pbuf *p,
   const ip_addr_t *dst_ip, u16_t dst_port)
 {
+  printf("my dbg udp sendto.\n");
 #if LWIP_CHECKSUM_ON_COPY && CHECKSUM_GEN_UDP
   return udp_sendto_chksum(pcb, p, dst_ip, dst_port, 0, 0);
 }
@@ -661,6 +678,7 @@ err_t
 udp_sendto_if_src(struct udp_pcb *pcb, struct pbuf *p,
   const ip_addr_t *dst_ip, u16_t dst_port, struct netif *netif, const ip_addr_t *src_ip)
 {
+  printf("my dbg udp sendto if src 0.\n");
 #if LWIP_CHECKSUM_ON_COPY && CHECKSUM_GEN_UDP
   return udp_sendto_if_src_chksum(pcb, p, dst_ip, dst_port, netif, 0, 0, src_ip);
 }
@@ -840,7 +858,7 @@ udp_sendto_if_src_chksum(struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *d
   LWIP_DEBUGF(UDP_DEBUG, ("udp_send: ip_output_if (,,,,0x%02"X16_F",)\n", (u16_t)ip_proto));
   /* output to IP */
   NETIF_SET_HWADDRHINT(netif, &(pcb->addr_hint));
-  printf("my dbg ip output if src.\n");
+  printf("my dbg calling ip output if src in udp sendto if src checksum.\n");
   err = ip_output_if_src(q, src_ip, dst_ip, ttl, pcb->tos, ip_proto, netif);
   NETIF_SET_HWADDRHINT(netif, NULL);
 
@@ -882,6 +900,7 @@ udp_sendto_if_src_chksum(struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *d
 err_t
 udp_bind(struct udp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port)
 {
+    printf("my dbg udp bind port in udp bind:%x.\n", port);
   struct udp_pcb *ipcb;
   u8_t rebind;
 
@@ -943,8 +962,8 @@ udp_bind(struct udp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port)
       }
     }
   }
-
   ip_addr_set_ipaddr(&pcb->local_ip, ipaddr);
+  printf("my dbg udp bind 1 port:%x.\n", port);
 
   pcb->local_port = port;
   mib2_udp_bind(pcb);
@@ -1071,7 +1090,7 @@ void
 udp_remove(struct udp_pcb *pcb)
 {
   struct udp_pcb *pcb2;
-
+  printf("my dbg udp remove 0.\n");
   mib2_udp_unbind(pcb);
   /* pcb to be removed is first in list? */
   if (udp_pcbs == pcb) {

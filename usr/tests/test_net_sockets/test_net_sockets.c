@@ -19,12 +19,16 @@
 #include <barrelfish/waitset.h>
 #include <barrelfish/nameservice_client.h>
 
+#include <barrelfish/deferred.h>
 #include <net_sockets/net_sockets.h>
 #include <arpa/inet.h>
 
-
+#ifdef CLIENT
+#undef CLIENT
+#endif
+//#define CLIENT
 struct in_addr dest_ip;
-uint16_t dest_port = 7;
+uint16_t udp_port = 7;
 struct net_socket *pcb;
 void * payload;
 int echo_counter = 10;
@@ -32,7 +36,7 @@ int echo_counter = 10;
 static errval_t send_message(struct net_socket *socket, char* message, struct in_addr addr, uint16_t port)
 {
     errval_t err;
-    err = net_send_to(socket, message, strlen(message) + 1, dest_ip, dest_port);
+    err = net_send_to(socket, message, strlen(message) + 1, addr, port);
     return err;
 }
 
@@ -55,15 +59,16 @@ static errval_t init(char *ip)
     }
 
     int ret = inet_aton(ip, &dest_ip);
+    printf("my dbg ip = %x.\n", dest_ip.s_addr);
     if (ret == 0) {
         debug_printf("Invalid IP addr: %s\n", ip);
         return 1;
     }
 
-    debug_printf("connecting to %s:%" PRIu16 "\n", ip, dest_port);
+    debug_printf("connecting to %s:%" PRIu16 "\n", ip, udp_port);
 
     errval_t r;
-    r = net_bind(pcb, (struct in_addr){(INADDR_ANY)}, 0);
+    r = net_bind(pcb, (struct in_addr){(INADDR_ANY)}, udp_port);
     if (r != SYS_ERR_OK) {
         USER_PANIC("UDP bind failed");
     }
@@ -74,11 +79,16 @@ static errval_t init(char *ip)
     return SYS_ERR_OK;
 }
 
+/*
 static errval_t cleanup(void)
 {
     net_close(pcb);
     return SYS_ERR_OK;
 }
+ */
+
+#pragma GCC push_options
+#pragma GCC optimize("O0")
 
 int main(int argc, char *argv[])
 {
@@ -89,11 +99,26 @@ int main(int argc, char *argv[])
     debug_printf("test net sockets initializing.\n");
     err = init(argv[1]);
     assert(err_is_ok(err));
-    debug_printf("test net sockets start sending.\n");
-    strcpy(payload, "hello.\n");
-    err = send_message(pcb, payload, dest_ip, dest_port);
-    assert(err_is_ok(err));
-    debug_printf("test net sockets finished sending.\n");
-    cleanup();
+#ifdef CLIENT
+    //while (1) {
+        int i, j;
+        i = -50000000;
+        j = -3;
+        while (j < 0) {
+            i++;
+            if (i > 0) {
+                j++;
+                i = -50000000;
+            }
+        }
+        debug_printf("test net sockets start sending.\n");
+        strcpy(payload, "hello.\n");
+        err = send_message(pcb, payload, dest_ip, udp_port);
+        assert(err_is_ok(err));
+    //}
+#endif
+    //cleanup();
     return 0;
 }
+
+#pragma GCC pop_options

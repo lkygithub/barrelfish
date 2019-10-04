@@ -123,6 +123,7 @@ static errval_t descq_enqueue(struct devq* queue,
                               genoffset_t valid_length,
                               uint64_t misc_flags)
 {
+    printf("my dbg descq enqueue 0.\n");
     struct descq* q = (struct descq*) queue;
     size_t head = q->tx_seq % q->slots;
 
@@ -316,6 +317,7 @@ static void mp_notify(void *arg) {
     errval_t err;
     struct descq* q = arg;
 
+    printf("my dbg notify called in mp_notify.\n");
     DESCQ_DEBUG("%p \n",q->f.notify);
     err = q->f.notify(q);
 
@@ -539,6 +541,7 @@ errval_t descq_create(struct descq** q,
 
         err = descq_export(state, export_cb, connect_cb,
                                 get_default_waitset(), IDC_BIND_FLAGS_DEFAULT);
+        printf("my dbg exported queue:%x.\n", state);
         if (err_is_fail(err)) {
             goto cleanup1;
         }
@@ -597,6 +600,7 @@ errval_t descq_create(struct descq** q,
 
         err = descq_bind(iref, bind_cb, tmp, get_default_waitset(),
                               IDC_BIND_FLAGS_DEFAULT);
+        printf("my dbg bound queue:%x.\n", tmp);
         if (err_is_fail(err)) {
             goto cleanup5;
         }
@@ -640,7 +644,6 @@ errval_t descq_create(struct descq** q,
         err = waitset_chan_register(get_default_waitset(), &tmp->notificator.ready_to_read, MKCLOSURE(mp_notify, tmp));
         assert(err_is_ok(err));
     }
-
 
     *q = tmp;
 

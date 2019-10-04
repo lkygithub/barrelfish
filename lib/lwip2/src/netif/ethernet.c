@@ -80,6 +80,7 @@ const struct eth_addr ethzero = {{0,0,0,0,0,0}};
 err_t
 ethernet_input(struct pbuf *p, struct netif *netif)
 {
+  printf("my dbg ethernet input 0.\n");
   struct eth_hdr* ethhdr;
   u16_t type;
 #if LWIP_ARP || ETHARP_SUPPORT_VLAN || LWIP_IPV6
@@ -133,6 +134,7 @@ ethernet_input(struct pbuf *p, struct netif *netif)
   }
 #endif /* ETHARP_SUPPORT_VLAN */
 
+  printf("my dbg ethernet input 1.\n");
 #if LWIP_ARP_FILTER_NETIF
   netif = LWIP_ARP_FILTER_NETIF_FN(p, netif, lwip_htons(type));
 #endif /* LWIP_ARP_FILTER_NETIF*/
@@ -160,11 +162,13 @@ ethernet_input(struct pbuf *p, struct netif *netif)
       p->flags |= PBUF_FLAG_LLBCAST;
     }
   }
+  printf("my dbg ethernet input 2.\n");
 
   switch (type) {
 #if LWIP_IPV4 && LWIP_ARP
     /* IP packet? */
     case PP_HTONS(ETHTYPE_IP):
+  printf("my dbg ethernet input 3.\n");
       if (!(netif->flags & NETIF_FLAG_ETHARP)) {
         goto free_and_return;
       }
@@ -182,6 +186,7 @@ ethernet_input(struct pbuf *p, struct netif *netif)
       break;
 
     case PP_HTONS(ETHTYPE_ARP):
+  printf("my dbg ethernet input 4.\n");
       if (!(netif->flags & NETIF_FLAG_ETHARP)) {
         goto free_and_return;
       }
@@ -212,6 +217,7 @@ ethernet_input(struct pbuf *p, struct netif *netif)
 
 #if LWIP_IPV6
     case PP_HTONS(ETHTYPE_IPV6): /* IPv6 */
+  printf("my dbg ethernet input 5.\n");
       /* skip Ethernet header */
       if ((p->len < ip_hdr_offset) || pbuf_header(p, (s16_t)-ip_hdr_offset)) {
         LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_WARNING,
@@ -265,6 +271,7 @@ ethernet_output(struct netif* netif, struct pbuf* p,
                 const struct eth_addr* src, const struct eth_addr* dst,
                 u16_t eth_type)
 {
+  printf("my dbg ethernet output 1.\n");
   struct eth_hdr* ethhdr;
   u16_t eth_type_be = lwip_htons(eth_type);
 
@@ -302,7 +309,7 @@ ethernet_output(struct netif* netif, struct pbuf* p,
     ("ethernet_output: sending packet %p\n", (void *)p));
 
   /* send the packet */
-  printf("my dbg netif linkoutput called.\n");
+  printf("my dbg ethernet output 2.\n");
   return netif->linkoutput(netif, p);
 
 pbuf_header_failed:

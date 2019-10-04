@@ -625,6 +625,8 @@ etharp_get_entry(u8_t i, ip4_addr_t **ipaddr, struct netif **netif, struct eth_a
   }
 }
 
+//#pragma GCC push_options
+//#pragma GCC optimize ("O0")
 /**
  * Responds to ARP requests to us. Upon ARP replies to us, add entry to cache
  * send out queued IP packets. Updates cache with snooped address pairs.
@@ -640,6 +642,7 @@ etharp_get_entry(u8_t i, ip4_addr_t **ipaddr, struct netif **netif, struct eth_a
 void
 etharp_input(struct pbuf *p, struct netif *netif)
 {
+  printf("my dbg etharp input 0.\n");
   struct etharp_hdr *hdr;
   /* these are aligned properly, whereas the ARP header fields might not be */
   ip4_addr_t sipaddr, dipaddr;
@@ -664,6 +667,7 @@ etharp_input(struct pbuf *p, struct netif *netif)
   }
   ETHARP_STATS_INC(etharp.recv);
 
+  printf("my dbg etharp input 1.\n");
 #if LWIP_AUTOIP
   /* We have to check if a host already has configured our random
    * created link local address and continuously check if there is
@@ -692,10 +696,12 @@ etharp_input(struct pbuf *p, struct netif *netif)
   etharp_update_arp_entry(netif, &sipaddr, &(hdr->shwaddr),
                    for_us ? ETHARP_FLAG_TRY_HARD : ETHARP_FLAG_FIND_ONLY);
 
+  printf("my dbg etharp input 2.\n");
   /* now act on the message itself */
   switch (hdr->opcode) {
   /* ARP request? */
   case PP_HTONS(ARP_REQUEST):
+  printf("my dbg etharp input 3.\n");
     /* ARP request. If it asked for our address, we send out a
      * reply. In any case, we time-stamp any existing ARP entry,
      * and possibly send out an IP packet that was queued on it. */
@@ -703,6 +709,21 @@ etharp_input(struct pbuf *p, struct netif *netif)
     LWIP_DEBUGF (ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_input: incoming ARP request\n"));
     /* ARP request for our address? */
     if (for_us) {
+  printf("my dbg etharp input 4.\n");
+  /*
+  int i = -50000000;
+  int j = -1;
+  if (j < 1 && i < 1) printf("my dbg etharp input i & j < 0.\n");
+  printf("my dbg etharp i/j:%d/%d.\n", i, j);
+  while (j < 0) {
+    i++;
+    if (i > 0) {
+      j++;
+      i = -50000000;
+    }
+  }
+  printf("my dbg etharp input after sleep.\n");
+  */
       /* send ARP response */
       etharp_raw(netif,
                  (struct eth_addr *)netif->hwaddr, &hdr->shwaddr,
@@ -720,6 +741,7 @@ etharp_input(struct pbuf *p, struct netif *netif)
     }
     break;
   case PP_HTONS(ARP_REPLY):
+  printf("my dbg etharp input 5.\n");
     /* ARP reply. We already updated the ARP cache earlier. */
     LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_input: incoming ARP reply\n"));
 #if (LWIP_DHCP && DHCP_DOES_ARP_CHECK)
@@ -738,7 +760,8 @@ etharp_input(struct pbuf *p, struct netif *netif)
   /* free ARP packet */
   pbuf_free(p);
 }
-
+//#pragma GCC pop_options
+//#pragma GCC optimize("O0")
 /** Just a small helper function that sends a pbuf to an ethernet address
  * in the arp_table specified by the index 'arp_idx'.
  */
@@ -788,6 +811,7 @@ etharp_output_to_arp_index(struct netif *netif, struct pbuf *q, u8_t arp_idx)
 err_t
 etharp_output(struct netif *netif, struct pbuf *q, const ip4_addr_t *ipaddr)
 {
+  printf("my dbg etharp output 0.\n");
   const struct eth_addr *dest;
   struct eth_addr mcastaddr;
   const ip4_addr_t *dst_addr = ipaddr;

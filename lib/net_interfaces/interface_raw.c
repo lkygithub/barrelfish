@@ -136,6 +136,7 @@ uint64_t get_tx_bufferid(void)
 
 static errval_t notify_handler(struct descq *queue)  
 {
+    printf("my dbg notify handler 0.\n");
     regionid_t rid;
     genoffset_t offset;
     genoffset_t length;

@@ -203,8 +203,10 @@ netif_init(void)
 err_t
 netif_input(struct pbuf *p, struct netif *inp)
 {
+  printf("my dbg netif input 0.\n");
 #if LWIP_ETHERNET
   if (inp->flags & (NETIF_FLAG_ETHARP | NETIF_FLAG_ETHERNET)) {
+  printf("my dbg netif input 1 .\n");
     return ethernet_input(p, inp);
   } else
 #endif /* LWIP_ETHERNET */

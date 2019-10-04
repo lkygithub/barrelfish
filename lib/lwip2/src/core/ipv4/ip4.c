@@ -373,6 +373,7 @@ return_noroute:
 err_t
 ip4_input(struct pbuf *p, struct netif *inp)
 {
+  printf("my dbg ip4 input.\n");
   struct ip_hdr *iphdr;
   struct netif *netif;
   u16_t iphdr_hlen;
@@ -675,6 +676,7 @@ ip4_input(struct pbuf *p, struct netif *inp)
     case IP_PROTO_UDPLITE:
 #endif /* LWIP_UDPLITE */
       MIB2_STATS_INC(mib2.ipindelivers);
+  printf("my dbg ip4 input 2.\n");
       udp_input(p, inp);
       break;
 #endif /* LWIP_UDP */
@@ -686,6 +688,7 @@ ip4_input(struct pbuf *p, struct netif *inp)
 #endif /* LWIP_TCP */
 #if LWIP_ICMP
     case IP_PROTO_ICMP:
+  printf("my dbg ip4 input 3.\n");
       MIB2_STATS_INC(mib2.ipindelivers);
       icmp_input(p, inp);
       break;
@@ -756,6 +759,7 @@ ip4_output_if(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *dest,
              u8_t ttl, u8_t tos,
              u8_t proto, struct netif *netif)
 {
+  printf("my dbg ip4 output if.\n");
 #if IP_OPTIONS_SEND
   return ip4_output_if_opt(p, src, dest, ttl, tos, proto, netif, NULL, 0);
 }
@@ -771,6 +775,7 @@ ip4_output_if_opt(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *dest,
        u8_t ttl, u8_t tos, u8_t proto, struct netif *netif, void *ip_options,
        u16_t optlen)
 {
+  printf("my dbg ip4 output if opt.\n");
 #endif /* IP_OPTIONS_SEND */
   const ip4_addr_t *src_used = src;
   if (dest != LWIP_IP_HDRINCL) {
@@ -796,6 +801,7 @@ ip4_output_if_src(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *dest,
              u8_t ttl, u8_t tos,
              u8_t proto, struct netif *netif)
 {
+  printf("my dbg ip4 output if src.\n");
 #if IP_OPTIONS_SEND
   return ip4_output_if_opt_src(p, src, dest, ttl, tos, proto, netif, NULL, 0);
 }
@@ -809,6 +815,7 @@ ip4_output_if_opt_src(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *d
        u8_t ttl, u8_t tos, u8_t proto, struct netif *netif, void *ip_options,
        u16_t optlen)
 {
+  printf("my dbg ip4 output if opt src.\n");
 #endif /* IP_OPTIONS_SEND */
   struct ip_hdr *iphdr;
   ip4_addr_t dest_addr;
@@ -837,6 +844,7 @@ ip4_output_if_opt_src(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *d
         LWIP_DEBUGF(IP_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("ip4_output_if_opt: not enough room for IP options in pbuf\n"));
         IP_STATS_INC(ip.err);
         MIB2_STATS_INC(mib2.ipoutdiscards);
+  printf("my dbg ip4 output if opt src 1.\n");
         return ERR_BUF;
       }
       MEMCPY(p->payload, ip_options, optlen);
@@ -857,6 +865,7 @@ ip4_output_if_opt_src(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *d
 
       IP_STATS_INC(ip.err);
       MIB2_STATS_INC(mib2.ipoutdiscards);
+  printf("my dbg ip4 output if opt src 2.\n");
       return ERR_BUF;
     }
 
@@ -942,6 +951,7 @@ ip4_output_if_opt_src(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *d
       ) {
     /* Packet to self, enqueue it for loopback */
     LWIP_DEBUGF(IP_DEBUG, ("netif_loop_output()"));
+  printf("my dbg ip4 output if opt src 3, dest=%x, netifaddr=%x.\n", *dest, *netif_ip4_addr(netif));
     return netif_loop_output(netif, p);
   }
 #if LWIP_MULTICAST_TX_OPTIONS
@@ -953,12 +963,13 @@ ip4_output_if_opt_src(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *d
 #if IP_FRAG
   /* don't fragment if interface has mtu set to 0 [loopif] */
   if (netif->mtu && (p->tot_len > netif->mtu)) {
+  printf("my dbg ip4 output if opt src 4.\n");
     return ip4_frag(p, netif, dest);
   }
 #endif /* IP_FRAG */
 
   LWIP_DEBUGF(IP_DEBUG, ("ip4_output_if: call netif->output()\n"));
-  printf("my dbg ip4_output_if: call netif->output().\n");
+  printf("my dbg ip4 output if opt src 5.\n");
   return netif->output(netif, p, dest);
 }
 
@@ -983,6 +994,7 @@ err_t
 ip4_output(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *dest,
           u8_t ttl, u8_t tos, u8_t proto)
 {
+  printf("my dbg ip4 output.\n");
   struct netif *netif;
 
   LWIP_IP_CHECK_PBUF_REF_COUNT_FOR_TX(p);

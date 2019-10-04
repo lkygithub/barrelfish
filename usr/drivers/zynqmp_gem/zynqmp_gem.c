@@ -27,7 +27,7 @@
 
 static zynqmp_gem_t device;
 
-static uint8_t zynqmp_gem_mac[6];
+static uint64_t zynqmp_gem_mac;
 
 static void zynqmp_gem_hardware_init(mackerel_addr_t vbase) {
     int i;
@@ -64,6 +64,8 @@ static void zynqmp_gem_hardware_init(mackerel_addr_t vbase) {
     zynqmp_gem_hashbt_wr(&device, 0); 
     zynqmp_gem_hashtp_wr(&device, 0);
 
+    zynqmp_gem_netcfg_ehdr_wrf(&device, 0x1);
+    //zynqmp_gem_netcfg_caf_wrf(&device, 0x1);
     zynqmp_gem_netcfg_fd_wrf(&device, 0x1);
     zynqmp_gem_netcfg_fr_wrf(&device, 0x1);
     zynqmp_gem_netcfg_mcd_wrf(&device, 0x3);
@@ -74,9 +76,7 @@ static void zynqmp_gem_hardware_init(mackerel_addr_t vbase) {
     mac_prefix = ZYNQMP_GEM_MAC_PREFIX;
     srand((int)time(0));
     mac_suffix = rand() % 0x1000000;
-    for (i = 0; i < 3; i++) zynqmp_gem_mac[i] = (mac_prefix & (0xff << (8 * (2 - i)))) >> (8 * (2 - i));
-    for (i = 3; i < 6; i++) zynqmp_gem_mac[i] = (mac_suffix & (0xff << (8 * (5 - i)))) >> (8 * (5 - i));
-    for (i = 0; i < 6; i++) ZYNQMP_GEM_DEBUG("mac %d is %x.\n", i, zynqmp_gem_mac[i]);
+    zynqmp_gem_mac = mac_prefix << 24 | mac_suffix;
     zynqmp_gem_spcaddbt_wr(&device, 0, ((mac_prefix & 0xff) << 24) | mac_suffix);
     zynqmp_gem_spcaddtp_addr_wrf(&device, 0, (mac_prefix & 0xffff00) >> 8);
 
@@ -118,8 +118,7 @@ static errval_t on_create_queue(struct zynqmp_gem_devif_binding *b,
     assert(err_is_ok(err));
     zynqmp_gem_txq1ptr_wr(&device, frameid.base);
 
-    memcpy(mac, zynqmp_gem_mac, sizeof(zynqmp_gem_mac));
-
+    *mac = zynqmp_gem_mac;
     //Enable controller
     zynqmp_gem_netctl_mpe_wrf(&device, 0x1);
     zynqmp_gem_netctl_er_wrf(&device, 0x1);
@@ -133,6 +132,19 @@ static void on_transmit_start(struct zynqmp_gem_devif_binding *b) {
     ZYNQMP_GEM_DEBUG("start transmission. qptr = %x\n", zynqmp_gem_txqptr_rd(&device));
     zynqmp_gem_netctl_tsp_wrf(&device, 0x1);
 }
+/*
+static void zynqmp_gem_dump_stats(void) {
+    int i = 0;
+    ZYNQMP_GEM_DEBUG("dump stats#################################");
+    for (i = 0; i < 45; i++) {
+        if (i % 4 == 0) {
+            printf("\noffset:%x\tcontents:", i * 4);
+        }
+        printf("%x\t", zynqmp_gem_stats_rd(&device, i));
+    }
+    ZYNQMP_GEM_DEBUG("\nstats dumped#################################\n");
+}
+ */
 
 static void on_interrupt(struct zynqmp_gem_devif_binding *b)
 {
@@ -151,6 +163,7 @@ static void on_interrupt(struct zynqmp_gem_devif_binding *b)
         rxstat = zynqmp_gem_rxstat_rd(&device);
         //FIXME:do something with rxstat.
         ZYNQMP_GEM_DEBUG("Rx completed, rxstat:%x.\n", rxstat);
+        //zynqmp_gem_dump_stats();
         zynqmp_gem_rxstat_wr(&device, 0xffffffff);
     }
     if (intstat & ZYNQMP_GEM_INT_TXUSED_MASK) {
@@ -221,6 +234,7 @@ static errval_t init(struct bfdriver_instance* bfi, const char* name, uint64_t
     ZYNQMP_GEM_DEBUG("Init management interface.\n");
     zynqmp_gem_init_mngif(st);
     ZYNQMP_GEM_DEBUG("Management interface initialized.\n");
+    
     return SYS_ERR_OK;
 }
 

@@ -141,6 +141,7 @@ void net_set_on_closed(struct net_socket *socket, net_closed_callback_t cb)
 
 void net_close(struct net_socket *socket)
 {
+    printf("my dbg net close.\n");
     errval_t err;
 
 // debug_printf_to_log("%s(%d): %ld:%p  %ld:%p", __func__, socket->descriptor, next_free, buffers[next_free], next_used, buffers[next_used]);
@@ -164,6 +165,7 @@ errval_t net_bind(struct net_socket *socket, struct in_addr ip_address, uint16_t
 {
     errval_t err, error;
     uint16_t bound_port;
+    printf("my dbg net sockets port in net bind:%x.\n", port);
 
     err = binding->rpc_tx_vtbl.bind(binding, socket->descriptor, ip_address.s_addr, port, &error, &bound_port);
     assert(err_is_ok(err));
@@ -234,11 +236,14 @@ errval_t net_send(struct net_socket *socket, void *data, size_t size)
     nb->descriptor = socket->descriptor;
     nb->host_address.s_addr = INADDR_NONE;
     nb->port = 0;
+    printf("my dbg enqueue net event send 1 queue:%x/rid:%x.\n", descq_queue, regionid);
 // debug_printf_to_log("%s(%d): enqueue %lx:%ld", __func__, socket->descriptor, buffer - buffer_start, sizeof(struct net_buffer) + size);
     err = devq_enqueue((struct devq *)descq_queue, regionid, buffer - buffer_start, sizeof(struct net_buffer) + size,
                        0, 0, NET_EVENT_SEND);
     assert(err_is_ok(err));
+    printf("my dbg devq notify 1.\n");
     err = devq_notify((struct devq *)descq_queue);
+    printf("my dbg after devq notify 1.\n");
     assert(err_is_ok(err));
 
     error = SYS_ERR_OK;
@@ -257,11 +262,14 @@ errval_t net_send_to(struct net_socket *socket, void *data, size_t size, struct 
     nb->descriptor = socket->descriptor;
     nb->host_address = ip_address;
     nb->port = port;
+    printf("my dbg enqueue net event send 2 queue:%x/rid:%x.\n", descq_queue, regionid);
     // debug_printf_to_log("%s: enqueue %ld  %lx:%ld\n", __func__, size, buffer - buffer_start, sizeof(struct net_buffer) + size);
     err = devq_enqueue((struct devq *)descq_queue, regionid, buffer - buffer_start, sizeof(struct net_buffer) + size,
                        0, 0, NET_EVENT_SEND);
     assert(err_is_ok(err));
+    printf("my dbg devq notify 2.\n");
     err = devq_notify((struct devq *)descq_queue);
+    printf("my dbg after devq notify 2.\n");
     assert(err_is_ok(err));
 
     error = SYS_ERR_OK;
@@ -354,6 +362,7 @@ static void alloc_mem(struct capref *frame, void** virt, size_t size)
 
 static errval_t q_notify(struct descq* q)
 {
+    printf("my dbg net sockets queue notify 0.\n");
     assert(descq_queue == q);
     errval_t err = SYS_ERR_OK;
     //errval_t err2 = SYS_ERR_OK;
@@ -377,8 +386,8 @@ static errval_t q_notify(struct descq* q)
             // debug_printf_to_log("%s: dequeue %lx:%ld %ld  %d:%d", __func__, offset, length, event, nb->descriptor, nb->size);
             // debug_printf("%s: dequeue %lx:%ld %ld  %p socket:%d asocket:%d\n", __func__, offset, length, event, nb, nb->descriptor, nb->accepted_descriptor);
             void *shb_data = buffer + sizeof(struct net_buffer);
-
             if (event == NET_EVENT_RECEIVED) { // receiving buffer
+    printf("my dbg handle net net event received.\n");
                 // debug_printf("%s: enqueue 1> %lx:%d\n", __func__, offset, nb->size);
                 struct net_socket *socket = get_socket(nb->descriptor);
                 if (socket && !socket->is_closing) {
@@ -404,6 +413,7 @@ static errval_t q_notify(struct descq* q)
                 notify = 1;
                 net_accepted(descriptor, accepted_descriptor, host_address, port);
             } else if (event == NET_EVENT_SENT) { // transmitting buffer
+    printf("my dbg handle net event sent.\n");
                 struct net_socket *socket = get_socket(nb->descriptor);
                 assert(socket);
 
@@ -435,6 +445,7 @@ static errval_t q_notify(struct descq* q)
 
     if (notify) {
         // debug_printf("notify>\n");
+        printf("my dbg devq notify 3.\n");
         err = devq_notify((struct devq *)descq_queue);
         assert(err_is_ok(err));
         // debug_printf("notify<\n");
@@ -489,6 +500,7 @@ errval_t net_sockets_init_with_card(char* cardname)
     err = devq_register((struct devq *)descq_queue, buffer_frame, &regionid);
     assert(err_is_ok(err));
 
+    printf("my dbg enqueue net event receive 1. queue:%x/rid:%d.\n", descq_queue, regionid);
     for (int i = 0; i < NO_OF_BUFFERS; i++) {
         err = devq_enqueue((struct devq *)descq_queue, regionid, i * BUFFER_SIZE, BUFFER_SIZE,
                            0, 0, NET_EVENT_RECEIVE);
@@ -497,8 +509,11 @@ errval_t net_sockets_init_with_card(char* cardname)
         assert(err_is_ok(err));
         buffers[i] = i * BUFFER_SIZE + buffer_start + BUFFER_SIZE * NO_OF_BUFFERS;
     }
+    
+    printf("my dbg devq notify 4.\n");
 
     err = devq_notify((struct devq *)descq_queue);
+    printf("my dbg after devq notify 4.\n");
     assert(err_is_ok(err));
 
     return SYS_ERR_OK;

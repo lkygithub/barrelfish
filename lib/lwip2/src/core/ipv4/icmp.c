@@ -79,6 +79,7 @@ static void icmp_send_response(struct pbuf *p, u8_t type, u8_t code);
 void
 icmp_input(struct pbuf *p, struct netif *inp)
 {
+  printf("my dbg icmp input 0.\n");
   u8_t type;
 #ifdef LWIP_DEBUG
   u8_t code;

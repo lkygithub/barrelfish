@@ -143,6 +143,7 @@ static errval_t networking_poll_st(struct net_state *st)
 static errval_t networking_init_with_queue_st(struct net_state *st, struct devq *q,
                                               net_flags_t flags)
 {
+    printf("my dbg networking init with queue st 1.\n");
     errval_t err;
 
     NETDEBUG("initializing networking with devq=%p, flags=%" PRIx32 "...\n", q,
@@ -182,6 +183,7 @@ static errval_t networking_init_with_queue_st(struct net_state *st, struct devq 
         goto out_err1;
     }
 
+    printf("my dbg networking init with queue st 2.\n");
     err = net_if_add(&st->netif, st);
     if (err_is_fail(err)) {
         goto out_err1;

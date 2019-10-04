@@ -86,6 +86,7 @@ static errval_t zynqmp_gem_control(struct devq* q, uint64_t cmd, uint64_t value,
 {
     zynqmp_gem_queue_t *q_ext = (zynqmp_gem_queue_t *)q;
     *result = q_ext->mac_address;
+    ZYNQMP_GEM_DEBUG("control returned mac address:%x.\n", result);
     return SYS_ERR_OK;
 }
 

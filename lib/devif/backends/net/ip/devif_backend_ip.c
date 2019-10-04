@@ -123,6 +123,7 @@ static errval_t ip_control(struct devq* q, uint64_t cmd, uint64_t value,
 
 static errval_t ip_notify(struct devq* q)
 {
+    printf("my dbg ip notify 0.\n");
     struct ip_q* que = (struct ip_q*) q;
     return que->q->f.notify(que->q);
 }

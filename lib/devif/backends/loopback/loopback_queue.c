@@ -94,6 +94,7 @@ static errval_t loopback_notify(struct devq *q)
         }   
 #endif
    
+    printf("my dbg loopback notify 0.\n");
 
     return SYS_ERR_OK;
 }

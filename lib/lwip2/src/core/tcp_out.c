@@ -917,6 +917,7 @@ tcp_build_wnd_scale_option(u32_t *opts)
 err_t
 tcp_send_empty_ack(struct tcp_pcb *pcb)
 {
+  printf("my dbg tcp send empty ack 0.\n");
   err_t err;
   struct pbuf *p;
   u8_t optlen = 0;
@@ -1188,6 +1189,7 @@ output_done:
 static err_t
 tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb, struct netif *netif)
 {
+  printf("my dbg tcp output segment 0.\n");
   err_t err;
   u16_t len;
   u32_t *opts;
@@ -1345,6 +1347,7 @@ tcp_rst(u32_t seqno, u32_t ackno,
   const ip_addr_t *local_ip, const ip_addr_t *remote_ip,
   u16_t local_port, u16_t remote_port)
 {
+  printf("my dbg tcp rst 0.\n");
   struct pbuf *p;
   struct tcp_hdr *tcphdr;
   struct netif *netif;
@@ -1531,6 +1534,7 @@ tcp_rexmit_fast(struct tcp_pcb *pcb)
 err_t
 tcp_keepalive(struct tcp_pcb *pcb)
 {
+  printf("my dbg tcp keepalive 0.\n");
   err_t err;
   struct pbuf *p;
   struct netif *netif;
@@ -1585,6 +1589,7 @@ tcp_keepalive(struct tcp_pcb *pcb)
 err_t
 tcp_zero_window_probe(struct tcp_pcb *pcb)
 {
+  printf("my dbg tcp zero window probe 0.\n");
   err_t err;
   struct pbuf *p;
   struct tcp_hdr *tcphdr;
