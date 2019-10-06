@@ -28,7 +28,7 @@
 #ifdef CLIENT
 #undef CLIENT
 #endif
-//#define CLIENT
+#define CLIENT
 
 struct allowed_registers
 {

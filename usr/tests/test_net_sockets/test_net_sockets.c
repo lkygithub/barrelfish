@@ -26,7 +26,7 @@
 #ifdef CLIENT
 #undef CLIENT
 #endif
-//#define CLIENT
+#define CLIENT
 struct in_addr dest_ip;
 uint16_t udp_port = 7;
 struct net_socket *pcb;

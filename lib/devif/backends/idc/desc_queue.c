@@ -200,7 +200,7 @@ static errval_t descq_dequeue(struct devq* queue,
     return SYS_ERR_OK;
 }
 
-static errval_t descq_notify_server(struct devq* q)
+static errval_t descq_notify(struct devq* q)
 {
     // errval_t err;
     //errval_t err2;
@@ -219,15 +219,6 @@ static errval_t descq_notify_server(struct devq* q)
     //         return err;
     //     }
     // }
-    struct descq *queue = (struct descq*) q;
-    queue->binding->tx_vtbl.notify_server(queue->binding, NOP_CONT);
-    return SYS_ERR_OK;
-}
-
-static errval_t descq_notify_client(struct devq* q)
-{
-    struct descq *queue = (struct descq*) q;
-    queue->binding->tx_vtbl.notify_client(queue->binding, NOP_CONT);
     return SYS_ERR_OK;
 }
 
@@ -334,13 +325,6 @@ static void mp_notify(void *arg) {
     assert(err_is_ok(err));
 }
 
-static void on_notify(struct descq_binding *b) 
-{
-    struct descq *q = (struct descq*) b->st;
-    mp_notify((void*)q);
-}
-
-
 static errval_t mp_reg(struct descq_binding* b, struct capref cap,
                    uint32_t rid, errval_t *err)
 {
@@ -424,19 +408,19 @@ static errval_t mp_create(struct descq_binding* b, uint32_t slots,
 
     q->q.f.enq = descq_enqueue;
     q->q.f.deq = descq_dequeue;
-    q->q.f.notify = descq_notify_client;
+    q->q.f.notify = descq_notify;
     q->q.f.reg = descq_register;
     q->q.f.dereg = descq_deregister;
     q->q.f.ctrl = descq_control;
     q->q.f.destroy = descq_destroy;
 
-    /*
+    
     q->notifications = notifications;
 
     notificator_init(&q->notificator, q, descq_can_read, descq_can_write);
     *err = waitset_chan_register(get_default_waitset(), &q->notificator.ready_to_read, MKCLOSURE(mp_notify, q));
     assert(err_is_ok(*err));
-     */
+    
 
     *err = q->f.create(q, notifications, role, queue_id);
     if (err_is_ok(*err)) {
@@ -501,7 +485,6 @@ static errval_t connect_cb(void *st, struct descq_binding* b)
     }
 
     b->rpc_rx_vtbl = rpc_rx_vtbl;
-    b->rx_vtbl.notify_server = on_notify;
     b->st = q;
     q->local_bind = b->local_binding != NULL;
 
@@ -516,7 +499,6 @@ static void bind_cb(void *st, errval_t err, struct descq_binding* b)
     DESCQ_DEBUG("Interface bound \n");
     q->binding = b;
     descq_rpc_client_init(q->binding);
-    b->rx_vtbl.notify_client = on_notify;
 
     q->bound_done = true;
     b->st = q;
@@ -652,17 +634,17 @@ errval_t descq_create(struct descq** q,
 
         tmp->q.f.enq = descq_enqueue;
         tmp->q.f.deq = descq_dequeue;
-        tmp->q.f.notify = descq_notify_server;
+        tmp->q.f.notify = descq_notify;
         tmp->q.f.reg = descq_register;
         tmp->q.f.dereg = descq_deregister;
         tmp->q.f.ctrl = descq_control;
 
-        /*
+        
         tmp->notifications = notifications;
         notificator_init(&tmp->notificator, tmp, descq_can_read, descq_can_write);
         err = waitset_chan_register(get_default_waitset(), &tmp->notificator.ready_to_read, MKCLOSURE(mp_notify, tmp));
         assert(err_is_ok(err));
-         */
+        
     }
 
     *q = tmp;
