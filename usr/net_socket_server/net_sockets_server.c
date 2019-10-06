@@ -136,6 +136,7 @@ static void net_udp_receive(void *arg, struct udp_pcb *pcb, struct pbuf *p, cons
 {
     struct socket_connection *connection = arg;
     struct network_connection *nc = connection->connection;
+
     errval_t err;
 
     assert(p->tot_len + sizeof(struct net_buffer) <= BUFFER_SIZE);
@@ -174,13 +175,10 @@ static void net_udp_receive(void *arg, struct udp_pcb *pcb, struct pbuf *p, cons
         it = it->next;
     }
     pbuf_free(p);
-    printf("my dbg enqueue net event received 1 queue:%x/rid:%d.\n", nc->queue, nc->region_id);
     err = devq_enqueue((struct devq *)nc->queue, nc->region_id, buffer - nc->buffer_start, sizeof(struct net_buffer) + length,
                        0, 0, NET_EVENT_RECEIVED);
     assert(err_is_ok(err));
-    printf("my dbg devq notify 5.\n");
     err = devq_notify((struct devq *)nc->queue);
-    printf("my dbg after devq notify 5.\n");
     assert(err_is_ok(err));
     // debug_printf("%s: notifing\n", __func__);
     // struct net_sockets_binding *binding = connection->connection->binding;
@@ -412,7 +410,6 @@ static errval_t net_register_queue(struct net_sockets_binding *binding, uint64_t
     binding->st = nc;
     nc->binding = binding;
     devq_set_state((struct devq *)nc->queue, nc);
-
     return SYS_ERR_OK;
 }
 
@@ -454,7 +451,6 @@ static errval_t net_tcp_socket(struct net_sockets_binding *binding, uint32_t *de
 
 static errval_t net_bind(struct net_sockets_binding *binding, uint32_t descriptor, uint32_t ip_address, uint16_t port, errval_t *error, uint16_t *bound_port)
 {
-    printf("my dbg net sockets server port in net bind:%x.\n", port);
     struct network_connection *nc;
     struct socket_connection *socket;
 
@@ -550,7 +546,6 @@ static errval_t net_connect(struct net_sockets_binding *binding, uint32_t descri
 
 static void net_delete_socket(struct network_connection *nc, uint32_t descriptor)
 {
-    printf("my dbg net delete socket.\n");
     struct socket_connection *socket, *last;
     errval_t err;
 
@@ -640,7 +635,6 @@ static errval_t q_destroy(struct descq* q)
 
 static errval_t q_notify(struct descq* q)
 {
-    printf("my dbg net sockets server queue notify 0.\n");
     struct devq* queue = (struct devq *)q;
     errval_t err = SYS_ERR_OK;
     //errval_t err2 = SYS_ERR_OK;
@@ -656,11 +650,9 @@ static errval_t q_notify(struct descq* q)
     // debug_printf("%s: \n", __func__);
     nc = devq_get_state(queue);
     for (;;) {
-    printf("my dbg net sockets server queue notify 1.\n");
         err = devq_dequeue(queue, &rid, &offset, &length,
                            &valid_data, &valid_length, &event);
         if (err_is_fail(err)) {
-    printf("my dbg net sockets server queue notify 2.\n");
             break;
         } else {
             void *buffer;
@@ -699,7 +691,6 @@ static errval_t q_notify(struct descq* q)
                     uint16_t port;
                     port = nb->port;
                     addr.addr = nb->host_address.s_addr;
-                    printf("my dbg enqueue net event sent 1. queue:%x/rid:%d\n", queue, rid);
                     // debug_printf("%s.%d: enqueue 2 %lx:%d\n", __func__, __LINE__, offset, nb->size);
                     err = devq_enqueue(queue, rid, offset, length, 0, 0, NET_EVENT_SENT);
                     assert(err_is_ok(err));
@@ -752,13 +743,11 @@ static errval_t q_notify(struct descq* q)
                     // assert(err_is_ok(err));
                     // notify = 1;
                 } else {
-                    printf("my dbg enqueue net event sent 2. queue:%x/rid:%d\n", queue, rid);
                     err = devq_enqueue(queue, rid, offset, length, 0, 0, NET_EVENT_SENT);
                     assert(err_is_ok(err));
                     notify = 1;
                 }
             } else if (event == NET_EVENT_CLOSE) {
-    printf("my dbg net sockets server queue notify net event close.\n");
                 // struct net_buffer *nb = offset + nc->buffer_start;
 
                 // debug_printf("%s(%d): close\n", __func__, nb->descriptor);
@@ -767,7 +756,6 @@ static errval_t q_notify(struct descq* q)
                 assert(err_is_ok(err));
                 notify = 1;
             } else {
-    printf("my dbg net sockets server queue notify unknown event.\n");
                 debug_printf("%s: unknown event %ld!", __func__, event);
                 assert(0);
             }
@@ -775,7 +763,6 @@ static errval_t q_notify(struct descq* q)
     }
 
     if (notify) {
-        printf("my dbg devq notify 6.\n");
         // debug_printf("notify>\n");
         err = devq_notify(queue);
         // debug_printf("notify<\n");

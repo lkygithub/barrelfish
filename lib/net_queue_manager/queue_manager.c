@@ -740,7 +740,6 @@ static void raw_add_buffer_rx(struct client_closure *cl,
 
 static errval_t notify_queue(struct descq *queue)
 {
-    printf("my dbg notify queue 0.\n");
     struct client_closure *cl = devq_get_state((struct devq *)queue);
 
     regionid_t rid;

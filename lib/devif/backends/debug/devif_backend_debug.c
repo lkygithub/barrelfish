@@ -333,7 +333,6 @@ static errval_t debug_control(struct devq* q, uint64_t cmd, uint64_t value,
 static errval_t debug_notify(struct devq* q)
 {
     DEBUG("notify \n");
-    printf("my dbg debug notify 0.\n");
     struct debug_q* que = (struct debug_q*) q;
     return que->q->f.notify(que->q);
 }

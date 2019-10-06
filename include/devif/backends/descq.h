@@ -10,6 +10,8 @@
 #define DESCQ_H_ 1
 
 
+#include <devif/queue_interface_backend.h>
+#include <barrelfish/notificator.h>
 #include <barrelfish/barrelfish.h>
 
 #define DESCQ_DEFAULT_SIZE 2048
@@ -38,6 +40,62 @@ struct descq_func_pointer {
     descq_control_t control;
 };
 
+struct __attribute__((aligned(DESCQ_ALIGNMENT))) desc {
+    genoffset_t offset; // 8
+    genoffset_t length; // 16
+    genoffset_t valid_data; // 24
+    genoffset_t valid_length; // 32
+    uint64_t flags; // 40
+    uint64_t seq; // 48
+    regionid_t rid; // 52
+    uint8_t pad[12];
+};
+
+union __attribute__((aligned(DESCQ_ALIGNMENT))) pointer {
+    volatile size_t value;
+    uint8_t pad[64];
+};
+
+struct descq {
+    struct devq q;
+    struct descq_func_pointer f;
+
+    // General info
+    size_t slots;
+    char* name;
+    bool bound_done;
+ 
+    // Descriptor Ring
+    struct desc* rx_descs;
+    struct desc* tx_descs;
+    
+    // Flow control
+    uint64_t rx_seq;
+    uint64_t tx_seq;
+    union pointer* rx_seq_ack;
+    union pointer* tx_seq_ack;
+  
+    // Flounder
+    struct descq_binding* binding;
+    bool local_bind;
+    uint64_t resend_args;
+  
+    // linked list
+    struct descq* next;
+    uint64_t qid;
+    
+    struct notificator notificator;
+    bool notifications;
+};
+
+struct descq_endpoint_state {
+    bool exp_done;
+    char* name;
+    struct descq_func_pointer f;
+    struct descq* head;
+    struct descq* tail;
+    uint64_t qid;
+};
 
 /**
  * @brief initialized a descriptor queue

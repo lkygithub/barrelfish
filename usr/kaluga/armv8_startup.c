@@ -25,6 +25,11 @@
 
 #include "kaluga.h"
 
+#ifdef CLIENT
+#undef CLIENT
+#endif
+//#define CLIENT
+
 struct allowed_registers
 {
     char* binary;
@@ -165,7 +170,12 @@ errval_t start_networking(coreid_t where,
     net_sockets->argv[0] = "net_sockets_server";
     net_sockets->argv[1] = "auto";
     net_sockets->argv[2] = driver->binary;
+#ifdef CLIENT
+    net_sockets->argv[3] = "--ip=192.168.0.1";
+#else
     net_sockets->argv[3] = "--ip=192.168.0.2";
+#endif
+
 
     err = spawn_program(where, net_sockets->path, net_sockets->argv, environ, 0,
                         get_did_ptr(net_sockets));
@@ -276,7 +286,11 @@ errval_t start_networking_new(coreid_t where,
     net_sockets->argv[0] = "net_sockets_server";
     net_sockets->argv[1] = "auto";
     net_sockets->argv[2] = driver->binary;
+#ifdef CLIENT
+    net_sockets->argv[3] = "--ip=192.168.0.1";
+#else
     net_sockets->argv[3] = "--ip=192.168.0.2";
+#endif
 
     err = spawn_program(where, net_sockets->path, net_sockets->argv, environ, 0,
                         get_did_ptr(net_sockets));

@@ -275,7 +275,6 @@ raw_recv(struct raw_pcb *pcb, raw_recv_fn recv, void *recv_arg)
 err_t
 raw_sendto(struct raw_pcb *pcb, struct pbuf *p, const ip_addr_t *ipaddr)
 {
-  printf("my dbg raw sendto 0.\n");
   err_t err;
   struct netif *netif;
   const ip_addr_t *src_ip;

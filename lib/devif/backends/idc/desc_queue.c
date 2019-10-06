@@ -15,9 +15,10 @@
 #include <if/descq_defs.h>
 #include "descq_debug.h"
 #include <barrelfish/systime.h>
-#include <barrelfish/notificator.h>
+//#include <barrelfish/notificator.h>
 #include <barrelfish/waitset_chan.h>
 
+/*
 struct __attribute__((aligned(DESCQ_ALIGNMENT))) desc {
     genoffset_t offset; // 8
     genoffset_t length; // 16
@@ -75,6 +76,7 @@ struct descq_endpoint_state {
     struct descq* tail;
     uint64_t qid;
 };
+ */
 
 // Check if there's anything to read from the queue
 static bool descq_can_read(void *arg)
@@ -123,7 +125,6 @@ static errval_t descq_enqueue(struct devq* queue,
                               genoffset_t valid_length,
                               uint64_t misc_flags)
 {
-    printf("my dbg descq enqueue 0.\n");
     struct descq* q = (struct descq*) queue;
     size_t head = q->tx_seq % q->slots;
 
@@ -199,7 +200,7 @@ static errval_t descq_dequeue(struct devq* queue,
     return SYS_ERR_OK;
 }
 
-static errval_t descq_notify(struct devq* q)
+static errval_t descq_notify_server(struct devq* q)
 {
     // errval_t err;
     //errval_t err2;
@@ -218,6 +219,15 @@ static errval_t descq_notify(struct devq* q)
     //         return err;
     //     }
     // }
+    struct descq *queue = (struct descq*) q;
+    queue->binding->tx_vtbl.notify_server(queue->binding, NOP_CONT);
+    return SYS_ERR_OK;
+}
+
+static errval_t descq_notify_client(struct devq* q)
+{
+    struct descq *queue = (struct descq*) q;
+    queue->binding->tx_vtbl.notify_client(queue->binding, NOP_CONT);
     return SYS_ERR_OK;
 }
 
@@ -317,12 +327,17 @@ static void mp_notify(void *arg) {
     errval_t err;
     struct descq* q = arg;
 
-    printf("my dbg notify called in mp_notify.\n");
     DESCQ_DEBUG("%p \n",q->f.notify);
     err = q->f.notify(q);
 
     DESCQ_DEBUG("end\n");
     assert(err_is_ok(err));
+}
+
+static void on_notify(struct descq_binding *b) 
+{
+    struct descq *q = (struct descq*) b->st;
+    mp_notify((void*)q);
 }
 
 
@@ -409,15 +424,19 @@ static errval_t mp_create(struct descq_binding* b, uint32_t slots,
 
     q->q.f.enq = descq_enqueue;
     q->q.f.deq = descq_dequeue;
-    q->q.f.notify = descq_notify;
+    q->q.f.notify = descq_notify_client;
     q->q.f.reg = descq_register;
     q->q.f.dereg = descq_deregister;
     q->q.f.ctrl = descq_control;
     q->q.f.destroy = descq_destroy;
 
+    /*
+    q->notifications = notifications;
+
     notificator_init(&q->notificator, q, descq_can_read, descq_can_write);
     *err = waitset_chan_register(get_default_waitset(), &q->notificator.ready_to_read, MKCLOSURE(mp_notify, q));
     assert(err_is_ok(*err));
+     */
 
     *err = q->f.create(q, notifications, role, queue_id);
     if (err_is_ok(*err)) {
@@ -482,6 +501,7 @@ static errval_t connect_cb(void *st, struct descq_binding* b)
     }
 
     b->rpc_rx_vtbl = rpc_rx_vtbl;
+    b->rx_vtbl.notify_server = on_notify;
     b->st = q;
     q->local_bind = b->local_binding != NULL;
 
@@ -496,6 +516,7 @@ static void bind_cb(void *st, errval_t err, struct descq_binding* b)
     DESCQ_DEBUG("Interface bound \n");
     q->binding = b;
     descq_rpc_client_init(q->binding);
+    b->rx_vtbl.notify_client = on_notify;
 
     q->bound_done = true;
     b->st = q;
@@ -541,7 +562,6 @@ errval_t descq_create(struct descq** q,
 
         err = descq_export(state, export_cb, connect_cb,
                                 get_default_waitset(), IDC_BIND_FLAGS_DEFAULT);
-        printf("my dbg exported queue:%x.\n", state);
         if (err_is_fail(err)) {
             goto cleanup1;
         }
@@ -600,7 +620,6 @@ errval_t descq_create(struct descq** q,
 
         err = descq_bind(iref, bind_cb, tmp, get_default_waitset(),
                               IDC_BIND_FLAGS_DEFAULT);
-        printf("my dbg bound queue:%x.\n", tmp);
         if (err_is_fail(err)) {
             goto cleanup5;
         }
@@ -633,16 +652,17 @@ errval_t descq_create(struct descq** q,
 
         tmp->q.f.enq = descq_enqueue;
         tmp->q.f.deq = descq_dequeue;
-        tmp->q.f.notify = descq_notify;
+        tmp->q.f.notify = descq_notify_server;
         tmp->q.f.reg = descq_register;
         tmp->q.f.dereg = descq_deregister;
         tmp->q.f.ctrl = descq_control;
 
+        /*
         tmp->notifications = notifications;
-
         notificator_init(&tmp->notificator, tmp, descq_can_read, descq_can_write);
         err = waitset_chan_register(get_default_waitset(), &tmp->notificator.ready_to_read, MKCLOSURE(mp_notify, tmp));
         assert(err_is_ok(err));
+         */
     }
 
     *q = tmp;

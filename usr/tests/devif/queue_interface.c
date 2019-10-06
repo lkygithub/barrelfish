@@ -383,7 +383,6 @@ static void test_net_rx(void)
 
 static errval_t descq_notify(struct descq* q)
 {
-    printf("my dbg descq notify 0.\n");
     errval_t err = SYS_ERR_OK;
     struct devq* queue = (struct devq*) q;
     

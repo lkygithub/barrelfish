@@ -100,7 +100,7 @@ int main(int argc, char *argv[])
     err = init(argv[1]);
     assert(err_is_ok(err));
 #ifdef CLIENT
-    //while (1) {
+    while (1) {
         int i, j;
         i = -50000000;
         j = -3;
@@ -115,7 +115,11 @@ int main(int argc, char *argv[])
         strcpy(payload, "hello.\n");
         err = send_message(pcb, payload, dest_ip, udp_port);
         assert(err_is_ok(err));
-    //}
+    }
+#else
+    while(1) {
+        event_dispatch(get_default_waitset());
+    }
 #endif
     //cleanup();
     return 0;

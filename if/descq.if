@@ -27,4 +27,6 @@ interface descq "Devif communication queue" {
 
     message enqueued();
     message notify();
+    message notify_client();
+    message notify_server();
 };
