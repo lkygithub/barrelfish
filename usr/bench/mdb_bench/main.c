@@ -95,12 +95,16 @@ static void usage(const char *program)
 
 int main(int argc, char* argv[])
 {
-
+    
+    // printf("size of cte is :%d\n", sizeof(struct cte));
     size_t size_wanted = 1<<20;
+    // printf("size wanted is %d\n", size_wanted);
+    size_wanted = sizeof(struct cte) * 4096;
     size_t runs = 100;
-    struct reset_opt *reset = NULL;
-    struct measure_opt *measure = NULL;
+    struct reset_opt *reset = &reset_opts[0];
+    struct measure_opt *measure = &measure_opts[0];
     bool dump = false;
+
 
     assert(argc>0);
     if (argc == 1) {
@@ -108,8 +112,24 @@ int main(int argc, char* argv[])
         return 0;
     }
 
-    bool args_ok = true;
-
+    //bool args_ok = true;
+    for (int arg = 1; arg < argc; arg++) {
+        if (strncmp(argv[arg], "count=", 6) == 0) {
+            size_t count = atol(argv[arg]+6);
+            size_wanted = sizeof(struct cte) * count; 
+        }
+        if (strncmp(argv[arg], "runs=", 5) == 0) {
+            runs = (size_t)atol(argv[arg]+5);
+        }
+        if (strncmp(argv[arg], "rst=", 4) == 0) {
+            reset = &reset_opts[atol(argv[arg]+4)];
+        }
+        if (strncmp(argv[arg], "measure=", 8) == 0) {
+            measure = &measure_opts[atol(argv[arg]+8)];
+        }
+    }
+    // printf("size wanted is %d\n", size_wanted);
+/*
     for (int arg = 1; arg < argc; arg++) {
         if (strcmp(argv[arg], "help") == 0
             || strcmp(argv[arg], "--help") == 0
@@ -118,10 +138,10 @@ int main(int argc, char* argv[])
             usage(argv[0]);
             return 0;
         }
-        if (strncmp(argv[arg], "size=", 5) == 0) {
+        if (strncmp(argv[arg], "s=", 5) == 0) {
             size_wanted = atol(argv[arg]+5);
         }
-        if (strncmp(argv[arg], "logsize=", 8) == 0) {
+        if (strncmp(argv[arg], "ls=", 8) == 0) {
             size_t logsize = atol(argv[arg]+8);
             if (logsize > 31) {
                 printf("ERROR: logsize too big\n");
@@ -131,10 +151,10 @@ int main(int argc, char* argv[])
                 size_wanted = 1 << logsize;
             }
         }
-        else if (strncmp(argv[arg], "count=", 6) == 0) {
+        else if (strncmp(argv[arg], "c=", 6) == 0) {
             size_wanted = atol(argv[arg]+6)*sizeof(struct cte);
         }
-        else if (strncmp(argv[arg], "logcount=", 9) == 0) {
+        else if (strncmp(argv[arg], "lc=", 9) == 0) {
             size_t logcount = atol(argv[arg]+9);
             if (logcount > (31-OBJBITS_CTE)) {
                 printf("ERROR: logcount too big\n");
@@ -144,10 +164,10 @@ int main(int argc, char* argv[])
                 size_wanted = (1 << logcount)*sizeof(struct cte);
             }
         }
-        else if (strncmp(argv[arg], "runs=", 5) == 0) {
+        else if (strncmp(argv[arg], "r=", 5) == 0) {
             runs = atol(argv[arg]+5);
         }
-        else if (strncmp(argv[arg], "reset=", 6) == 0) {
+        else if (strncmp(argv[arg], "rst=", 6) == 0) {
             char *name = argv[arg]+6;
             int i;
             for (i = 0; reset_opts[i].name; i++) {
@@ -161,7 +181,7 @@ int main(int argc, char* argv[])
                 printf("ERROR: unkown reset \"%s\"\n", name);
             }
         }
-        else if (strncmp(argv[arg], "measure=", 8) == 0) {
+        else if (strncmp(argv[arg], "m=", 8) == 0) {
             char *name = argv[arg]+8;
             if (strcmp(name, "dump") == 0) {
                 measure = NULL;
@@ -194,7 +214,7 @@ int main(int argc, char* argv[])
         usage(argv[0]);
         return 1;
     }
-
+*/
     assert(size_wanted > 0);
     assert(runs > 0);
     assert(reset);

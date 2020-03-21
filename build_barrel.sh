@@ -1,5 +1,5 @@
-BARREL_PATH=~/mCode/barrelfish
-BUILD_PATH=build_arm
+BARREL_PATH=~/barrelfish
+BUILD_PATH=build
 MOUNT_PATH=/mnt/sdcard
 SBIN_PATH=armv8/sbin
 ECFILE=eclipseclp_ramfs.cpio.gz
@@ -8,7 +8,7 @@ MEMULIST=menu.lst.armv8_zynqmp
 
 # build barrelfish
 cd $BUILD_PATH
-#make ZynqmpZCU104 -j9
+make ZynqmpZCU104 -j9
 
 #cd armv8/sbin
 #aarch64-linux-gnu-objcopy -I elf64-littleaarch64 -O elf64-littleaarch64 --change-addresses 0xffff00007737a000 cpu_zynqmp cpu_zynqmp_relocated

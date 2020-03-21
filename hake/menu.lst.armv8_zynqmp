@@ -38,5 +38,8 @@ module /armv8/sbin/angler serial0.terminal xterm
 module /armv8/sbin/memtest nospawn
 
 #Time-Triggered application
-module /armv8/sbin/tt/producer nospawn
-module /armv8/sbin/tt/customer nospawn
+# module /armv8/sbin/tt/producer nospawn
+# module /armv8/sbin/tt/customer nospawn
+
+# mdb benchmark
+module /armv8/sbin/mdb_bench nospawn     

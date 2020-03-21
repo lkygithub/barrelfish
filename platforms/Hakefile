@@ -387,7 +387,8 @@ let bin_rcce_lu = [ "/sbin/" ++ f | f <- [
                        "fish",
                        "angler",
                        "kaluga",
-                       "acpi"
+                       "acpi",
+                       "mdb_bench"
                        ] ]
 
     -- ARMv8 Time-Triggered modules for ZynqZCU104
