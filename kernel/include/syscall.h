@@ -132,5 +132,6 @@ struct sysret sys_monitor_clear_step(capaddr_t ret_cn_addr,
  */
 struct sysret sys_ttmp_send(void);
 struct sysret sys_ttmp_receive(void);
+struct sysret sys_dump_mdb(void);
 
 #endif

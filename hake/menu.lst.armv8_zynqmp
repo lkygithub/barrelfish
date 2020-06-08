@@ -42,4 +42,15 @@ module /armv8/sbin/memtest nospawn
 # module /armv8/sbin/tt/customer nospawn
 
 # mdb benchmark
-module /armv8/sbin/mdb_bench nospawn     
+# module /armv8/sbin/mdb_bench nospawn
+module /armv8/sbin/test_retype nospawn
+module /armv8/sbin/hellotest nospawn
+module /armv8/sbin/test_rootcn_resize nospawn
+ 
+
+
+# trace
+# module /armv8/sbin/tracetest nospawn
+# module /armv8/sbin/tracectrl nospawn
+
+

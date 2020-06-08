@@ -1268,6 +1268,10 @@ void sys_syscall(uint64_t a0, uint64_t a1, uint64_t a2, uint64_t a3,
             r = sys_ttmp_receive();
             break;
 
+        case SYSCALL_DUMP_MDB:
+            r = sys_dump_mdb();
+            break;
+            
         default:
             printf("Illegal syscall %u\n", syscall);
             r.error = SYS_ERR_ILLEGAL_SYSCALL;

@@ -1,0 +1,491 @@
+
+> 
+> Xilinx Zynq MP First Stage Boot Loader 
+Release 2018.2   Jul 24 2018  -  20:56:57
+Reset Mode	:	System Reset
+Platform: Silicon (4.0), Cluster ID 0x80000000
+Running on A53-0 (64-bit) Processor, Device Name: XCZU7EV
+XFSBL_EEPROM PRESENT
+Calc_Vadj is VADJ_0V0
+FMC VADJ Configuration Successful
+Board Configuration successful
+Processor Initialization Done 
+================= In Stage 2 ============ 
+SD1 with level shifter Boot Mode 
+SD: rc= 0
+File name is BOOT.BIN
+Multiboot Reg : 0x0 
+Image Header Table Offset 0x8C0 
+*****Image Header Table Details******** 
+Boot Gen Ver: 0x1020000 
+No of Partitions: 0x4 
+Partition Header Address: 0x440 
+Partition Present Device: 0x0 
+Initialization Success 
+======= In Stage 3, Partition No:1 ======= 
+UnEncrypted data Length: 0x28A49C 
+Data word offset: 0x28A49C 
+Total Data word length: 0x28A49C 
+Destination Load Address: 0xFFFFFFFF 
+Execution Address: 0x0 
+Data word offset: 0xF980 
+Partition Attributes: 0x26 
+Destination Device is PL, changing LoadAddress
+Non authenticated Bitstream download to start now
+DMA transfer done 
+PL Configuration done successfully 
+Partition 1 Load Success 
+======= In Stage 3, Partition No:2 ======= 
+UnEncrypted data Length: 0x31F4 
+Data word offset: 0x31F4 
+Total Data word length: 0x31F4 
+Destination Load Address: 0xFFFEA000 
+Execution Address: 0xFFFEA000 
+Data word offset: 0x299E20 
+Partition Attributes: 0x117 
+Partition 2 Load Success 
+======= In Stage 3, Partition No:3 ======= 
+UnEncrypted data Length: 0x317F4 
+Data word offset: 0x317F4 
+Total Data word length: 0x317F4 
+Destination Load Address: 0x8000000 
+Execution Address: 0x8000000 
+Data word offset: 0x29D020 
+Partition Attributes: 0x114 
+Partition 3 Load Success 
+All Partitions Loaded 
+================= In Stage 4 ============ 
+PM Init Success
+Protection configuration applied
+Running ÏêŠUjT”'$HPª£ running on XCZU7EV/silicon v4/RTL5.1 at 0xfffea000
+NOTICE:  BL31: Secure code at 0x0
+NOTICE:  BL31: Non secure code at 0x8000000
+NOTICE:  BL31: v1.4(release):xilinx-v2018.1-4-g93a69a5a
+NOTICE:  BL31: Built : 08:13:07, Jun 20 2018
+PMUFW:	v1.0
+
+
+U-Boot 2018.01-g0ca9d43-dirty (Aug 30 2018 - 20:55:29 +0800) Xilinx ZynqMP ZCU104 revC
+
+I2C:   ready
+DRAM:  2 GiB
+EL Level:	EL2
+Chip ID:	zu7ev
+MMC:   sdhci@ff170000: 0 (SD)
+reading uboot.env
+In:    serial@ff000000
+Out:   serial@ff000000
+Err:   serial@ff000000
+Net:   ZYNQ GEM: ff0e0000, phyaddr c, interface rgmii-id
+
+Warning: ethernet@ff0e0000 (eth0) using random MAC address - f6:0e:c0:07:26:95
+eth0: ethernet@ff0e0000
+Hit any key to stop autoboot:  2  1  0 
+switch to partitions #0, OK
+mmc0 is current device
+Device: sdhci@ff170000
+Manufacturer ID: 3
+OEM: 5344
+Name: SC16G 
+Tran Speed: 50000000
+Rd Block Len: 512
+SD version 3.0
+High Capacity: Yes
+Capacity: 14.8 GiB
+Bus Width: 4-bit
+Erase Group Size: 512 Bytes
+** Unable to read file system.dtb **
+reading hagfish.efi
+382560 bytes read in 43 ms (8.5 MiB/s)
+## Starting EFI application at 10000000 ...
+Scanning disk sdhci@ff170000.blk...
+Found 2 disks
+configing the pxe net...
+WARNING: Invalid device tree, expect boot to fail
+Hagfish UEFI loader starting
+UEFI vendor: Das U-boot
+Hagfish loaded at 10000000, size 382560B, by handle 7DEE4250
+try local file systemHagfish:	Init SimpleFileSystem Protocol
+Hagfish:	Find 1 controllers
+Hagfish:	Open Simple File System on contorller0
+Loading "/menu.lst"
+File "/menu.lst" has size 1214B
+reading /menu.lst
+FAT: Misaligned buffer address (0000000078e4c060)
+Loaded config at [78E4C060-78E4C51D]
+Parsing configuration... done
+Found 1 EFI configuration tables
+MADT Table not found!
+ACPI: could not parse MADT. Info not available
+Loading the boot driver [/armv8/sbin/boot_armv8_genericreading /armv8/sbin/boot_armv8_generic
+ done (78E37000, 3880B)
+].
+Loading the cpu driver [/armv8/sbin/cpu_zynqmpreading /armv8/sbin/cpu_zynqmp
+ done (78DFF000, 228216B)
+].
+Loading init images [/armv8/sbin/initreading /armv8/sbin/init
+ done (78C98000, 1468616B)
+, /armv8/sbin/mem_servreading /armv8/sbin/mem_serv
+ done (78B3A000, 1430144B)
+, /armv8/sbin/monitorreading /armv8/sbin/monitor
+ done (78968000, 1906136B)
+, /armv8/sbin/ramfsdreading /armv8/sbin/ramfsd
+ done (787E4000, 1585968B)
+, /armv8/sbin/skbreading /armv8/sbin/skb
+ done (784A8000, 3387848B)
+, /armv8/sbin/kalugareading /armv8/sbin/kaluga
+ done (78250000, 2456776B)
+, /armv8/sbin/spawndreading /armv8/sbin/spawnd
+ done (7808B000, 1854400B)
+, /armv8/sbin/proc_mgmtreading /armv8/sbin/proc_mgmt
+ done (77F2F000, 1423104B)
+, /armv8/sbin/startdreading /armv8/sbin/startd
+ done (77D6B000, 1848032B)
+, /eclipseclp_ramfs.cpio.gzreading /eclipseclp_ramfs.cpio.gz
+ done (77C57000, 1126635B)
+, /skb_ramfs.cpio.gzreading /skb_ramfs.cpio.gz
+ done (77C46000, 67050B)
+, /armv8/sbin/serial_kernelreading /armv8/sbin/serial_kernel
+ done (77ADD000, 1474912B)
+, /armv8/sbin/corectrlreading /armv8/sbin/corectrl
+ done (7787B000, 2496416B)
+, /armv8/sbin/fishreading /armv8/sbin/fish
+ done (77626000, 2443976B)
+, /armv8/sbin/anglerreading /armv8/sbin/angler
+ done (774C8000, 1432880B)
+, /armv8/sbin/memtestreading /armv8/sbin/memtest
+ done (77370000, 1406568B)
+].
+1 RAM region(s)
+ 0 0-80000000
+2097152kB total
+Kernel physical window from 0 to FFFFFFFFFFFF
+Mapping 16GB blocks from 0 to FFFFFFFFFFFF
+Allocating 512 L1 tables
+Warning: CPU driver isn't executable.  Continuing anyway.
+Unrelocated kernel entry point is 0
+Found 3 program header(s)
+Segment 0 load address 0, file size 708, memory size 708 LOAD
+Loading into 1 pages at 77167000
+Segment 1 load address 688, file size 80, memory size 80
+Segment 2 load address 0, file size 0, memory size 0
+Relocating kernel image.
+Relocated boot driver entry point is 77167000
+Warning: CPU driver isn't executable.  Continuing anyway.
+Unrelocated kernel entry point is 1A80
+Found 3 program header(s)
+Segment 0 load address 0, file size 2E728, memory size 2E728 LOAD
+Loading into 47 pages at 7710C000
+Segment 1 load address 2E668, file size C0, memory size C0
+Segment 2 load address 0, file size 0, memory size 0
+Relocating kernel image.
+Relocated CPU driver entry point is FFFF00007710DA80, stack at 7713B000
+Allocated 6867 pages for 28126048B multiboot info at 75631000.
+AArch64: CPU initialisation.
+AArch64: MMU is enabled.
+AArch64: Executing at EL2.
+AArch64: EFI-supplied page table root is 7FFE0000
+AArch64: Current configuration:
+  Physical addresses are 40b (1TB)
+  Translation granule is 4kB
+  Table walks are inner sharable (coherent).
+  Outer caching is write-back, write-allocate.
+  Inner caching is write-back, write-allocate.
+  EL2 virtual address region is 40b (1024GB)
+Terminating boot services and jumping to image at 77167000
+New stack pointer is 7715AFF0   [7713B000..7715B000]  0x80 kB
+Multiboot2 pointer is 75631000
+mmap_size(merged) 960, page_num(merged) 24
+Memory map at 78EA5920, key: 0, descriptor version: 1
+Got 24 memory map entries of 40B (960B).
+Type          PStart           PEnd             PVRT               Size      Attributes
+available     0000000000000000 0000000075630FFF FFFF000000000000   1923268kB 8
+BF multiboot  0000000075631000 0000000077103FFF FFFF000075631000     27468kB 8
+available     0000000077104000 000000007710BFFF FFFF000077104000        32kB 8
+BF code       000000007710C000 000000007713AFFF FFFF00007710C000       188kB 8
+BF stack      000000007713B000 000000007715AFFF FFFF00007713B000       128kB 8
+available     000000007715B000 0000000077166FFF FFFF00007715B000        48kB 8
+BF code       0000000077167000 0000000077167FFF FFFF000077167000         4kB 8
+available     0000000077168000 000000007716BFFF FFFF000077168000        16kB 8
+BF page table 000000007716C000 000000007736BFFF FFFF00007716C000      2048kB 8
+available     000000007736C000 000000007736DFFF FFFF00007736C000         8kB 8
+BF page table 000000007736E000 000000007736EFFF FFFF00007736E000         4kB 8
+available     000000007736F000 000000007736FFFF FFFF00007736F000         4kB 8
+BF module     0000000077370000 0000000078E37FFF FFFF000077370000     27424kB 8
+available     0000000078E38000 0000000078E4AFFF FFFF000078E38000        76kB 8
+LD data       0000000078E4B000 0000000078E4BFFF FFFF000078E4B000         4kB 8
+available     0000000078E4C000 0000000078E4CFFF FFFF000078E4C000         4kB 8
+reserved      0000000078E4D000 0000000078E4DFFF FFFF000078E4D000         4kB 8
+BS data       0000000078E4E000 0000000078E5CFFF FFFF000078E4E000        60kB 8
+LD data       0000000078E5D000 0000000078EBAFFF FFFF000078E5D000       376kB 8
+RS data       0000000078EBB000 0000000078EBBFFF FFFF000078EBB000         4kB 8
+reserved      0000000078EBC000 0000000078EC5FFF FFFF000078EBC000        40kB 8
+LD data       0000000078EC6000 000000007FF8EFFF FFFF000078EC6000    115492kB 8
+RS code       000000007FF8F000 000000007FF8FFFF FFFF00007FF8F000         4kB 8
+LD data       000000007FF90000 000000007FFFFFFF FFFF00007CEC6000       448kB 8
+BSP BOOTING
+kernel 0: ARMv8-A: comes into zynqmp cpu_driver now
+kernel 0: ARMv8-A: multiboot addr is ffff000075631000
+kernel 0: ARMv8-A: multiboot magic is 920085129
+kernel 0: ARMv8-A: multiboot stack addr is ffff00007715aff0
+kernel 0: ARMv8-A: Found EFI mmap: 0xffff0000770efb50
+kernel 0: ARMv8-A: mmap->size: 976
+kernel 0: ARMv8-A: mmap->descr_size : 40
+kernel 0: ARMv8-A: mmap->descr_ver 1
+kernel 0: ARMv8-A: mmap->mmap_addr ffff0000770efb60
+kernel 0: ARMv8-A: start_kernel_ram:0000000000000000  start_free_rame:0000000000001000
+kernel 0: ARMv8-A: Current EL level 
+kernel 0: ARMv8-A: Barrelfish CPU driver starting on ARMv8
+kernel 0: ARMv8-A: Global data at 0xffff000000000130
+kernel 0: ARMv8-A: Multiboot record at 0xffff000075631000
+kernel 0: ARMv8-A: Kernel stack at 0xffff000077157000.. 0xffff00007715aff0
+kernel 0: ARMv8-A: Kernel first byte at 0xffff00007710c000
+kernel 0: ARMv8-A: Exception vectors (VBAR_EL1): 0xffff00007710c800
+kernel 0: ARMv8-A: Initilizing GIC400v2
+kernel 0: gic_v2: In init. GIC supports secure mode
+kernel 0: GICv2: gic_init done
+kernel 0: ARMv8-A: Setting coreboot spawn handler
+kernel 0: isr_el1=0x0
+System counter frequency is 100000002Hz.
+Timeslice interrupt every 1000 ticks (10ms).
+kernel 0: ARMv8-A: Doing BSP related bootup 
+start_free_ram = 0x1000
+kernel 0: ARMv8-A: Global ttmp buffer base is 0xffff000000001000.
+kernel 0: ARMv8-A: Global tt-tracing buffer base is 0xffff000000006000.
+kernel 0: ARMv8-A: spawning 'armv8/sbin/init' on BSP core
+kernel 0: ARMv8-A: spawn_init_common armv8/sbin/init
+spawn module: armv8/sbin/init
+kernel 0: init page tables: l0=0xffff0000001e0000, l1=0xffff0000001e1000, l2=0xffff0000001e2000, l3=0xffff0000001f2000
+Dump of dispatcher at address 0xffff000000080000:
+  disabled      = 1 (RESUME)
+  haswork       = 0
+  udisp         = 0x224000
+  lmp_delivered = 0
+  lmp_seen      = 0
+  lpm_hint      = 0x0
+  dispatcher_run                = 0x0
+  dispatcher_pagefault          = 0x0
+  dispatcher_pagefault_disabled = 0x0
+  dispatcher_trap               = 0x0
+  systime      = 0x0
+  wakeup       = 0x0
+  name         = init
+  fpu_used     = 0
+  fpu_trap     = 1
+  curr_core_id = 0x0
+load_init_image 0xffff000078c98000 001668c7
+kernel 0: ARMv8-A: init loaded with entry=0x40082c and GOT=0x518ce8
+kernel 0: gic_v2: GICC IIDR implementer=0x43b, revision=0x1, variant=0x2, prodid=0x2, raw=0x202143b
+kernel 0: gic_v2: GICD IIDR implementer=0x43b, revision=0x1, variant=0x0, prodid=0x2, raw=0x200143b
+kernel 0: gic_v2: #INTIDs supported: 192
+kernel 0: gic_v2: #LSPIs supported: 31
+kernel 0: ARMv8-A: Calling dispatch from arm_kernel_startup, entry point 0x40082c
+init: invoked as: init 2097152
+init.0.0: using 0x6d631000, 128 MB for init's allocator
+Spawning memory server (armv8/sbin/mem_serv)...
+Spawning monitor (armv8/sbin/monitor)...
+monitor: invoked as: armv8/sbin/monitor 7553024
+RAM allocator initialised, 1726 MB (of 1726 MB) available
+Spawning ramfsd on core 0
+ramfsd.0.0: pre-populating from boot image...
+ramfsd.0.0: unpacking Gzipped CPIO /eclipseclp_ramfs.cpio.gz
+ramfsd.0.0: unpacking Gzipped CPIO /skb_ramfs.cpio.gz
+ramfsd.0.0: ready
+Spawning skb on core 0
+skb: invoked as: skb boot
+vfs_initializing
+making dir /tmp
+call dlopen_set_param
+malloc skb_query_state
+memory malloc success
+before ec init
+ec_mem_init ok
+ec_global_init ok
+ec_emu_init ok
+ec_eccess ok
+ec_boot ok
+ec_term ok
+ec_main_emulc_noexit ok
+skb_main: ec_init() succeeded.
+excute_query
+skb.0.0: oct_server_init
+monitor.0.0: Storing BSP KCB in octopus
+monitor.0.0: octopus_set_bspkcb: storing cap
+monitor.0.0: octopus_set_bspkcb: setting mapping
+Spawning proc_mgmt on core 0
+proc_mgmt.0.0: ready
+Spawning /armv8/sbin/kaluga on core 0
+Spawning /armv8/sbin/spawnd on core 0
+Spawning /armv8/sbin/startd on core 0
+spawnd.0 up.
+proc_mgmt.0.0: Process manager bound with spawnd.0 on iref 11
+kaluga.0.0: Kluga running on ZynqMP ZCU104
+kaluga.0.0: CPU driver reports 4 core(s).
+spawnd.0.0: spawning /armv8/sbin/corectrl on core 0
+corectrl.0.0: Parking Version: 0, ParkedAddress= 0x1
+Invoking PSCI on: cpu=0x1, entry=0x4f62008, context=0x4f68000
+APP BOOTING
+kernel 0: ARMv8-A: comes into zynqmp cpu_driver now
+kernel 0: ARMv8-A: multiboot addr is ffff000004f68000
+kernel 0: ARMv8-A: multiboot magic is 2952900609
+kernel 0: ARMv8-A: multiboot stack addr is ffff000004f6fff0
+kernel 1: ARMv8-A: ARMv8 Core magic...
+kernel 1: ARMv8-A: Current EL level 
+kernel 1: ARMv8-A: Barrelfish CPU driver starting on ARMv8
+kernel 1: ARMv8-A: Global data at 0xffff000000000130
+kernel 1: ARMv8-A: Multiboot record at 0xffff000004f68000
+spawnd.0.0: spawning /armv8/sbin/corectrl on core 0
+kernel 1: ARMv8-A: Kernel stack at 0xffff000004f69000.. 0xffff000004f6fff0
+kernel 1: ARMv8-A: Kernel first byte at 0xffff000006180000
+kernel 1: ARMv8-A: Exception vectors (VBAR_EL1): 0xffff000006180800
+kernel 1: ARMv8-A: Initilizing GIC400v2
+kernel 1: gic_v2: In init. GIC supports secure mode
+kernel 1: GICv2: gic_init done
+kernel 1: ARMv8-A: Setting coreboot spawn handler
+kernel 1: isr_el1=0x0
+System counter frequency is 100000002Hz.
+Timeslice interrupt every 1000 ticks (10ms).
+kernel 1: ARMv8-A: Doing non-BSP related bootup 
+kernel 1: ARMv8-A: Memory: 8800000, 9000000, size=8192 kB
+kernel 1: ARMv8-A: spawning 'armv8/sbin/monitor' on APP core
+kernel 1: ARMv8-A: spawn_init_common armv8/sbin/monitor
+spawn module: armv8/sbin/monitor
+kernel 1: init page tables: l0=0xffff0000089a0000, l1=0xffff0000089a1000, l2=0xffff0000089a2000, l3=0xffff0000089b2000
+Dump of dispatcher at address 0xffff000008840000:
+  disabled      = 1 (RESUME)
+  haswork       = 0
+  udisp         = 0x224000
+  lmp_delivered = 0
+  lmp_seen      = 0
+  lpm_hint      = 0x0
+  dispatcher_run                = 0x0
+  dispatcher_pagefault          = 0x0
+  dispatcher_pagefault_disabled = 0x0
+  dispatcher_trap               = 0x0
+  systime      = 0x0
+  wakeup       = 0x0
+  name         = armv8/sbin/monit
+  fpu_used     = 111
+  fpu_trap     = 1
+  curr_core_id = 0x0
+kernel 1: ARMv8-A: creating monitor URPC frame cap
+kernel 1: ARMv8-A: mapping URPC frame cap 4f34000 
+kernel 1: ARMv8-A: loading elf 'armv8/sbin/monitor' @ ffff000007000000
+kernel 1: ARMv8-A: init loaded with entry=0x400f4c and GOT=0x56fbc8
+kernel 1: ARMv8-A: init dcb set up
+kernel 1: gic_v2: GICC IIDR implementer=0x43b, revision=0x1, variant=0x2, prodid=0x2, raw=0x202143b
+kernel 1: gic_v2: GICD IIDR implementer=0x43b, revision=0x1, variant=0x0, prodid=0x2, raw=0x200143b
+kernel 1: gic_v2: #INTIDs supported: 192
+kernel 1: gic_v2: #LSPIs supported: 31
+kernel 1: ARMv8-A: Calling dispatch from arm_kernel_startup, entry point 0x400f4c
+monitor: invoked as: armv8/sbin/monitor 0 chanid=0 archid=0
+Spawning spawnd on core 1
+spawnd.0.0: spawning /armv8/sbin/corectrl on core 0
+spawnd.1 up.
+proc_mgmt.0.0: Process manager bound with spawnd.1 on iref 259
+corectrl.0.0: Parking Version: 0, ParkedAddress= 0x1
+Invoking PSCI on: cpu=0x2, entry=0x627f008, context=0x6328000
+APP BOOTING
+kernel 0: ARMv8-A: comes into zynqmp cpu_driver now
+kernel 0: ARMv8-A: multiboot addr is ffff000006328000
+kernel 0: ARMv8-A: multiboot magic is 2952900609
+kernel 0: ARMv8-A: multiboot stack addr is ffff00000632fff0
+kernel 2: ARMv8-A: ARMv8 Core magic...
+kernel 2: ARMv8-A: Current EL level 
+kernel 2: ARMv8-A: Barrelfish CPU driver starting on ARMv8
+kernel 2: ARMv8-A: Global data at 0xffff000000000130
+kernel 2: ARMv8-A: Multiboot record at 0xffff000006328000
+kernel 2: ARMv8-A: Kernel stack at 0xffff000006329000.. 0xffff00000632fff0
+kernel 2: ARMv8-A: Kernel first byte at 0xffff000006700000
+kernel 2: ARMv8-A: Exception vectors (VBAR_EL1): 0xffff000006700800
+kernel 2: ARMv8-A: Initilizing GIC400v2
+kernel 2: gic_v2: In init. GIC supports secure mode
+kernel 2: GICv2: gic_init done
+kernel 2: ARMv8-A: Setting coreboot spawn handler
+kernel 2: isr_el1=0x0
+System counter frequency is 100000002Hz.
+Timeslice interrupt every 1000 ticks (10ms).
+kernel 2: ARMv8-A: Doing non-BSP related bootup 
+kernel 2: ARMv8-A: Memory: 9800000, a000000, size=8192 kB
+kernel 2: ARMv8-A: spawning 'armv8/sbin/monitor' on APP core
+kernel 2: ARMv8-A: spawn_init_common armv8/sbin/monitor
+spawn module: armv8/sbin/monitor
+kernel 2: init page tables: l0=0xffff0000099a0000, l1=0xffff0000099a1000, l2=0xffff0000099a2000, l3=0xffff0000099b2000
+Dump of dispatcher at address 0xffff000009840000:
+  disabled      = 1 (RESUME)
+  haswork       = 0
+  udisp         = 0x224000
+  lmp_delivered = 0
+  lmp_seen      = 0
+  lpm_hint      = 0x0
+  dispatcher_run                = 0x0
+  dispatcher_pagefault          = 0x0
+  dispatcher_pagefault_disabled = 0x0
+  dispatcher_trap               = 0x0
+  systime      = 0x0
+  wakeup       = 0x0
+  name         = armv8/sbin/monit
+  fpu_used     = 111
+  fpu_trap     = 1
+  curr_core_id = 0x0
+kernel 2: ARMv8-A: creating monitor URPC frame cap
+kernel 2: ARMv8-A: mapping URPC frame cap 627c000 
+kernel 2: ARMv8-A: loading elf 'armv8/sbin/monitor' @ ffff000007000000
+kernel 2: ARMv8-A: init loaded with entry=0x400f4c and GOT=0x56fbc8
+kernel 2: ARMv8-A: init dcb set up
+kernel 2: gic_v2: GICC IIDR implementer=0x43b, revision=0x1, variant=0x2, prodid=0x2, raw=0x202143b
+kernel 2: gic_v2: GICD IIDR implementer=0x43b, revision=0x1, variant=0x0, prodid=0x2, raw=0x200143b
+kernel 2: gic_v2: #INTIDs supported: 192
+kernel 2: gic_v2: #LSPIs supported: 31
+kernel 2: ARMv8-A: Calling dispatch from arm_kernel_startup, entry point 0x400f4c
+monitor: invoked as: armv8/sbin/monitor 0 chanid=0 archid=0
+Spawning spawnd on core 2
+spawnd.2 up.
+proc_mgmt.0.0: Process manager bound with spawnd.2 on iref 515
+startd.0.0: starting app /armv8/sbin/serial_kernel on core 0
+corectrl.0.0: Parking Version: 0, ParkedAddress= 0x1
+Invoking PSCI on: cpu=0x3, entry=0x6755008, context=0x96a0000
+APP BOOTING
+kernel 0: ARMv8-A: comes into zynqmp cpu_driver now
+kernel 0: ARMv8-A: multiboot addr is ffff0000096a0000
+kernel 0: ARMv8-A: multiboot magic is 2952900609
+kernel 0: ARMv8-A: multiboot stack addr is ffff0000096a7ff0
+kernel 3: ARMv8-A: ARMv8 Core magic...
+kernel 3: ARMv8-A: Current EL level 
+kernel 3: ARMv8-A: Barrelfish CPU driver starting on ARMv8
+kernel 3: ARMv8-A: Global data at 0xffff000000000130
+kernel 3: ARMv8-A: Multiboot record at 0xffff0000096a0000
+kernel 3: ARMv8-A: Kernel stack at 0xffff0000096a1000.. 0xffff0000096a7ff0
+kernel 3: ARMv8-A: Kernel first byte at 0xffff0000096c0000
+kernel 3: ARMv8-A: Exception vectors (VBAR_EL1): 0xffff0000096c0800
+kernel 3: ARMv8-A: Initilizing GIC400v2
+kernel 3: gic_v2: In init. GIC supports secure mode
+kernel 3: GICv2: gic_init done
+kernel 3: ARMv8-A: Setting coreboot spawn handler
+kernel 3: isr_el1=0x0
+System counter frequency is 100000002Hz.
+Timeslice interrupt every 1000 ticks (10ms).
+kernel 3: ARMv8-A: Doing non-BSP related bootup 
+kernel 3: ARMv8-A: Memory: a800000, b000000, size=8192 kB
+#### TEST tt-transfer cost: 8209538512, 8209538564, 52
+spawnd.0.0: spawning /armv8/sbin/serial_kernel on core 0
+startd.0.0: starting app /armv8/sbin/angler on core 0
+arg 0 : serial_kernel
+arg 1 : irq=53
+kernel 0: GICv2: gic_enable_interrupt for id=0x35, offset=0x200000, index=0x1
+kernel 0: GICv2: TYPE 2
+spawnd.0.0: spawning /armv8/sbin/angler on core 0
+No bootscript
+kernel 0: type = 44, bytes = 0
+spawnd.0.0: spawning /armv8/sbin/fish on core 0
+fish v0.2 -- pleased to meet you!
+File /init.fish not found
+available commands:
+help           print_cspace   quit           nproc          ps             
+demo           pixels         mnfs           oncore         reset          
+poweroff       skb            mount          ls             cd             
+pwd            touch          cat            hd             cat2           
+dd             cp             rm             mkdir          rmdir          
+setenv         src            printenv       free           dump_caps      
+
+> 

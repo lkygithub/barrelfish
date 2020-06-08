@@ -388,7 +388,11 @@ let bin_rcce_lu = [ "/sbin/" ++ f | f <- [
                        "angler",
                        "kaluga",
                        "acpi",
-                       "mdb_bench"
+               --        "mdb_bench",
+               --        "tracetest"
+                       "test_retype",
+                       "test_rootcn_resize",
+                       "hellotest"
                        ] ]
 
     -- ARMv8 Time-Triggered modules for ZynqZCU104
@@ -396,6 +400,12 @@ let bin_rcce_lu = [ "/sbin/" ++ f | f <- [
                        "tt/producer",
                        "tt/customer"
                        ] ]
+
+    -- ARMv8 Capability modules for ZynqZCU104
+    -- tt_modules = [ "/sbin/" ++ f | f <- [
+    --                   "cap/cap_serv"
+    --                   ] ]
+
 
     armv7Image target bootTarget cpuTarget physBase modules =
         let bootDriver = "/sbin/boot_" ++ bootTarget

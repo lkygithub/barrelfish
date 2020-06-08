@@ -1003,3 +1003,10 @@ struct sysret sys_ttmp_receive(void)
 
     return SYSRET(SYS_ERR_OK);
 };
+
+
+struct sysret sys_dump_mdb(void){
+    // printf("this is a syscall defined by lky!\n");
+    mdb_dump_all_the_things();
+    return SYSRET(SYS_ERR_OK);
+}

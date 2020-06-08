@@ -1226,6 +1226,7 @@ errval_t caps_create_from_existing(struct capability *root, capaddr_t cnode_cptr
 
     dest->mdbnode.owner = owner;
 
+    // insert the capability table entry into the mdb.
     err = mdb_insert(dest);
     assert(err_is_ok(err));
 
@@ -1676,6 +1677,7 @@ errval_t caps_retype(enum objtype type, gensize_t objsize, size_t count,
     }
 
     /* special initialisation for endpoint caps */
+    /* set the endpoint 's listener as the dispatcher 's dcb which it is retyping from */
     if (type == ObjType_EndPoint) {
         assert(src_cap->type == ObjType_Dispatcher);
         assert(count == 1);
@@ -1698,7 +1700,9 @@ errval_t caps_retype(enum objtype type, gensize_t objsize, size_t count,
         }
     }
 
-    /* Handle mapping */
+    /////////////////////////////////////////////////////
+    ////////////////* Handle mapping *///////////////////
+    /////////////////////////////////////////////////////
     for (size_t i = 0; i < count; i++) {
         mdb_insert(&dest_cte[i]);
     }

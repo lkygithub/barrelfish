@@ -64,7 +64,10 @@ struct sysret {
 #define SYSCALL_TTMP_SEND           12
 #define SYSCALL_TTMP_RECEIVE        13
 
-#define SYSCALL_COUNT               14     ///< Number of syscalls [0..SYSCALL_COUNT - 1]
+/* New MDB */
+#define SYSCALL_DUMP_MDB            14
+
+#define SYSCALL_COUNT               15     ///< Number of syscalls [0..SYSCALL_COUNT - 1]
 
 /*
  * To understand system calls it might be helpful to know that there

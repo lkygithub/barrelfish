@@ -1,0 +1,16 @@
+--------------------------------------------------------------------------
+-- Copyright (c) 2018-2020, BUAA LES.
+-- All rights reserved.
+--
+-- Hakefile for /usr/central_mdb/cap_server
+--
+--------------------------------------------------------------------------
+
+[
+    build application { target = "cap_server",
+                        cFiles = [ "main.c" ],
+                        addIncludes = [ "" ],
+                        addLibraries = libDeps ["tt_message_passing"]
+                        addLibraries = [ "mm", "trace" ],
+    }
+]

@@ -237,7 +237,7 @@ static inline size_t vnode_entry_bits(enum objtype type) {
 /**
  * Return number of slots for cnode in bits.
  * @param type Object type.
- * @return Number of page table entries in bits
+ * @return Number of slots for cnode in bits
  */
 static inline size_t cnode_get_slots(struct capability *cnode) {
     STATIC_ASSERT(50 == ObjType_Num, "Check CNode definitions");

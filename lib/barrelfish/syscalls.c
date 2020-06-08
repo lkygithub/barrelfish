@@ -55,3 +55,9 @@ errval_t sys_ttmp_receive(void)
     struct sysret ret = syscall1(SYSCALL_TTMP_RECEIVE);
     return ret.error;
 }
+
+errval_t sys_dump_mdb(void)
+{
+    struct sysret ret = syscall1(SYSCALL_DUMP_MDB);
+    return ret.error;
+}

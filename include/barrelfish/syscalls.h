@@ -70,6 +70,8 @@ uint64_t sys_get_absolute_time(void);
 errval_t sys_ttmp_send(void);
 
 errval_t sys_ttmp_receive(void);
+
+errval_t sys_dump_mdb(void);
 __END_DECLS
 
 #endif //LIBBARRELFISH_SYSCALL_H

@@ -40,5 +40,9 @@ int main(int argc, char *argv[])
   printf("After pagefault\n");
 #endif // __x86__
 
+
+  errval_t err = SYS_ERR_OK;
+  err = sys_dump_mdb();
+
   return EXIT_SUCCESS;
 }
