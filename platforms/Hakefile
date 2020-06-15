@@ -392,7 +392,8 @@ let bin_rcce_lu = [ "/sbin/" ++ f | f <- [
                --        "tracetest"
                        "test_retype",
                        "test_rootcn_resize",
-                       "hellotest"
+                       "hellotest",
+                       "cap_serv"
                        ] ]
 
     -- ARMv8 Time-Triggered modules for ZynqZCU104

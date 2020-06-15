@@ -47,7 +47,9 @@ module /armv8/sbin/test_retype nospawn
 module /armv8/sbin/hellotest nospawn
 module /armv8/sbin/test_rootcn_resize nospawn
  
+# cap_serv
 
+module /armv8/sbin/cap_serv nospawn
 
 # trace
 # module /armv8/sbin/tracetest nospawn

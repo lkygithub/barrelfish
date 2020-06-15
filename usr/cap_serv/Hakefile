@@ -7,10 +7,9 @@
 --------------------------------------------------------------------------
 
 [
-    build application { target = "cap_server",
-                        cFiles = [ "main.c" ],
+    build application { target = "cap_serv",
+                        cFiles = [ "cap_serv.c" ],
                         addIncludes = [ "" ],
-                        addLibraries = libDeps ["tt_message_passing"]
-                        addLibraries = [ "mm", "trace" ],
-    }
+                        addLibraries = [ "mm", "trace" ]
+                      }
 ]
